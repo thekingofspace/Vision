@@ -3,10 +3,10 @@ import { defineConfig } from "vitepress"
 export default defineConfig({
     title: "Vision",
     description: "Existence Begins With Perception.",
-    base: "/vision/",
+    base: "/Vision/",
 
     head: [
-        ["link", { rel: "icon", type: "image/svg+xml", href: "/vision/logo.svg" }],
+        ["link", { rel: "icon", type: "image/svg+xml", href: "/Vision/logo.svg" }],
         ["meta", { name: "theme-color", content: "#5865F2" }],
     ],
 
