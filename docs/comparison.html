@@ -126,7 +126,7 @@ graph and leaves the instances alone, so you destroy the container yourself.</p>
 </tr>
 <tr>
 <td>derived values</td>
-<td><code>derive</code>, tracked per run</td>
+<td><code>derive</code>, tracked per run, writable both ways</td>
 <td><code>derive</code>, tracked per run</td>
 <td>by hand</td>
 </tr>
@@ -253,7 +253,7 @@ binding is recorded, so a binding is a plain closure:</p>
 <span class="hljs-keyword">end</span></code></pre>
 <p>Vision tracks <strong>explicitly</strong>. A binding names its value up front with <code>event</code>
 or <code>merge</code>, and a <code>derive</code> reads through a <code>Read</code> handed to it:</p>
-<pre class="code"><code class="hljs">derive(<span class="hljs-string">&quot;Total&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Read)</span></span>
+<pre class="code"><code class="hljs">derive(<span class="hljs-string">&quot;Total&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Mode, Read)</span></span>
     <span class="hljs-keyword">return</span> Read(<span class="hljs-string">&quot;Price&quot;</span>) * Read(<span class="hljs-string">&quot;Quantity&quot;</span>)
 <span class="hljs-keyword">end</span>)</code></pre>
 <p>The tracking inside a derive is per run, so an untaken branch is not a

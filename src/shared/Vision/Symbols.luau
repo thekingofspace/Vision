@@ -24,7 +24,10 @@ function Symbols.merge(Event: string, Callback: (Instance, any) -> ())
     }, Marker)
 end
 
-function Symbols.derive(Name: string, Compute: (Read: (string) -> any) -> any)
+function Symbols.derive(
+    Name: string,
+    Compute: (Mode: string, Read: (string) -> any, Write: (string, any) -> any, Value: any) -> any
+)
     return setmetatable({
         Kind = "Derive",
         Name = Name,

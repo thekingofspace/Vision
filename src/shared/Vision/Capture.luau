@@ -113,6 +113,7 @@ const function Register(State, Name: string)
     end
 
     Event.Write = Write
+    Event.Set = Write
     State.Vision[Name] = Write
 
     return Event
@@ -338,7 +339,11 @@ const function Recompute(State, Event, Silent: boolean?)
         return Source.Value
     end
 
-    local Ok, Result = pcall(Event.Compute, Read)
+    const Refuse = function(Name: string): any
+        error(`Vision value "{Event.Name}" tried to write "{Name}" while computing`, 0)
+    end
+
+    local Ok, Result = pcall(Event.Compute, "get", Read, Refuse)
 
     if not Ok then
         Event.Running = false
@@ -563,13 +568,37 @@ function Capture.new(Scope, Declaration)
     State.Root = Parse(State, Declaration, nil)
 
     for _, Event in State.Derived do
-        Vision[Event.Name] = function(NewValue: any?): any
+        const Compute = Event.Compute
+
+        const Source = function(Name: string)
+            const Found = State.Events[Name]
+
+            if not Found then
+                error(`Vision value "{Event.Name}" refers to "{Name}", which is not declared`, 0)
+            end
+
+            return Found
+        end
+
+        const Plain = function(Name: string): any
+            return Source(Name).Value
+        end
+
+        const Push = function(Name: string, NewValue: any): any
+            return Source(Name).Set(NewValue)
+        end
+
+        Event.Set = function(NewValue: any?): any
             if NewValue == nil then
                 return Event.Value
             end
 
-            error(`Vision value "{Event.Name}" is derived and cannot be written to`, 0)
+            Compute("set", Plain, Push, NewValue)
+
+            return Event.Value
         end
+
+        Vision[Event.Name] = Event.Set
     end
 
     State.Vision = nil

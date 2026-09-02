@@ -77,42 +77,70 @@ is how one value drives several instances - each callback receives its own
 },</code></pre>
 <p>A <code>merge</code> may name a value that has not been declared yet.</p>
 <h2 id="derive"><a class="anchor" href="#derive">#</a>derive</h2>
-<pre class="code"><code class="hljs">derive(Name: <span class="hljs-built_in">string</span>, Compute: (Read: (<span class="hljs-built_in">string</span>) -&gt; any) -&gt; any) -&gt; Marker</code></pre>
-<p>Declares a value computed from other values. The <code>Read</code> you are handed both
-returns a value and records it as a dependency, so the graph is discovered as
-the function runs.</p>
+<pre class="code"><code class="hljs">derive(Name: <span class="hljs-built_in">string</span>, Compute: (Mode, Read, Write, Value) -&gt; any) -&gt; Marker</code></pre>
+<p>Declares a value computed from other values. One callback handles both
+directions, and <code>Mode</code> says which one you are in.</p>
+<table>
+<thead>
+<tr>
+<th>argument</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Mode</code></td>
+<td><code>&quot;get&quot;</code> when computing, <code>&quot;set&quot;</code> when someone writes</td>
+</tr>
+<tr>
+<td><code>Read</code></td>
+<td><code>Read(Name)</code> returns another value</td>
+</tr>
+<tr>
+<td><code>Write</code></td>
+<td><code>Write(Name, Value)</code> writes another value, only in <code>&quot;set&quot;</code></td>
+</tr>
+<tr>
+<td><code>Value</code></td>
+<td>the incoming value, only in <code>&quot;set&quot;</code></td>
+</tr>
+</tbody></table>
+<h3 id="reading"><a class="anchor" href="#reading">#</a>Reading</h3>
+<p>Return the computed value from <code>&quot;get&quot;</code>. The <code>Read</code> you are handed records
+what you touched, so the graph is discovered as the function runs.</p>
 <pre class="code"><code class="hljs">event(<span class="hljs-string">&quot;Price&quot;</span>, <span class="hljs-number">10</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span> <span class="hljs-keyword">end</span>),
 event(<span class="hljs-string">&quot;Quantity&quot;</span>, <span class="hljs-number">2</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span> <span class="hljs-keyword">end</span>),
 
-derive(<span class="hljs-string">&quot;Total&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Read)</span></span>
+derive(<span class="hljs-string">&quot;Total&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Mode, Read)</span></span>
     <span class="hljs-keyword">return</span> Read(<span class="hljs-string">&quot;Price&quot;</span>) * Read(<span class="hljs-string">&quot;Quantity&quot;</span>)
 <span class="hljs-keyword">end</span>),</code></pre>
 <p><code>Total</code> behaves like any other value: <code>merge</code> onto it, read it with
 <code>Interface.Total()</code>, animate it. It recomputes whenever a value it read
-changes, and derived values chain, so a derive that reads another derive
-updates after it.</p>
-<div class="callout warning">
+changes, and derives chain.</p>
+<h3 id="writing"><a class="anchor" href="#writing">#</a>Writing</h3>
+<p>Handle <code>&quot;set&quot;</code> and the value becomes writable in both directions. You do not
+assign the derived value; you push into the values it is computed from, and
+it recomputes from them.</p>
+<pre class="code"><code class="hljs">event(<span class="hljs-string">&quot;Fahrenheit&quot;</span>, <span class="hljs-number">212</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span> <span class="hljs-keyword">end</span>),
 
-<p><strong>A derive must be pure</strong></p>
-<p>This is the one place purity is required. A derive may run more than once for
-a single change, and it only re-runs when something it read through <code>Read</code>
-changes.</p>
-<p>So it must have no side effects, and it must read every input through <code>Read</code>.
-A derive that reads an ordinary upvalue silently goes stale, because Vision
-has no way to know that value moved:</p>
-<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Bonus = <span class="hljs-number">10</span>
+derive(<span class="hljs-string">&quot;Celsius&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Mode, Read, Write, Value)</span></span>
+    <span class="hljs-keyword">if</span> Mode == <span class="hljs-string">&quot;set&quot;</span> <span class="hljs-keyword">then</span>
+        Write(<span class="hljs-string">&quot;Fahrenheit&quot;</span>, Value * <span class="hljs-number">1.8</span> + <span class="hljs-number">32</span>)
+        <span class="hljs-keyword">return</span>
+    <span class="hljs-keyword">end</span>
 
-derive(<span class="hljs-string">&quot;Total&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Read)</span></span>
-    <span class="hljs-keyword">return</span> Read(<span class="hljs-string">&quot;Base&quot;</span>) + Bonus   <span class="hljs-comment">-- wrong, Bonus is untracked</span>
+    <span class="hljs-keyword">return</span> (Read(<span class="hljs-string">&quot;Fahrenheit&quot;</span>) - <span class="hljs-number">32</span>) / <span class="hljs-number">1.8</span>
 <span class="hljs-keyword">end</span>),</code></pre>
-<p>Changing <code>Bonus</code> will not recompute anything, and the stale result survives
-until some tracked value happens to change. Make it a value and <code>Read</code> it.</p>
-</div>
-
+<pre class="code"><code class="hljs">Interface.Celsius()      <span class="hljs-comment">--&gt; 100</span>
+Interface.Celsius(<span class="hljs-number">0</span>)     <span class="hljs-comment">-- writes 32 into Fahrenheit</span>
+Interface.Fahrenheit()   <span class="hljs-comment">--&gt; 32</span></code></pre>
+<p>That keeps the invariant that a derived value always equals what its sources
+compute to. There is no way for the two to disagree.</p>
+<p>A derive that never handles <code>&quot;set&quot;</code> is simply read only: writing to it does
+nothing and the value stays derived.</p>
 <h3 id="tracking-is-per-run"><a class="anchor" href="#tracking-is-per-run">#</a>Tracking is per run</h3>
-<p>Dependencies are re-recorded on every recompute, so a branch you did not take
+<p>Dependencies are re-recorded on every <code>&quot;get&quot;</code>, so a branch you did not take
 is not a dependency:</p>
-<pre class="code"><code class="hljs">derive(<span class="hljs-string">&quot;Shown&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Read)</span></span>
+<pre class="code"><code class="hljs">derive(<span class="hljs-string">&quot;Shown&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Mode, Read)</span></span>
     <span class="hljs-keyword">if</span> Read(<span class="hljs-string">&quot;UseFallback&quot;</span>) <span class="hljs-keyword">then</span>
         <span class="hljs-keyword">return</span> Read(<span class="hljs-string">&quot;Fallback&quot;</span>)
     <span class="hljs-keyword">end</span>
@@ -123,9 +151,19 @@ is not a dependency:</p>
 and <code>Fallback</code> becomes live while <code>Primary</code> goes quiet.</p>
 <div class="callout warning">
 
-<p><strong>Derived values are read only</strong></p>
-<p><code>Interface.Total(5)</code> raises. A derive owns its value. Reading a value from
-itself raises too, as does a cycle between two derives.</p>
+<p><strong>Getting must be pure</strong></p>
+<p>A <code>&quot;get&quot;</code> may run more than once for a single change, and only re-runs when
+something it read through <code>Read</code> changes. So it must have no side effects,
+and it must read every input through <code>Read</code>.</p>
+<p>A derive that reads an ordinary upvalue silently goes stale, because Vision
+has no way to know that value moved:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Bonus = <span class="hljs-number">10</span>
+
+derive(<span class="hljs-string">&quot;Total&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Mode, Read)</span></span>
+    <span class="hljs-keyword">return</span> Read(<span class="hljs-string">&quot;Base&quot;</span>) + Bonus   <span class="hljs-comment">-- wrong, Bonus is untracked</span>
+<span class="hljs-keyword">end</span>),</code></pre>
+<p><code>Write</code> is refused during a <code>&quot;get&quot;</code> for the same reason. Reading a value from
+itself raises, as does a cycle between two derives.</p>
 </div>
 
 <h2 id="ready"><a class="anchor" href="#ready">#</a>ready</h2>

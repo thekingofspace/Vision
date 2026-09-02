@@ -64,55 +64,75 @@ A `merge` may name a value that has not been declared yet.
 ## derive
 
 ```lua
-derive(Name: string, Compute: (Read: (string) -> any) -> any) -> Marker
+derive(Name: string, Compute: (Mode, Read, Write, Value) -> any) -> Marker
 ```
 
-Declares a value computed from other values. The `Read` you are handed both
-returns a value and records it as a dependency, so the graph is discovered as
-the function runs.
+Declares a value computed from other values. One callback handles both
+directions, and `Mode` says which one you are in.
+
+| argument | meaning |
+| --- | --- |
+| `Mode` | `"get"` when computing, `"set"` when someone writes |
+| `Read` | `Read(Name)` returns another value |
+| `Write` | `Write(Name, Value)` writes another value, only in `"set"` |
+| `Value` | the incoming value, only in `"set"` |
+
+### Reading
+
+Return the computed value from `"get"`. The `Read` you are handed records
+what you touched, so the graph is discovered as the function runs.
 
 ```lua
 event("Price", 10, function() end),
 event("Quantity", 2, function() end),
 
-derive("Total", function(Read)
+derive("Total", function(Mode, Read)
     return Read("Price") * Read("Quantity")
 end),
 ```
 
 `Total` behaves like any other value: `merge` onto it, read it with
 `Interface.Total()`, animate it. It recomputes whenever a value it read
-changes, and derived values chain, so a derive that reads another derive
-updates after it.
+changes, and derives chain.
 
-::: warning A derive must be pure
-This is the one place purity is required. A derive may run more than once for
-a single change, and it only re-runs when something it read through `Read`
-changes.
+### Writing
 
-So it must have no side effects, and it must read every input through `Read`.
-A derive that reads an ordinary upvalue silently goes stale, because Vision
-has no way to know that value moved:
+Handle `"set"` and the value becomes writable in both directions. You do not
+assign the derived value; you push into the values it is computed from, and
+it recomputes from them.
 
 ```lua
-local Bonus = 10
+event("Fahrenheit", 212, function() end),
 
-derive("Total", function(Read)
-    return Read("Base") + Bonus   -- wrong, Bonus is untracked
+derive("Celsius", function(Mode, Read, Write, Value)
+    if Mode == "set" then
+        Write("Fahrenheit", Value * 1.8 + 32)
+        return
+    end
+
+    return (Read("Fahrenheit") - 32) / 1.8
 end),
 ```
 
-Changing `Bonus` will not recompute anything, and the stale result survives
-until some tracked value happens to change. Make it a value and `Read` it.
-:::
+```lua
+Interface.Celsius()      --> 100
+Interface.Celsius(0)     -- writes 32 into Fahrenheit
+Interface.Fahrenheit()   --> 32
+```
+
+That keeps the invariant that a derived value always equals what its sources
+compute to. There is no way for the two to disagree.
+
+A derive that never handles `"set"` is simply read only: writing to it does
+nothing and the value stays derived.
 
 ### Tracking is per run
 
-Dependencies are re-recorded on every recompute, so a branch you did not take
+Dependencies are re-recorded on every `"get"`, so a branch you did not take
 is not a dependency:
 
 ```lua
-derive("Shown", function(Read)
+derive("Shown", function(Mode, Read)
     if Read("UseFallback") then
         return Read("Fallback")
     end
@@ -124,9 +144,24 @@ end),
 While `UseFallback` is false, writing `Fallback` recomputes nothing. Flip it
 and `Fallback` becomes live while `Primary` goes quiet.
 
-::: warning Derived values are read only
-`Interface.Total(5)` raises. A derive owns its value. Reading a value from
-itself raises too, as does a cycle between two derives.
+::: warning Getting must be pure
+A `"get"` may run more than once for a single change, and only re-runs when
+something it read through `Read` changes. So it must have no side effects,
+and it must read every input through `Read`.
+
+A derive that reads an ordinary upvalue silently goes stale, because Vision
+has no way to know that value moved:
+
+```lua
+local Bonus = 10
+
+derive("Total", function(Mode, Read)
+    return Read("Base") + Bonus   -- wrong, Bonus is untracked
+end),
+```
+
+`Write` is refused during a `"get"` for the same reason. Reading a value from
+itself raises, as does a cycle between two derives.
 :::
 
 ## ready

@@ -241,7 +241,7 @@ return function()
 
     table.insert(
         Declaration,
-        derive("Average", function(Read)
+        derive("Average", function(Mode, Read)
             local Sum = 0
 
             for _, Stat in Stats do

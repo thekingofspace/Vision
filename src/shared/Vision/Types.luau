@@ -19,7 +19,7 @@ export type Declaration = {[any]:any}
 
 export type event = (Event:string, InitialValue:any, Callback:(self:Instance, Value:any) -> ()) -> Marker
 export type merge = (Event:string, Callback:(self:Instance, Value:any) -> ()) -> Marker
-export type derive = (Event:string, Compute:(Read:(Event:string) -> any) -> any) -> Marker
+export type derive = (Event:string, Compute:(Mode:string, Read:(Event:string) -> any, Write:(Event:string, Value:any) -> any, Value:any) -> any) -> Marker
 export type ready = (Callback:(self:Instance) -> ()) -> Marker
 export type cleanup = (Callback:(self:Instance) -> ()) -> Marker?
 export type mount = (Target:Instance | string) -> Marker

@@ -38,7 +38,7 @@ graph and leaves the instances alone, so you destroy the container yourself.
 | who assigns the property | your callback | the binding | you |
 | one value, many targets | `event` + `merge` | one source, many effects | by hand |
 | unchanged write | skipped | skipped | writes anyway |
-| derived values | `derive`, tracked per run | `derive`, tracked per run | by hand |
+| derived values | `derive`, tracked per run, writable both ways | `derive`, tracked per run | by hand |
 | dependency tracking | explicit `Read` inside a derive | ambient, any source read | none |
 | tween animation | `TweenInfo`, real `Tween` semantics | not built in | `TweenService` directly |
 | physics animation | `Physics*`, carries velocity | `spring`, carries velocity | none |
@@ -122,7 +122,7 @@ Vision tracks **explicitly**. A binding names its value up front with `event`
 or `merge`, and a `derive` reads through a `Read` handed to it:
 
 ```lua
-derive("Total", function(Read)
+derive("Total", function(Mode, Read)
     return Read("Price") * Read("Quantity")
 end)
 ```
