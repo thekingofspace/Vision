@@ -1,5 +1,8 @@
-local Comparison = require(script.Comparison)
+const Showcase = require(script.Showcase)
 
-task.wait(10)
-print("ran")
-task.defer(Comparison)
+-- const Comparison = require(script.Comparison)
+-- Comparison()
+
+task.wait(5)
+
+Showcase()

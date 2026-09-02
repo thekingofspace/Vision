@@ -1,6 +1,6 @@
-local Symbols = {}
+const Symbols = {}
 
-local Marker = {}
+const Marker = {}
 Marker.__index = Marker
 
 function Symbols.Is(Value: any): boolean

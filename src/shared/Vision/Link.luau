@@ -1,21 +1,21 @@
-local RunService = game:GetService("RunService")
+const RunService = game:GetService("RunService")
 
-local Interpolate = require(script.Parent.Interpolate)
+const Interpolate = require(script.Parent.Interpolate)
 
-local Link = {}
+const Link = {}
 Link.__index = Link
 
 local Runtime = {}
 Runtime.__index = Runtime
 
-local Rate = 240
-local Epsilon = 0.0005
+const Rate = 240
+const Epsilon = 0.0005
 
-local function Tween(Self, DeltaTime: number): boolean
+const function Tween(Self, DeltaTime: number): boolean
     Self.Elapsed += DeltaTime
 
-    local Info = Self.Info
-    local Alpha, Ended = Interpolate.Cycle(Info, Self.Elapsed)
+    const Info = Self.Info
+    const Alpha, Ended = Interpolate.Cycle(Info, Self.Elapsed)
 
     Self.Apply(Alpha, DeltaTime)
 
@@ -23,7 +23,7 @@ local function Tween(Self, DeltaTime: number): boolean
         return false
     end
 
-    local Repeats = Info.RepeatCount
+    const Repeats = Info.RepeatCount
 
     if Repeats >= 0 and Self.Cycle >= Repeats then
         return true
@@ -35,23 +35,23 @@ local function Tween(Self, DeltaTime: number): boolean
     return false
 end
 
-local function Physics(Self, DeltaTime: number): boolean
-    local Omega = Self.Omega
-    local Damping = Self.Damping
-    local Steps = math.clamp(math.ceil(DeltaTime * Rate), 1, 32)
-    local Slice = DeltaTime / Steps
+const function Physics(Self, DeltaTime: number): boolean
+    const Omega = Self.Omega
+    const Damping = Self.Damping
+    const Steps = math.clamp(math.ceil(DeltaTime * Rate), 1, 32)
+    const Slice = DeltaTime / Steps
     local Settled = true
 
     for _, Channel in Self.Channels do
-        local Position = Channel.Position
-        local Velocity = Channel.Velocity
-        local Goal = Channel.Goal
-        local Count = #Position
+        const Position = Channel.Position
+        const Velocity = Channel.Velocity
+        const Goal = Channel.Goal
+        const Count = #Position
 
         for _ = 1, Steps do
             for Index = 1, Count do
-                local Offset = Position[Index] - Goal[Index]
-                local Accel = -(Omega * Omega) * Offset - 2 * Damping * Omega * Velocity[Index]
+                const Offset = Position[Index] - Goal[Index]
+                const Accel = -(Omega * Omega) * Offset - 2 * Damping * Omega * Velocity[Index]
 
                 Velocity[Index] += Accel * Slice
                 Position[Index] += Velocity[Index] * Slice
@@ -61,7 +61,7 @@ local function Physics(Self, DeltaTime: number): boolean
         local Done = true
 
         for Index = 1, Count do
-            local Scale = math.max(1, math.abs(Goal[Index]))
+            const Scale = math.max(1, math.abs(Goal[Index]))
 
             if
                 math.abs(Position[Index] - Goal[Index]) > Epsilon * Scale
@@ -116,7 +116,7 @@ function Link:Cancel()
 
     self.Finished = true
 
-    local Owner = self.Runtime
+    const Owner = self.Runtime
 
     for _, Claim in self.Claims do
         Owner:Unclaim(Claim[1], Claim[2], self)
@@ -163,7 +163,7 @@ function Runtime:Claim(Owner: any, Name: string, Target)
         self.Claims[Owner] = Slots
     end
 
-    local Existing = Slots[Name]
+    const Existing = Slots[Name]
 
     if Existing and Existing ~= Target then
         Existing:Cancel()
@@ -202,7 +202,7 @@ function Runtime:CancelOwner(Owner: any)
         return
     end
 
-    local Doomed = {}
+    const Doomed = {}
 
     for _, Target in Slots do
         table.insert(Doomed, Target)
@@ -219,7 +219,7 @@ function Runtime:Add(Target)
 end
 
 function Runtime:Remove(Target)
-    local Index = table.find(self.Links, Target)
+    const Index = table.find(self.Links, Target)
 
     if Index then
         table.remove(self.Links, Index)
@@ -235,7 +235,7 @@ function Runtime:Start()
         return
     end
 
-    local Signal = if RunService:IsClient() then RunService.RenderStepped else RunService.Heartbeat
+    const Signal = if RunService:IsClient() then RunService.RenderStepped else RunService.Heartbeat
 
     self.Connection = Signal:Connect(function(DeltaTime: number)
         self:Step(DeltaTime)
@@ -269,7 +269,7 @@ function Runtime:Release()
 end
 
 function Runtime:Create(Info: TweenInfo, Apply: (number, number) -> (), Slots: { { any } })
-    local Target = Link.new(self, Tween)
+    const Target = Link.new(self, Tween)
 
     Target.Info = Info
     Target.Apply = Apply
@@ -294,7 +294,7 @@ function Runtime:Velocity(Owner: any, Name: string): { number }?
         return nil
     end
 
-    local Existing = Slots[Name]
+    const Existing = Slots[Name]
 
     if not Existing or not Existing.Channels then
         return nil
@@ -310,14 +310,14 @@ function Runtime:Velocity(Owner: any, Name: string): { number }?
 end
 
 function Runtime:Solve(Period: number, Damping: number, Channels: { any })
-    local Target = Link.new(self, Physics)
+    const Target = Link.new(self, Physics)
 
     Target.Omega = 2 * math.pi / math.max(Period, 1e-4)
     Target.Damping = math.max(Damping, 0)
     Target.Channels = Channels
 
     for _, Channel in Channels do
-        local Carried = self:Velocity(Channel.Owner, Channel.Name)
+        const Carried = self:Velocity(Channel.Owner, Channel.Name)
 
         if Carried then
             for Index = 1, math.min(#Carried, #Channel.Velocity) do

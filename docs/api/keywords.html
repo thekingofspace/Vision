@@ -57,13 +57,6 @@ declaration behaves as a <code>merge</code>, adding another binding. The first
 declaration&#39;s <code>InitialValue</code> wins.</p>
 <p>The callback runs <strong>once at mount</strong> with the value at that moment, then on
 every change that actually changes it.</p>
-<div class="callout warning">
-
-<p><strong>Reserved names</strong></p>
-<p><code>Mount</code>, <code>Open</code> and <code>Cleanup</code> are methods on the Vision, so an event may not
-use those names. Doing so raises at capture time.</p>
-</div>
-
 <h2 id="merge"><a class="anchor" href="#merge">#</a>merge</h2>
 <pre class="code"><code class="hljs">merge(Name: <span class="hljs-built_in">string</span>, Callback: (<span class="hljs-built_in">self</span>: Instance, Value: any) -&gt; ()) -&gt; Marker</code></pre>
 <p>Binds another callback to a value declared elsewhere in the same tree. This
@@ -98,6 +91,24 @@ derive(<span class="hljs-string">&quot;Total&quot;</span>, <span class="hljs-fun
 <code>Interface.Total()</code>, animate it. It recomputes whenever a value it read
 changes, and derived values chain, so a derive that reads another derive
 updates after it.</p>
+<div class="callout warning">
+
+<p><strong>A derive must be pure</strong></p>
+<p>This is the one place purity is required. A derive may run more than once for
+a single change, and it only re-runs when something it read through <code>Read</code>
+changes.</p>
+<p>So it must have no side effects, and it must read every input through <code>Read</code>.
+A derive that reads an ordinary upvalue silently goes stale, because Vision
+has no way to know that value moved:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Bonus = <span class="hljs-number">10</span>
+
+derive(<span class="hljs-string">&quot;Total&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Read)</span></span>
+    <span class="hljs-keyword">return</span> Read(<span class="hljs-string">&quot;Base&quot;</span>) + Bonus   <span class="hljs-comment">-- wrong, Bonus is untracked</span>
+<span class="hljs-keyword">end</span>),</code></pre>
+<p>Changing <code>Bonus</code> will not recompute anything, and the stale result survives
+until some tracked value happens to change. Make it a value and <code>Read</code> it.</p>
+</div>
+
 <h3 id="tracking-is-per-run"><a class="anchor" href="#tracking-is-per-run">#</a>Tracking is per run</h3>
 <p>Dependencies are re-recorded on every recompute, so a branch you did not take
 is not a dependency:</p>

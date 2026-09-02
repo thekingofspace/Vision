@@ -1,8 +1,8 @@
-local TweenService = game:GetService("TweenService")
+const TweenService = game:GetService("TweenService")
 
-local Interpolate = {}
+const Interpolate = {}
 
-local function Scalar(Start: number, Goal: number, Alpha: number): number
+const function Scalar(Start: number, Goal: number, Alpha: number): number
     return Start + (Goal - Start) * Alpha
 end
 
@@ -14,8 +14,8 @@ local Lerps: { [string]: (any, any, number) -> any } = {
             return Goal
         end
 
-        local Length = utf8.len(Goal) or #Goal
-        local Count = math.round(Scalar(utf8.len(Start) or #Start, Length, Alpha))
+        const Length = utf8.len(Goal) or #Goal
+        const Count = math.round(Scalar(utf8.len(Start) or #Start, Length, Alpha))
 
         if Count <= 0 then
             return ""
@@ -25,7 +25,7 @@ local Lerps: { [string]: (any, any, number) -> any } = {
             return Goal
         end
 
-        local Offset = utf8.offset(Goal, Count + 1)
+        const Offset = utf8.offset(Goal, Count + 1)
 
         return if Offset then string.sub(Goal, 1, Offset - 1) else Goal
     end,
@@ -81,17 +81,17 @@ local Lerps: { [string]: (any, any, number) -> any } = {
     end,
 
     NumberSequence = function(Start: NumberSequence, Goal: NumberSequence, Alpha: number)
-        local From = Start.Keypoints
-        local To = Goal.Keypoints
+        const From = Start.Keypoints
+        const To = Goal.Keypoints
 
         if #From ~= #To then
             return if Alpha >= 0.5 then Goal else Start
         end
 
-        local Keypoints = table.create(#From)
+        const Keypoints = table.create(#From)
 
         for Index, Point in From do
-            local Other = To[Index]
+            const Other = To[Index]
 
             Keypoints[Index] = NumberSequenceKeypoint.new(
                 Scalar(Point.Time, Other.Time, Alpha),
@@ -104,17 +104,17 @@ local Lerps: { [string]: (any, any, number) -> any } = {
     end,
 
     ColorSequence = function(Start: ColorSequence, Goal: ColorSequence, Alpha: number)
-        local From = Start.Keypoints
-        local To = Goal.Keypoints
+        const From = Start.Keypoints
+        const To = Goal.Keypoints
 
         if #From ~= #To then
             return if Alpha >= 0.5 then Goal else Start
         end
 
-        local Keypoints = table.create(#From)
+        const Keypoints = table.create(#From)
 
         for Index, Point in From do
-            local Other = To[Index]
+            const Other = To[Index]
 
             Keypoints[Index] = ColorSequenceKeypoint.new(
                 Scalar(Point.Time, Other.Time, Alpha),
@@ -127,13 +127,13 @@ local Lerps: { [string]: (any, any, number) -> any } = {
 }
 
 function Interpolate.Value(Start: any, Goal: any, Alpha: number): any
-    local Kind = typeof(Start)
+    const Kind = typeof(Start)
 
     if Kind ~= typeof(Goal) then
         return if Alpha >= 0.5 then Goal else Start
     end
 
-    local Lerp = Lerps[Kind]
+    const Lerp = Lerps[Kind]
 
     if Lerp then
         return Lerp(Start, Goal, Alpha)
@@ -221,7 +221,7 @@ local Shapes: { [string]: { Read: (any) -> { number }, Make: ({ number }) -> any
 }
 
 function Interpolate.Components(Value: any): { number }?
-    local Shape = Shapes[typeof(Value)]
+    const Shape = Shapes[typeof(Value)]
 
     return if Shape then Shape.Read(Value) else nil
 end
@@ -235,15 +235,15 @@ function Interpolate.Solvable(Value: any): boolean
 end
 
 function Interpolate.Cycle(Info: TweenInfo, Elapsed: number): (number, boolean)
-    local Duration = Info.Time
-    local Span = Duration * (if Info.Reverses then 2 else 1)
-    local Length = Info.DelayTime + Span
+    const Duration = Info.Time
+    const Span = Duration * (if Info.Reverses then 2 else 1)
+    const Length = Info.DelayTime + Span
 
     if Elapsed >= Length then
         return if Info.Reverses then 0 else 1, true
     end
 
-    local Played = Elapsed - Info.DelayTime
+    const Played = Elapsed - Info.DelayTime
 
     if Played <= 0 then
         return 0, false

@@ -1,11 +1,11 @@
 local Runtime = require(script.Parent.Link)
-local Capture = require(script.Parent.Capture)
-local Interpolate = require(script.Parent.Interpolate)
+const Capture = require(script.Parent.Capture)
+const Interpolate = require(script.Parent.Interpolate)
 
-local Scope = {}
+const Scope = {}
 Scope.__index = Scope
 
-local function AsList(Value: any): { any }
+const function AsList(Value: any): { any }
     if typeof(Value) == "Instance" or Capture.Is(Value) then
         return { Value }
     end
@@ -31,7 +31,7 @@ function Scope:Adopt(Vision: any)
 end
 
 function Scope:Forget(Vision: any)
-    local Index = table.find(self.Visions, Vision)
+    const Index = table.find(self.Visions, Vision)
 
     if Index then
         table.remove(self.Visions, Index)
@@ -39,12 +39,12 @@ function Scope:Forget(Vision: any)
 end
 
 function Scope:SpringValue(Info: TweenInfo, Vision: any, ValueName: string, TargetValue: any)
-    local Targets = AsList(Vision)
-    local Starts = {}
-    local Slots = {}
+    const Targets = AsList(Vision)
+    const Starts = {}
+    const Slots = {}
 
     for _, Item in Targets do
-        local Cap = Item[ValueName]
+        const Cap = Item[ValueName]
 
         if type(Cap) ~= "function" then
             error(`Vision has no value named "{ValueName}"`, 0)
@@ -62,12 +62,12 @@ function Scope:SpringValue(Info: TweenInfo, Vision: any, ValueName: string, Targ
 end
 
 function Scope:SpringInstance(Info: TweenInfo, Object: any, TargetProps: { [string]: any })
-    local Targets = AsList(Object)
-    local Starts = {}
-    local Slots = {}
+    const Targets = AsList(Object)
+    const Starts = {}
+    const Slots = {}
 
     for _, Item in Targets do
-        local Values = {}
+        const Values = {}
 
         for Key in TargetProps do
             Values[Key] = Item[Key]
@@ -79,7 +79,7 @@ function Scope:SpringInstance(Info: TweenInfo, Object: any, TargetProps: { [stri
 
     return self.Runtime:Create(Info, function(Alpha: number)
         for _, Item in Targets do
-            local Values = Starts[Item]
+            const Values = Starts[Item]
 
             for Key, Goal in TargetProps do
                 Item[Key] = Interpolate.Value(Values[Key], Goal, Alpha)
@@ -99,7 +99,7 @@ function Scope:SpringFunction(
     end, { { TargetFun, "" } })
 end
 
-local function Channel(Owner: any, Name: string, Current: any, Goal: any, Write: (any) -> ())
+const function Channel(Owner: any, Name: string, Current: any, Goal: any, Write: (any) -> ())
     local Kind = typeof(Current)
 
     if Kind ~= typeof(Goal) then
@@ -107,7 +107,7 @@ local function Channel(Owner: any, Name: string, Current: any, Goal: any, Write:
     end
 
     local Position = Interpolate.Components(Current)
-    local Target = Interpolate.Components(Goal)
+    const Target = Interpolate.Components(Goal)
 
     if not Position or not Target then
         error(`{Kind} cannot be solved by a physics spring, use a tween instead`, 0)
@@ -131,11 +131,11 @@ local function Channel(Owner: any, Name: string, Current: any, Goal: any, Write:
 end
 
 function Scope:PhysicsValue(Period: number, Damping: number, Vision: any, ValueName: string, TargetValue: any)
-    local Targets = AsList(Vision)
-    local Channels = {}
+    const Targets = AsList(Vision)
+    const Channels = {}
 
     for _, Item in Targets do
-        local Cap = Item[ValueName]
+        const Cap = Item[ValueName]
 
         if type(Cap) ~= "function" then
             error(`Vision has no value named "{ValueName}"`, 0)
@@ -148,8 +148,8 @@ function Scope:PhysicsValue(Period: number, Damping: number, Vision: any, ValueN
 end
 
 function Scope:PhysicsInstance(Period: number, Damping: number, Object: any, TargetProps: { [string]: any })
-    local Targets = AsList(Object)
-    local Channels = {}
+    const Targets = AsList(Object)
+    const Channels = {}
 
     for _, Item in Targets do
         for Key, Goal in TargetProps do

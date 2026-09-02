@@ -33,11 +33,6 @@ declaration's `InitialValue` wins.
 The callback runs **once at mount** with the value at that moment, then on
 every change that actually changes it.
 
-::: warning Reserved names
-`Mount`, `Open` and `Cleanup` are methods on the Vision, so an event may not
-use those names. Doing so raises at capture time.
-:::
-
 ## merge
 
 ```lua
@@ -89,6 +84,27 @@ end),
 `Interface.Total()`, animate it. It recomputes whenever a value it read
 changes, and derived values chain, so a derive that reads another derive
 updates after it.
+
+::: warning A derive must be pure
+This is the one place purity is required. A derive may run more than once for
+a single change, and it only re-runs when something it read through `Read`
+changes.
+
+So it must have no side effects, and it must read every input through `Read`.
+A derive that reads an ordinary upvalue silently goes stale, because Vision
+has no way to know that value moved:
+
+```lua
+local Bonus = 10
+
+derive("Total", function(Read)
+    return Read("Base") + Bonus   -- wrong, Bonus is untracked
+end),
+```
+
+Changing `Bonus` will not recompute anything, and the stale result survives
+until some tracked value happens to change. Make it a value and `Read` it.
+:::
 
 ### Tracking is per run
 
