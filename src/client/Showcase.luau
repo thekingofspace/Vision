@@ -4,6 +4,7 @@ const RunService = game:GetService("RunService")
 const UserInputService = game:GetService("UserInputService")
 
 const Vision = require(ReplicatedStorage.Shared.Vision)
+const Modular = require(script.Parent.Modular)
 
 const event = Vision.event
 const merge = Vision.merge
@@ -13,316 +14,80 @@ const mount = Vision.mount
 
 const PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
-const Ink = Color3.fromRGB(14, 15, 21)
-const Panel = Color3.fromRGB(26, 28, 38)
-const Rail = Color3.fromRGB(44, 47, 62)
-const Ivory = Color3.fromRGB(228, 231, 244)
-const Muted = Color3.fromRGB(138, 144, 166)
-const Accent = Color3.fromRGB(88, 101, 242)
-const Warm = Color3.fromRGB(236, 118, 92)
-const Mint = Color3.fromRGB(86, 214, 168)
+const Coal = Color3.fromRGB(12, 9, 9)
+const Char = Color3.fromRGB(28, 21, 20)
+const Ash = Color3.fromRGB(150, 132, 126)
+const Bone = Color3.fromRGB(240, 228, 216)
+const Ember = Color3.fromRGB(255, 122, 47)
+const Flame = Color3.fromRGB(255, 194, 74)
+const Blood = Color3.fromRGB(196, 58, 34)
 
-const Palette = { Accent, Warm, Mint }
+const Heat = { Ember, Flame, Blood }
+
+const Menu = { "Continue", "New Run", "Settings", "Quit" }
 
 const Stats = {
-    { Key = "Power", Tint = Accent },
-    { Key = "Focus", Tint = Mint },
-    { Key = "Flow", Tint = Warm },
+    { Key = "Power", Tint = Ember },
+    { Key = "Focus", Tint = Flame },
+    { Key = "Flow", Tint = Blood },
 }
-
-const Actions = {
-    { Key = "Pulse", Tint = Accent },
-    { Key = "Burst", Tint = Warm },
-    { Key = "Shuffle", Tint = Mint },
-}
-
-const Open = UDim2.fromOffset(420, 316)
-const Wide = UDim2.fromOffset(454, 340)
 
 return function()
     const Scope = Vision.Scope()
 
     local Alive = true
-    local Card
+    local Showing = "title"
+
     local Glow
+    local Embers
+    local Crest
+    local Card
     local Orb
-    local Layer
+    local Wake
+    local Panel
+    local Deck
 
     const Spark = Scope:Capture({
         ClassName = "Frame",
         Name = "Spark",
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Size = UDim2.fromOffset(12, 12),
+        Size = UDim2.fromOffset(8, 8),
         BorderSizePixel = 0,
-        BackgroundColor3 = Accent,
+        BackgroundColor3 = Ember,
 
         { ClassName = "UICorner", CornerRadius = UDim.new(1, 0) },
 
-        event("Tint", Accent, function(self, Value)
+        event("Tint", Ember, function(self, Value)
             self.BackgroundColor3 = Value
         end),
     })
 
-    const Declaration = {
-        ClassName = "ScreenGui",
-        Name = "VisionShowcase",
-        ResetOnSpawn = false,
-        IgnoreGuiInset = true,
-        DisplayOrder = 50,
-
-        mount(PlayerGui),
-
-        {
-            ClassName = "Frame",
-            Name = "Backdrop",
-            Size = UDim2.fromScale(1, 1),
-            BackgroundColor3 = Ink,
-            BackgroundTransparency = 0.2,
-            BorderSizePixel = 0,
-        },
-
-        {
-            ClassName = "Frame",
-            Name = "Layer",
-            Size = UDim2.fromScale(1, 1),
-            BackgroundTransparency = 1,
-
-            ready(function(self)
-                Layer = self
-            end),
-        },
-
-        {
-            ClassName = "Frame",
-            Name = "Card",
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            Position = UDim2.fromScale(0.5, 0.5),
-            Size = UDim2.fromOffset(70, 70),
-            BackgroundColor3 = Panel,
-            BorderSizePixel = 0,
-            ClipsDescendants = true,
-
-            { ClassName = "UICorner", CornerRadius = UDim.new(0, 18) },
-
-            {
-                ClassName = "UIStroke",
-                Color = Rail,
-                Thickness = 1,
-                Transparency = 0.25,
-            },
-
-            ready(function(self)
-                Card = self
-            end),
-
-            {
-                ClassName = "Frame",
-                Name = "Glow",
-                AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.fromOffset(48, 46),
-                Size = UDim2.fromOffset(26, 26),
-                BackgroundColor3 = Accent,
-                BorderSizePixel = 0,
-
-                { ClassName = "UICorner", CornerRadius = UDim.new(1, 0) },
-
-                ready(function(self)
-                    Glow = self
-                end),
-            },
-
-            {
-                ClassName = "TextLabel",
-                Name = "Title",
-                BackgroundTransparency = 1,
-                Position = UDim2.fromOffset(72, 26),
-                Size = UDim2.new(1, -160, 0, 24),
-                Font = Enum.Font.GothamBold,
-                TextSize = 21,
-                TextColor3 = Ivory,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Text = "Vision",
-            },
-
-            {
-                ClassName = "TextLabel",
-                Name = "Motto",
-                BackgroundTransparency = 1,
-                Position = UDim2.fromOffset(72, 48),
-                Size = UDim2.new(1, -160, 0, 16),
-                Font = Enum.Font.Gotham,
-                TextSize = 11,
-                TextColor3 = Muted,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Text = "Existence Begins With Perception.",
-            },
-
-            {
-                ClassName = "TextLabel",
-                Name = "Average",
-                BackgroundTransparency = 1,
-                Position = UDim2.new(1, -104, 0, 24),
-                Size = UDim2.fromOffset(78, 44),
-                Font = Enum.Font.GothamBold,
-                TextSize = 32,
-                TextColor3 = Accent,
-                TextXAlignment = Enum.TextXAlignment.Right,
-
-                merge("Average", function(self, Value)
-                    self.Text = string.format("%.0f", Value * 100)
-                end),
-            },
-        },
-    }
-
-    for Index, Stat in Stats do
-        table.insert(Declaration, {
-            ClassName = "Frame",
-            Name = `Row{Index}`,
-            Position = UDim2.fromOffset(28, 92 + (Index - 1) * 46),
-            Size = UDim2.new(1, -56, 0, 34),
-            BackgroundTransparency = 1,
-
-            mount("Card"),
-
-            {
-                ClassName = "TextLabel",
-                Name = "Key",
-                BackgroundTransparency = 1,
-                Size = UDim2.new(1, 0, 0, 14),
-                Font = Enum.Font.GothamMedium,
-                TextSize = 12,
-                TextColor3 = Muted,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Text = Stat.Key,
-            },
-
-            {
-                ClassName = "TextLabel",
-                Name = "Read",
-                BackgroundTransparency = 1,
-                Size = UDim2.new(1, 0, 0, 14),
-                Font = Enum.Font.Code,
-                TextSize = 12,
-                TextColor3 = Muted,
-                TextXAlignment = Enum.TextXAlignment.Right,
-
-                merge(Stat.Key, function(self, Value)
-                    self.Text = string.format("%.2f", Value)
-                end),
-            },
-
-            {
-                ClassName = "Frame",
-                Name = "Track",
-                Position = UDim2.fromOffset(0, 22),
-                Size = UDim2.new(1, 0, 0, 8),
-                BackgroundColor3 = Rail,
-                BorderSizePixel = 0,
-
-                { ClassName = "UICorner", CornerRadius = UDim.new(1, 0) },
-
-                {
-                    ClassName = "Frame",
-                    Name = "Bar",
-                    Size = UDim2.fromScale(0, 1),
-                    BackgroundColor3 = Stat.Tint,
-                    BorderSizePixel = 0,
-
-                    { ClassName = "UICorner", CornerRadius = UDim.new(1, 0) },
-
-                    event(Stat.Key, 0, function(self, Value)
-                        self.Size = UDim2.fromScale(math.clamp(Value, 0, 1), 1)
-                    end),
-                },
-            },
-        })
-    end
-
-    table.insert(
-        Declaration,
-        derive("Average", function(Mode, Read)
-            local Sum = 0
-
-            for _, Stat in Stats do
-                Sum += Read(Stat.Key)
-            end
-
-            return Sum / #Stats
-        end)
+    const function Fleck(
+        Layer: Instance?,
+        Where: UDim2,
+        Drift: Vector2,
+        Travel: number,
+        Hold: number,
+        Fade: number,
+        Wide: number
     )
+        if not Layer then
+            return
+        end
 
-    for Index, Action in Actions do
-        table.insert(Declaration, {
-            ClassName = "TextButton",
-            Name = Action.Key,
-            AnchorPoint = Vector2.new(0.5, 1),
-            Position = UDim2.new(0.5, (Index - 2) * 122, 1, -22),
-            Size = UDim2.fromOffset(110, 34),
-            BackgroundColor3 = Action.Tint,
-            BorderSizePixel = 0,
-            AutoButtonColor = false,
-            Font = Enum.Font.GothamMedium,
-            TextSize = 14,
-            TextColor3 = Color3.new(1, 1, 1),
-            Text = Action.Key,
-
-            mount("Card"),
-
-            { ClassName = "UICorner", CornerRadius = UDim.new(0, 10) },
-
-            MouseEnter = function(self)
-                Scope:PhysicsInstance(0.26, 0.42, self, { Size = UDim2.fromOffset(120, 38) })
-            end,
-
-            MouseLeave = function(self)
-                Scope:PhysicsInstance(0.3, 0.6, self, { Size = UDim2.fromOffset(110, 34) })
-            end,
-        })
-    end
-
-    table.insert(Declaration, {
-        ClassName = "Frame",
-        Name = "Orb",
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(24, 24),
-        BackgroundColor3 = Accent,
-        BackgroundTransparency = 0.4,
-        BorderSizePixel = 0,
-
-        { ClassName = "UICorner", CornerRadius = UDim.new(1, 0) },
-
-        {
-            ClassName = "UIStroke",
-            Color = Accent,
-            Thickness = 2,
-            Transparency = 0.35,
-        },
-
-        ready(function(self)
-            Orb = self
-        end),
-    })
-
-    const Interface = Scope:Capture(Declaration)
-
-    Interface:Mount()
-
-    const function Fleck(Where: UDim2, Drift: Vector2, Fall: number, Hold: number, Fade: number, Wide: number)
         const Dot = Spark:Clone()
 
-        Dot.Tint(Palette[math.random(#Palette)])
+        Dot.Tint(Heat[math.random(#Heat)])
 
         const Body = Dot:Open()
 
         Body.AnchorPoint = Vector2.new(0.5, 0.5)
         Body.Position = Where
         Body.Size = UDim2.fromOffset(Wide, Wide)
-        Body.BackgroundTransparency = 0.08
+        Body.BackgroundTransparency = 0.05
         Body.Parent = Layer
 
-        Scope:PhysicsInstance(Fall, 1, Body, {
+        Scope:PhysicsInstance(Travel, 1, Body, {
             Position = UDim2.new(
                 Where.X.Scale,
                 Where.X.Offset + Drift.X,
@@ -345,125 +110,540 @@ return function()
         end)
     end
 
-    const function Scatter(Where: UDim2, Count: number)
-        for Index = 1, Count do
-            const Angle = (Index / Count) * math.pi * 2 + math.random() * 0.5
-            const Reach = 160 + math.random() * 220
+    const Screen = {
+        ClassName = "ScreenGui",
+        Name = "VisionTitle",
+        ResetOnSpawn = false,
+        IgnoreGuiInset = true,
+        DisplayOrder = 40,
 
-            Fleck(
-                Where,
-                Vector2.new(math.cos(Angle) * Reach, math.sin(Angle) * Reach + 120),
-                0.9,
-                0.5 + math.random() * 0.4,
-                0.9 + math.random() * 0.5,
-                11 + math.random() * 7
-            )
-        end
+        mount(PlayerGui),
+
+        {
+            ClassName = "Frame",
+            Name = "Coal",
+            Size = UDim2.fromScale(1, 1),
+            BackgroundColor3 = Coal,
+            BorderSizePixel = 0,
+
+            {
+                ClassName = "UIGradient",
+                Rotation = 90,
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Coal),
+                    ColorSequenceKeypoint.new(0.62, Color3.fromRGB(38, 18, 12)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(96, 34, 14)),
+                }),
+            },
+        },
+
+        {
+            ClassName = "Frame",
+            Name = "Hearth",
+            AnchorPoint = Vector2.new(0.5, 1),
+            Position = UDim2.new(0.5, 0, 1, 60),
+            Size = UDim2.fromOffset(760, 250),
+            BackgroundColor3 = Ember,
+            BackgroundTransparency = 0.55,
+            BorderSizePixel = 0,
+
+            { ClassName = "UICorner", CornerRadius = UDim.new(1, 0) },
+
+            ready(function(self)
+                Glow = self
+            end),
+        },
+
+        {
+            ClassName = "Frame",
+            Name = "Embers",
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+
+            ready(function(self)
+                Embers = self
+            end),
+        },
+
+        {
+            ClassName = "TextLabel",
+            Name = "Crest",
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            Position = UDim2.fromScale(0.5, 0.22),
+            Size = UDim2.fromOffset(780, 110),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.GothamBlack,
+            TextSize = 92,
+            TextColor3 = Bone,
+            Text = "VISION",
+
+            {
+                ClassName = "UIGradient",
+                Rotation = 90,
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Bone),
+                    ColorSequenceKeypoint.new(0.5, Flame),
+                    ColorSequenceKeypoint.new(1, Ember),
+                }),
+            },
+
+            ready(function(self)
+                Crest = self
+            end),
+        },
+
+        {
+            ClassName = "TextLabel",
+            Name = "Motto",
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            Position = UDim2.fromScale(0.5, 0.325),
+            Size = UDim2.fromOffset(620, 22),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.Gotham,
+            TextSize = 15,
+            TextColor3 = Ash,
+            Text = "Existence Begins With Perception.",
+        },
+
+        {
+            ClassName = "TextLabel",
+            Name = "Hint",
+            AnchorPoint = Vector2.new(0.5, 1),
+            Position = UDim2.new(0.5, 0, 1, -24),
+            Size = UDim2.fromOffset(460, 18),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.Code,
+            TextSize = 13,
+            TextColor3 = Ash,
+            Text = "press  K  to switch screens",
+        },
+    }
+
+    for Index, Label in Menu do
+        table.insert(Screen, {
+            ClassName = "TextButton",
+            Name = `Item{Index}`,
+            AnchorPoint = Vector2.new(0.5, 0),
+            Position = UDim2.new(0.5, 0, 0.42, (Index - 1) * 48),
+            Size = UDim2.fromOffset(300, 40),
+            BackgroundColor3 = Char,
+            BackgroundTransparency = 0.35,
+            BorderSizePixel = 0,
+            AutoButtonColor = false,
+            Font = Enum.Font.GothamMedium,
+            TextSize = 16,
+            TextColor3 = Ash,
+            Text = Label,
+
+            { ClassName = "UICorner", CornerRadius = UDim.new(0, 8) },
+
+            MouseEnter = function(self)
+                Scope:PhysicsInstance(0.3, 0.4, self, {
+                    Size = UDim2.fromOffset(348, 44),
+                    TextColor3 = Flame,
+                    BackgroundTransparency = 0.08,
+                })
+
+                const Spot = self.AbsolutePosition + self.AbsoluteSize / 2
+
+                for _ = 1, 7 do
+                    Fleck(
+                        Embers,
+                        UDim2.fromOffset(Spot.X + math.random(-160, 160), Spot.Y + 14),
+                        Vector2.new(math.random(-50, 50), -110 - math.random() * 90),
+                        1.2,
+                        0.4,
+                        0.6,
+                        4 + math.random() * 5
+                    )
+                end
+            end,
+
+            MouseLeave = function(self)
+                Scope:PhysicsInstance(0.34, 0.6, self, {
+                    Size = UDim2.fromOffset(300, 40),
+                    TextColor3 = Ash,
+                    BackgroundTransparency = 0.35,
+                })
+            end,
+        })
     end
 
-    const function Trailer(Where: UDim2)
-        for _ = 1, 3 do
-            Fleck(
-                UDim2.new(
-                    Where.X.Scale,
-                    Where.X.Offset + math.random(-14, 14),
-                    Where.Y.Scale,
-                    Where.Y.Offset + math.random(-14, 14)
-                ),
-                Vector2.new((math.random() - 0.5) * 120, 240 + math.random() * 320),
-                2.4 + math.random() * 0.8,
-                0.7 + math.random() * 0.5,
-                1.2 + math.random() * 0.6,
-                7 + math.random() * 8
-            )
-        end
+    const Title = Scope:Capture(Screen)
+
+    const Board = {
+        ClassName = "ScreenGui",
+        Name = "VisionBoard",
+        ResetOnSpawn = false,
+        IgnoreGuiInset = true,
+        DisplayOrder = 40,
+
+        mount(PlayerGui),
+
+        {
+            ClassName = "Frame",
+            Name = "Coal",
+            Size = UDim2.fromScale(1, 1),
+            BackgroundColor3 = Coal,
+            BorderSizePixel = 0,
+
+            {
+                ClassName = "UIGradient",
+                Rotation = 90,
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Coal),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(54, 22, 14)),
+                }),
+            },
+        },
+
+        {
+            ClassName = "Frame",
+            Name = "Wake",
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+
+            ready(function(self)
+                Wake = self
+            end),
+        },
+
+        {
+            ClassName = "Frame",
+            Name = "Orb",
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            Position = UDim2.fromScale(0.5, 0.5),
+            Size = UDim2.fromOffset(22, 22),
+            BackgroundColor3 = Ember,
+            BackgroundTransparency = 0.35,
+            BorderSizePixel = 0,
+
+            { ClassName = "UICorner", CornerRadius = UDim.new(1, 0) },
+
+            ready(function(self)
+                Orb = self
+            end),
+        },
+
+        {
+            ClassName = "Frame",
+            Name = "Card",
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            Position = UDim2.fromScale(0.5, 0.5),
+            Size = UDim2.fromOffset(70, 70),
+            BackgroundColor3 = Char,
+            BorderSizePixel = 0,
+            ClipsDescendants = true,
+
+            { ClassName = "UICorner", CornerRadius = UDim.new(0, 16) },
+
+            {
+                ClassName = "UIStroke",
+                Color = Blood,
+                Thickness = 1,
+                Transparency = 0.4,
+            },
+
+            ready(function(self)
+                Card = self
+            end),
+
+            {
+                ClassName = "TextLabel",
+                Name = "Heading",
+                BackgroundTransparency = 1,
+                Position = UDim2.fromOffset(26, 20),
+                Size = UDim2.new(1, -140, 0, 26),
+                Font = Enum.Font.GothamBold,
+                TextSize = 20,
+                TextColor3 = Bone,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Text = "Loadout",
+            },
+
+            {
+                ClassName = "TextLabel",
+                Name = "Visits",
+                BackgroundTransparency = 1,
+                Position = UDim2.fromOffset(26, 44),
+                Size = UDim2.new(1, -140, 0, 16),
+                Font = Enum.Font.Code,
+                TextSize = 12,
+                TextColor3 = Ash,
+                TextXAlignment = Enum.TextXAlignment.Left,
+
+                merge("Visits", function(self, Value)
+                    self.Text = `rebuilt {Value}x, state kept`
+                end),
+            },
+
+            {
+                ClassName = "TextLabel",
+                Name = "Average",
+                BackgroundTransparency = 1,
+                Position = UDim2.new(1, -106, 0, 20),
+                Size = UDim2.fromOffset(80, 44),
+                Font = Enum.Font.GothamBold,
+                TextSize = 32,
+                TextColor3 = Ember,
+                TextXAlignment = Enum.TextXAlignment.Right,
+
+                merge("Average", function(self, Value)
+                    self.Text = string.format("%.0f", Value * 100)
+                end),
+            },
+        },
+    }
+
+    for Index, Stat in Stats do
+        table.insert(Board, {
+            ClassName = "Frame",
+            Name = `Row{Index}`,
+            Position = UDim2.fromOffset(26, 84 + (Index - 1) * 44),
+            Size = UDim2.new(1, -52, 0, 32),
+            BackgroundTransparency = 1,
+
+            mount("Card"),
+
+            {
+                ClassName = "TextLabel",
+                Name = "Key",
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 14),
+                Font = Enum.Font.GothamMedium,
+                TextSize = 12,
+                TextColor3 = Ash,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Text = Stat.Key,
+            },
+
+            {
+                ClassName = "TextLabel",
+                Name = "Read",
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 14),
+                Font = Enum.Font.Code,
+                TextSize = 12,
+                TextColor3 = Ash,
+                TextXAlignment = Enum.TextXAlignment.Right,
+
+                merge(Stat.Key, function(self, Value)
+                    self.Text = string.format("%.2f", Value)
+                end),
+            },
+
+            {
+                ClassName = "Frame",
+                Name = "Track",
+                Position = UDim2.fromOffset(0, 21),
+                Size = UDim2.new(1, 0, 0, 7),
+                BackgroundColor3 = Color3.fromRGB(48, 34, 30),
+                BorderSizePixel = 0,
+
+                { ClassName = "UICorner", CornerRadius = UDim.new(1, 0) },
+
+                {
+                    ClassName = "Frame",
+                    Name = "Bar",
+                    Size = UDim2.fromScale(0, 1),
+                    BackgroundColor3 = Stat.Tint,
+                    BorderSizePixel = 0,
+
+                    { ClassName = "UICorner", CornerRadius = UDim.new(1, 0) },
+
+                    event(Stat.Key, 0.35, function(self, Value)
+                        self.Size = UDim2.fromScale(math.clamp(Value, 0, 1), 1)
+                    end),
+                },
+            },
+        })
     end
 
-    const function Pulse()
-        Scope:PhysicsInstance(0.3, 0.28, Card, { Size = Wide })
+    table.insert(
+        Board,
+        derive("Average", function(Mode, Read)
+            local Sum = 0
 
-        task.delay(0.14, function()
-            if Alive then
-                Scope:PhysicsInstance(0.46, 0.55, Card, { Size = Open })
+            for _, Stat in Stats do
+                Sum += Read(Stat.Key)
             end
-        end)
-    end
 
-    const function Shuffle()
-        for _, Stat in Stats do
-            Scope:PhysicsValue(0.7, 0.42, Interface, Stat.Key, 0.12 + math.random() * 0.85)
+            return Sum / #Stats
+        end)
+    )
+
+    table.insert(Board, event("Visits", 0, function() end))
+
+    table.insert(Board, {
+        ClassName = "TextButton",
+        Name = "Stoke",
+        AnchorPoint = Vector2.new(0.5, 1),
+        Position = UDim2.new(0.5, 0, 1, -18),
+        Size = UDim2.fromOffset(150, 32),
+        BackgroundColor3 = Blood,
+        BorderSizePixel = 0,
+        AutoButtonColor = false,
+        Font = Enum.Font.GothamMedium,
+        TextSize = 14,
+        TextColor3 = Bone,
+        Text = "Stoke",
+
+        mount("Card"),
+
+        { ClassName = "UICorner", CornerRadius = UDim.new(0, 8) },
+
+        MouseEnter = function(self)
+            Scope:PhysicsInstance(0.26, 0.42, self, { Size = UDim2.fromOffset(162, 36) })
+        end,
+
+        MouseLeave = function(self)
+            Scope:PhysicsInstance(0.3, 0.6, self, { Size = UDim2.fromOffset(150, 32) })
+        end,
+
+        Activated = function(self)
+            for _, Stat in Stats do
+                Scope:PhysicsValue(0.7, 0.42, Panel, Stat.Key, 0.15 + math.random() * 0.8)
+            end
+
+            Scope:PhysicsInstance(0.3, 0.28, Card, { Size = UDim2.fromOffset(452, 300) })
+
+            task.delay(0.15, function()
+                if Alive and Showing == "board" then
+                    Scope:PhysicsInstance(0.46, 0.55, Card, { Size = UDim2.fromOffset(420, 280) })
+                end
+            end)
+        end,
+    })
+
+    Panel = Scope:Capture(Board)
+
+    const Order = { "title", "board", "modular" }
+
+    const function Show(Which: string)
+        Showing = Which
+
+        if Which == "title" then
+            Title:Mount()
+
+            Crest.Position = UDim2.fromScale(0.5, 0.14)
+            Scope:PhysicsInstance(0.85, 0.45, Crest, { Position = UDim2.fromScale(0.5, 0.22) })
+        elseif Which == "board" then
+            Panel.Visits(Panel.Visits() + 1)
+            Panel:Mount()
+
+            Scope:PhysicsInstance(0.62, 0.4, Card, { Size = UDim2.fromOffset(420, 280) })
+        else
+            Deck = Deck or Modular()
+
+            Deck.Show()
         end
     end
 
-    const Root = Interface:Open()
-    const Face = Root.Card
+    const function Hide(Which: string)
+        if Which == "title" then
+            Title:Cleanup()
+        elseif Which == "board" then
+            Panel:Cleanup()
+        elseif Deck then
+            Deck.Hide()
+        end
+    end
 
-    Face.Pulse.Activated:Connect(Pulse)
-    Face.Shuffle.Activated:Connect(Shuffle)
+    Show("title")
 
-    Face.Burst.Activated:Connect(function()
-        const Middle = Root.Card.AbsolutePosition + Root.Card.AbsoluteSize / 2
+    const Keys = UserInputService.InputBegan:Connect(function(Input, Busy)
+        if Busy or not Alive or Input.KeyCode ~= Enum.KeyCode.K then
+            return
+        end
 
-        Scatter(UDim2.fromOffset(Middle.X, Middle.Y), 30)
-        Pulse()
+        const Index = table.find(Order, Showing) or 1
+
+        Hide(Showing)
+        Show(Order[Index % #Order + 1])
     end)
-
-    Scope:PhysicsInstance(0.62, 0.4, Card, { Size = Open })
 
     task.spawn(function()
         while Alive do
-            Scope:PhysicsInstance(0.9, 0.26, Glow, { Size = UDim2.fromOffset(36, 36) }):Await()
-
-            if not Alive then
-                break
+            if Showing == "title" and Glow then
+                Scope:PhysicsInstance(0.4 + math.random() * 0.35, 0.55, Glow, {
+                    BackgroundTransparency = 0.42 + math.random() * 0.22,
+                    Size = UDim2.fromOffset(700 + math.random() * 150, 220 + math.random() * 80),
+                }):Await()
+            else
+                task.wait(0.12)
             end
-
-            Scope:PhysicsInstance(0.9, 0.26, Glow, { Size = UDim2.fromOffset(24, 24) }):Await()
         end
     end)
 
-    task.spawn(function()
-        for Index, Stat in Stats do
-            task.wait(0.1)
-
-            if not Alive then
-                break
-            end
-
-            Scope:PhysicsValue(0.8, 0.38, Interface, Stat.Key, 0.3 + Index * 0.19)
-        end
-    end)
-
+    local Rising = 0
     local Was = UserInputService:GetMouseLocation()
-    local Trail = 0
+    local Streak = 0
 
-    const Follow = RunService.RenderStepped:Connect(function(Delta)
+    const Frame = RunService.RenderStepped:Connect(function(Delta)
         if not Alive then
+            return
+        end
+
+        if Showing == "title" then
+            Rising += Delta
+
+            if Rising > 0.055 then
+                Rising = 0
+
+                for _ = 1, 2 do
+                    Fleck(
+                        Embers,
+                        UDim2.new(math.random(), 0, 1, 20),
+                        Vector2.new(math.random(-80, 80), -460 - math.random() * 420),
+                        3.4 + math.random() * 1.4,
+                        1.5 + math.random() * 0.9,
+                        1.2 + math.random() * 0.7,
+                        4 + math.random() * 7
+                    )
+                end
+            end
+
             return
         end
 
         const Now = UserInputService:GetMouseLocation()
         const Moved = (Now - Was).Magnitude
 
-        if Moved > 4 then
+        if Moved > 4 and Orb then
             Was = Now
 
             Scope:PhysicsInstance(0.4, 0.5, Orb, { Position = UDim2.fromOffset(Now.X, Now.Y) })
         end
 
-        Trail += Delta
+        Streak += Delta
 
-        if Moved > 5 and Trail > 0.05 then
-            Trail = 0
+        if Moved > 5 and Streak > 0.05 then
+            Streak = 0
 
-            Trailer(UDim2.fromOffset(Now.X, Now.Y))
+            for _ = 1, 3 do
+                Fleck(
+                    Wake,
+                    UDim2.fromOffset(Now.X + math.random(-12, 12), Now.Y + math.random(-12, 12)),
+                    Vector2.new((math.random() - 0.5) * 110, 220 + math.random() * 300),
+                    2.4 + math.random() * 0.8,
+                    0.7 + math.random() * 0.5,
+                    1.2 + math.random() * 0.6,
+                    6 + math.random() * 7
+                )
+            end
         end
     end)
 
     return function()
         Alive = false
 
-        Follow:Disconnect()
+        Keys:Disconnect()
+        Frame:Disconnect()
+
+        if Deck then
+            Deck.Destroy()
+        end
+
         Scope:Release()
     end
 end
