@@ -5,6 +5,7 @@ const UserInputService = game:GetService("UserInputService")
 
 const Vision = require(ReplicatedStorage.Shared.Vision)
 const Modular = require(script.Parent.Modular)
+const Palette = require(script.Parent.Palette)
 
 const event = Vision.event
 const merge = Vision.merge
@@ -46,6 +47,7 @@ return function()
     local Wake
     local Panel
     local Deck
+    local Wash
 
     const Spark = Scope:Capture({
         ClassName = "Frame",
@@ -517,7 +519,7 @@ return function()
 
     Panel = Scope:Capture(Board)
 
-    const Order = { "title", "board", "modular" }
+    const Order = { "title", "board", "modular", "palette" }
 
     const function Show(Which: string)
         Showing = Which
@@ -532,10 +534,14 @@ return function()
             Panel:Mount()
 
             Scope:PhysicsInstance(0.62, 0.4, Card, { Size = UDim2.fromOffset(420, 280) })
-        else
+        elseif Which == "modular" then
             Deck = Deck or Modular()
 
             Deck.Show()
+        else
+            Wash = Wash or Palette()
+
+            Wash.Show()
         end
     end
 
@@ -544,8 +550,12 @@ return function()
             Title:Cleanup()
         elseif Which == "board" then
             Panel:Cleanup()
-        elseif Deck then
-            Deck.Hide()
+        elseif Which == "modular" then
+            if Deck then
+                Deck.Hide()
+            end
+        elseif Wash then
+            Wash.Hide()
         end
     end
 
@@ -642,6 +652,10 @@ return function()
 
         if Deck then
             Deck.Destroy()
+        end
+
+        if Wash then
+            Wash.Destroy()
         end
 
         Scope:Release()

@@ -296,17 +296,13 @@ local function Ready(Node)
         return
     end
 
-    const Previous = Symbols.Sink
-
-    Symbols.Sink = function(Callback)
+    const Later = function(Callback: (Instance) -> ())
         table.insert(Node.Transient, Callback)
     end
 
     for _, Callback in Node.Ready do
-        Callback(Node.Instance)
+        Callback(Node.Instance, Later)
     end
-
-    Symbols.Sink = Previous
 end
 
 const function Recompute(State, Event, Silent: boolean?)

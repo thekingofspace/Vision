@@ -167,7 +167,7 @@ itself raises, as does a cycle between two derives.
 ## ready
 
 ```lua
-ready(Callback: (self: Instance) -> ()) -> Marker
+ready(Callback: (self: Instance, cleanup: (Callback: (self: Instance) -> ()) -> ()) -> ()) -> Marker
 ```
 
 Runs after the tree is built and the root is parented. Callbacks run
@@ -177,33 +177,18 @@ parent's `ready` runs.
 ```lua
 ready(function(self)
     print(self.Name, "is live", self.AbsoluteSize)
-end)
-```
-
-## cleanup
-
-```lua
-cleanup(Callback: (self: Instance) -> ()) -> Marker?
-```
-
-Runs when the Vision is cleaned up, before anything is disconnected or
-destroyed, so the instance is still live.
-
-It works two ways. In a declaration:
-
-```lua
-cleanup(function(self)
-    print("releasing", self.Name)
 end),
 ```
 
-Or called **inside a `ready` callback**, where it registers against the node
-currently running. This is the useful form - it puts a connection and its
-disconnect next to each other:
+### Releasing what you set up
+
+`ready` hands you a second argument: a function that registers cleanup work
+for **this node**, for **this mount**. Use it to keep a connection and its
+disconnect in one place.
 
 ```lua
-ready(function(self)
-    local Connection = SomeSignal:Connect(Handler)
+ready(function(self, cleanup)
+    const Connection = Workspace.ChildAdded:Connect(Handler)
 
     cleanup(function()
         Connection:Disconnect()
@@ -211,9 +196,56 @@ ready(function(self)
 end),
 ```
 
-Callbacks run deepest first across nodes, and **last registered first**
-within a node, so a connection made in `ready` is released before the
-declared `cleanup` runs.
+The callback you pass runs on teardown, before anything is disconnected or
+destroyed, and receives the instance.
+
+Because it is an argument rather than an ambient lookup, it is bound to the
+node you are already inside. There is nothing to get wrong, and it works the
+same whether you call it directly, from a nested helper, or pass it along.
+
+::: warning Register it while ready is running
+The registration itself must happen during the `ready` call. Handing the
+function to something deferred registers nothing useful, because by the time
+it runs the mount is over:
+
+```lua
+ready(function(self, cleanup)
+    task.delay(1, function()
+        cleanup(function() end)   -- too late, the tree is already live
+    end)
+end),
+```
+:::
+
+## cleanup
+
+```lua
+cleanup(Callback: (self: Instance) -> ()) -> Marker
+```
+
+A declaration keyword. Runs when the tree is torn down, before anything is
+disconnected or destroyed, so the instance is still usable.
+
+```lua
+{
+    ClassName = "Frame",
+
+    cleanup(function(self)
+        print("releasing", self.Name)
+    end),
+}
+```
+
+This is for teardown work you know about up front. For anything you set up
+inside `ready`, use the function `ready` gives you instead.
+
+Callbacks run deepest first across nodes, and **last registered first** within
+a node, so anything registered from `ready` is released before the `cleanup`
+you declared in the table.
+
+A declared `cleanup` persists for the life of the Vision and runs on every
+teardown. One registered from `ready` belongs to that mount only, and is
+registered again the next time `ready` runs.
 
 ## mount
 

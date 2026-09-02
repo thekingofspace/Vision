@@ -35,6 +35,7 @@ return function()
     local List
     local Count = 0
     local Made = 0
+    local Seeded = false
 
     const Rows = {}
 
@@ -439,7 +440,9 @@ return function()
             end
         end)
 
-        if #Rows == 0 then
+        if not Seeded then
+            Seeded = true
+
             for _ = 1, 4 do
                 Add()
             end

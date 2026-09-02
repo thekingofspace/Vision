@@ -167,34 +167,61 @@ itself raises, as does a cycle between two derives.</p>
 </div>
 
 <h2 id="ready"><a class="anchor" href="#ready">#</a>ready</h2>
-<pre class="code"><code class="hljs">ready(Callback: (<span class="hljs-built_in">self</span>: Instance) -&gt; ()) -&gt; Marker</code></pre>
+<pre class="code"><code class="hljs">ready(Callback: (<span class="hljs-built_in">self</span>: Instance, cleanup: (Callback: (<span class="hljs-built_in">self</span>: Instance) -&gt; ()) -&gt; ()) -&gt; ()) -&gt; Marker</code></pre>
 <p>Runs after the tree is built and the root is parented. Callbacks run
 <strong>deepest first</strong>, climbing the tree, so a child is always live before its
 parent&#39;s <code>ready</code> runs.</p>
 <pre class="code"><code class="hljs">ready(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
     <span class="hljs-built_in">print</span>(<span class="hljs-built_in">self</span>.Name, <span class="hljs-string">&quot;is live&quot;</span>, <span class="hljs-built_in">self</span>.AbsoluteSize)
-<span class="hljs-keyword">end</span>)</code></pre>
-<h2 id="cleanup"><a class="anchor" href="#cleanup">#</a>cleanup</h2>
-<pre class="code"><code class="hljs">cleanup(Callback: (<span class="hljs-built_in">self</span>: Instance) -&gt; ()) -&gt; Marker?</code></pre>
-<p>Runs when the Vision is cleaned up, before anything is disconnected or
-destroyed, so the instance is still live.</p>
-<p>It works two ways. In a declaration:</p>
-<pre class="code"><code class="hljs">cleanup(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
-    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;releasing&quot;</span>, <span class="hljs-built_in">self</span>.Name)
 <span class="hljs-keyword">end</span>),</code></pre>
-<p>Or called <strong>inside a <code>ready</code> callback</strong>, where it registers against the node
-currently running. This is the useful form - it puts a connection and its
-disconnect next to each other:</p>
-<pre class="code"><code class="hljs">ready(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
-    <span class="hljs-keyword">local</span> Connection = SomeSignal:Connect(Handler)
+<h3 id="releasing-what-you-set-up"><a class="anchor" href="#releasing-what-you-set-up">#</a>Releasing what you set up</h3>
+<p><code>ready</code> hands you a second argument: a function that registers cleanup work
+for <strong>this node</strong>, for <strong>this mount</strong>. Use it to keep a connection and its
+disconnect in one place.</p>
+<pre class="code"><code class="hljs">ready(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, cleanup)</span></span>
+    const Connection = Workspace.ChildAdded:Connect(Handler)
 
     cleanup(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
         Connection:Disconnect()
     <span class="hljs-keyword">end</span>)
 <span class="hljs-keyword">end</span>),</code></pre>
-<p>Callbacks run deepest first across nodes, and <strong>last registered first</strong>
-within a node, so a connection made in <code>ready</code> is released before the
-declared <code>cleanup</code> runs.</p>
+<p>The callback you pass runs on teardown, before anything is disconnected or
+destroyed, and receives the instance.</p>
+<p>Because it is an argument rather than an ambient lookup, it is bound to the
+node you are already inside. There is nothing to get wrong, and it works the
+same whether you call it directly, from a nested helper, or pass it along.</p>
+<div class="callout warning">
+
+<p><strong>Register it while ready is running</strong></p>
+<p>The registration itself must happen during the <code>ready</code> call. Handing the
+function to something deferred registers nothing useful, because by the time
+it runs the mount is over:</p>
+<pre class="code"><code class="hljs">ready(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, cleanup)</span></span>
+    task.delay(<span class="hljs-number">1</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+        cleanup(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span> <span class="hljs-keyword">end</span>)   <span class="hljs-comment">-- too late, the tree is already live</span>
+    <span class="hljs-keyword">end</span>)
+<span class="hljs-keyword">end</span>),</code></pre>
+</div>
+
+<h2 id="cleanup"><a class="anchor" href="#cleanup">#</a>cleanup</h2>
+<pre class="code"><code class="hljs">cleanup(Callback: (<span class="hljs-built_in">self</span>: Instance) -&gt; ()) -&gt; Marker</code></pre>
+<p>A declaration keyword. Runs when the tree is torn down, before anything is
+disconnected or destroyed, so the instance is still usable.</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+
+    cleanup(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
+        <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;releasing&quot;</span>, <span class="hljs-built_in">self</span>.Name)
+    <span class="hljs-keyword">end</span>),
+}</code></pre>
+<p>This is for teardown work you know about up front. For anything you set up
+inside <code>ready</code>, use the function <code>ready</code> gives you instead.</p>
+<p>Callbacks run deepest first across nodes, and <strong>last registered first</strong> within
+a node, so anything registered from <code>ready</code> is released before the <code>cleanup</code>
+you declared in the table.</p>
+<p>A declared <code>cleanup</code> persists for the life of the Vision and runs on every
+teardown. One registered from <code>ready</code> belongs to that mount only, and is
+registered again the next time <code>ready</code> runs.</p>
 <h2 id="mount"><a class="anchor" href="#mount">#</a>mount</h2>
 <pre class="code"><code class="hljs">mount(Target: Instance | <span class="hljs-built_in">string</span>) -&gt; Marker</code></pre>
 <p>Sets where this node is parented. An <code>Instance</code> parents there directly; a

@@ -40,12 +40,12 @@ end),
 
 ## The useful form
 
-`cleanup` can also be called **inside** a `ready` callback, where it attaches
-to the node currently running. This is the form you will reach for most,
-because it puts a connection and its disconnect in the same place:
+`ready` hands you a second argument: a function that registers cleanup for
+that node, for that mount. This is the form you will reach for most, because
+it puts a connection and its disconnect in the same place:
 
 ```lua
-ready(function(self)
+ready(function(self, cleanup)
     local Connection = Workspace.ChildAdded:Connect(Handler)
 
     cleanup(function()

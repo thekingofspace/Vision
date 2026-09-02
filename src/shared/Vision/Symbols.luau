@@ -43,12 +43,6 @@ function Symbols.ready(Callback: (Instance) -> ())
 end
 
 function Symbols.cleanup(Callback: (Instance) -> ())
-    if Symbols.Sink then
-        Symbols.Sink(Callback)
-
-        return nil
-    end
-
     return setmetatable({
         Kind = "Cleanup",
         Callback = Callback,
