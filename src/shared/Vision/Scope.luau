@@ -21,11 +21,7 @@ function Scope.new()
 end
 
 function Scope:Capture(Declaration: any)
-    local Vision = Capture.new(self, Declaration)
-
-    table.insert(self.Visions, Vision)
-
-    return Vision
+    return Capture.new(self, Declaration)
 end
 
 function Scope:Adopt(Vision: any)

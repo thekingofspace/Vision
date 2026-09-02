@@ -504,7 +504,7 @@ function Capture.new(Scope, Declaration)
     State.Root = Parse(State, Declaration, nil)
 
     for _, Event in State.Derived do
-        State.Vision[Event.Name] = function(NewValue: any?): any
+        Vision[Event.Name] = function(NewValue: any?): any
             if NewValue == nil then
                 return Event.Value
             end
@@ -512,6 +512,8 @@ function Capture.new(Scope, Declaration)
             error(`Vision value "{Event.Name}" is derived and cannot be written to`, 0)
         end
     end
+
+    State.Vision = nil
 
     return Vision
 end
