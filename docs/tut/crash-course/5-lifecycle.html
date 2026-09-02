@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Lifecycle | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../../assets/logo.svg">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../../index.html">
+<img src="../../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../../index.html">Home</a>
+<a href="./1-introduction.html">Tutorials</a>
+<a href="../../api/declarations.html">API</a>
+<a href="../../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">Crash Course</p>
+<div class="items">
+<a href="./1-introduction.html">Introduction</a>
+<a href="./2-declarations.html">Declarations</a>
+<a href="./3-mounting.html">Staging and Mounting</a>
+<a href="./4-values.html">Values</a>
+<a class="active" href="./5-lifecycle.html">Lifecycle</a>
+<a href="./6-sleeping.html">Sleeping and Cloning</a>
+<a href="./7-animation.html">Animation</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="lifecycle"><a class="anchor" href="#lifecycle">#</a>Lifecycle</h1>
+<p>Two keywords run code at the edges of a tree&#39;s life.</p>
+<h2 id="ready"><a class="anchor" href="#ready">#</a>ready</h2>
+<p><code>ready</code> runs after the instance exists and the root is parented.</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    Size = UDim2.fromOffset(<span class="hljs-number">300</span>, <span class="hljs-number">200</span>),
+
+    ready(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
+        <span class="hljs-built_in">print</span>(<span class="hljs-built_in">self</span>.Name, <span class="hljs-built_in">self</span>.AbsoluteSize)
+    <span class="hljs-keyword">end</span>),
+}</code></pre>
+<p>Because the root is already parented, measurements like <code>AbsoluteSize</code> are
+real by the time your callback runs.</p>
+<p>Callbacks run <strong>deepest first</strong>, climbing the tree. A child is fully set up
+before its parent&#39;s <code>ready</code> runs, so a parent can rely on its children.</p>
+<pre class="code"><code class="hljs">Title -&gt; Panel -&gt; ScreenGui</code></pre>
+<h2 id="cleanup"><a class="anchor" href="#cleanup">#</a>cleanup</h2>
+<p><code>cleanup</code> runs when the tree is torn down, before anything is disconnected or
+destroyed - so the instance is still usable.</p>
+<pre class="code"><code class="hljs">cleanup(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;releasing&quot;</span>, <span class="hljs-built_in">self</span>.Name)
+<span class="hljs-keyword">end</span>),</code></pre>
+<h2 id="the-useful-form"><a class="anchor" href="#the-useful-form">#</a>The useful form</h2>
+<p><code>cleanup</code> can also be called <strong>inside</strong> a <code>ready</code> callback, where it attaches
+to the node currently running. This is the form you will reach for most,
+because it puts a connection and its disconnect in the same place:</p>
+<pre class="code"><code class="hljs">ready(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
+    <span class="hljs-keyword">local</span> Connection = Workspace.ChildAdded:Connect(Handler)
+
+    cleanup(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+        Connection:Disconnect()
+    <span class="hljs-keyword">end</span>)
+<span class="hljs-keyword">end</span>),</code></pre>
+<p>No bookkeeping table, no remembering to tidy up somewhere else.</p>
+<h2 id="ordering"><a class="anchor" href="#ordering">#</a>Ordering</h2>
+<p>Cleanups run deepest first across nodes, matching <code>ready</code>. Within a single
+node they run <strong>last registered first</strong>, so anything you set up in <code>ready</code> is
+released before the <code>cleanup</code> you declared in the table.</p>
+<h2 id="what-cleanup-does"><a class="anchor" href="#what-cleanup-does">#</a>What Cleanup does</h2>
+<pre class="code"><code class="hljs">Interface:Cleanup()</code></pre>
+<ol>
+<li>runs <code>cleanup</code> callbacks, deepest first</li>
+<li>cancels any animation driving this tree</li>
+<li>disconnects every connection</li>
+<li>destroys the instances</li>
+</ol>
+<p>What it does <em>not</em> do is throw away your values. That is the next page.</p>
+<h2 id="next"><a class="anchor" href="#next">#</a>Next</h2>
+<p><a href="./6-sleeping.html">Sleeping and cloning</a>.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

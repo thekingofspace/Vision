@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Declarations | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../../assets/logo.svg">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../../index.html">
+<img src="../../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../../index.html">Home</a>
+<a href="./1-introduction.html">Tutorials</a>
+<a href="../../api/declarations.html">API</a>
+<a href="../../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">Crash Course</p>
+<div class="items">
+<a href="./1-introduction.html">Introduction</a>
+<a class="active" href="./2-declarations.html">Declarations</a>
+<a href="./3-mounting.html">Staging and Mounting</a>
+<a href="./4-values.html">Values</a>
+<a href="./5-lifecycle.html">Lifecycle</a>
+<a href="./6-sleeping.html">Sleeping and Cloning</a>
+<a href="./7-animation.html">Animation</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="declarations"><a class="anchor" href="#declarations">#</a>Declarations</h1>
+<p>A declaration is a table. The only required key is <code>ClassName</code>.</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>,
+    Text = <span class="hljs-string">&quot;Hello&quot;</span>,
+    Size = UDim2.fromOffset(<span class="hljs-number">200</span>, <span class="hljs-number">40</span>),
+}</code></pre>
+<p>Every other string key is set on the instance. Nothing special so far.</p>
+<h2 id="children"><a class="anchor" href="#children">#</a>Children</h2>
+<p>Tables in the array part are children.</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    Size = UDim2.fromOffset(<span class="hljs-number">300</span>, <span class="hljs-number">200</span>),
+
+    { ClassName = <span class="hljs-string">&quot;UICorner&quot;</span>, CornerRadius = UDim.new(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>) },
+
+    {
+        ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>,
+        Text = <span class="hljs-string">&quot;Nested&quot;</span>,
+    },
+}</code></pre>
+<p>A child parents to the declaration containing it, so the shape of the table
+is the shape of the tree.</p>
+<h2 id="events-are-just-keys"><a class="anchor" href="#events-are-just-keys">#</a>Events are just keys</h2>
+<p>If a key names a signal instead of a property, the value is connected rather
+than assigned:</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;TextButton&quot;</span>,
+    Text = <span class="hljs-string">&quot;Click me&quot;</span>,
+
+    Activated = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
+        <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;clicked&quot;</span>, <span class="hljs-built_in">self</span>.Name)
+    <span class="hljs-keyword">end</span>,
+}</code></pre>
+<p><code>Text</code> is assigned, <code>Activated</code> is connected, and you did not have to say
+which is which - Vision checks what the member actually is.</p>
+<p>Notice the callback receives <code>self</code>. <strong>Every</strong> callback in Vision gets the
+instance as its first argument, so you can edit it without closing over a
+variable.</p>
+<h2 id="attributes-and-tags"><a class="anchor" href="#attributes-and-tags">#</a>Attributes and tags</h2>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+
+    attributes = { Role = <span class="hljs-string">&quot;Panel&quot;</span> },
+    tags = { <span class="hljs-string">&quot;Managed&quot;</span> },
+
+    AttributeChanged = {
+        Role = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
+            <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;role is now&quot;</span>, <span class="hljs-built_in">self</span>:GetAttribute(<span class="hljs-string">&quot;Role&quot;</span>))
+        <span class="hljs-keyword">end</span>,
+    },
+}</code></pre>
+<p><code>AttributeChanged</code> connects after the declared attributes are applied, so
+setting up initial state does not fire your handler.</p>
+<h2 id="mounting-somewhere-else"><a class="anchor" href="#mounting-somewhere-else">#</a>Mounting somewhere else</h2>
+<p><code>mount</code> says where a node goes. Given an <code>Instance</code>, it parents there:</p>
+<pre class="code"><code class="hljs">mount(PlayerGui)</code></pre>
+<p>Given a string, it finds the node in the same tree with that <code>Name</code>:</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;ScreenGui&quot;</span>,
+    mount(PlayerGui),
+
+    { ClassName = <span class="hljs-string">&quot;Frame&quot;</span>, Name = <span class="hljs-string">&quot;Panel&quot;</span> },
+
+    {
+        ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>,
+        mount(<span class="hljs-string">&quot;Panel&quot;</span>),     <span class="hljs-comment">-- lands inside Panel</span>
+    },
+}</code></pre>
+<p>That is useful when a piece of UI is easier to <em>write</em> at the top level than
+where it belongs.</p>
+<h2 id="next"><a class="anchor" href="#next">#</a>Next</h2>
+<p><a href="./3-mounting.html">Staging and mounting</a> - the part that makes
+this different.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

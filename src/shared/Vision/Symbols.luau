@@ -24,6 +24,14 @@ function Symbols.merge(Event: string, Callback: (Instance, any) -> ())
     }, Marker)
 end
 
+function Symbols.derive(Name: string, Compute: (Read: (string) -> any) -> any)
+    return setmetatable({
+        Kind = "Derive",
+        Name = Name,
+        Callback = Compute,
+    }, Marker)
+end
+
 function Symbols.ready(Callback: (Instance) -> ())
     return setmetatable({
         Kind = "Ready",

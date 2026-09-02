@@ -28,7 +28,7 @@ Creates the tree. In order:
 5. `ready` callbacks run, deepest first
 
 Calling `Mount` on a Vision that is already mounted does nothing. Mounting a
-Vision that was cleaned up rebuilds it — see [Cleanup](#cleanup).
+Vision that was cleaned up rebuilds it - see [Cleanup](#cleanup).
 
 Mount also re-registers the Vision with its scope, so `Scope:Release` covers
 it again.
@@ -39,7 +39,7 @@ it again.
 local Object = Interface:Open()
 ```
 
-Mounts if needed and returns the root instance. Idempotent — calling it twice
+Mounts if needed and returns the root instance. Idempotent - calling it twice
 returns the same instance and does not rebuild anything.
 
 ## Cleanup
@@ -65,7 +65,7 @@ print(Interface.Count())   --> 7
 Interface:Mount()          -- rebuilt, callbacks fire once with 7
 ```
 
-A sleeping Vision behaves exactly like one that has never been mounted —
+A sleeping Vision behaves exactly like one that has never been mounted -
 writes store and nothing runs, so it can keep receiving updates while its
 instances are gone, and comes back correct rather than stale.
 
@@ -95,7 +95,7 @@ Row.Title("Second")
 Row:Mount()
 ```
 
-The two share nothing after that — separate instances, separate values.
+The two share nothing after that - separate instances, separate values.
 `Scope:Release` cleans up clones along with everything else.
 
 ## CapFunc
@@ -135,7 +135,7 @@ Every bound callback runs immediately, each with its own instance.
 
 ### Unchanged writes are skipped
 
-Writing the value it already holds does nothing — no callbacks, no property
+Writing the value it already holds does nothing - no callbacks, no property
 assignments.
 
 ```lua

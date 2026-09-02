@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="./assets/logo.svg">
+<link rel="stylesheet" href="./assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="./index.html">
+<img src="./assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a class="active" href="./index.html">Home</a>
+<a href="./tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="./api/declarations.html">API</a>
+<a href="./comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell wide">
+
+<main class="content home">
+<h1 id="vision"><a class="anchor" href="#vision">#</a>Vision</h1>
+<p>A declarative instance library for Luau. Describe a tree as a table, stage
+data into it, and create it when you are ready.</p>
+<blockquote>
+<p>Existence Begins With Perception.</p>
+</blockquote>
+<ul>
+<li><strong>Nothing exists until you mount.</strong> <code>Capture</code> returns a handle, not a tree.
+Stage values, change your mind, throw it away - all before a single
+<code>Instance</code> is created.</li>
+<li><strong>Writes coalesce while staged.</strong> Set a value five times before mounting and
+the callback runs once, with the last value. After mounting, an unchanged
+write does nothing at all.</li>
+<li><strong>Sleep it, wake it, keep the state.</strong> <code>Cleanup</code> destroys the instances but
+keeps the values. Mount again and the tree comes back exactly as it was.</li>
+<li><strong>Animation that is really TweenService.</strong> Springs take a <code>TweenInfo</code> and
+read their curve from <code>TweenService:GetValue</code>.</li>
+</ul>
+<p><a href="./tut/crash-course/1-introduction.html">Get started</a> &middot;
+<a href="./api/declarations.html">API</a> &middot;
+<a href="./comparison.html">Comparison</a></p>
+<h2 id="at-a-glance"><a class="anchor" href="#at-a-glance">#</a>At a glance</h2>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Vision = <span class="hljs-built_in">require</span>(ReplicatedStorage.Shared.Vision)
+
+<span class="hljs-keyword">local</span> event, ready, mount = Vision.event, Vision.ready, Vision.mount
+
+<span class="hljs-keyword">local</span> Scope = Vision.Scope()
+
+<span class="hljs-keyword">local</span> Interface = Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;ScreenGui&quot;</span>,
+    Name = <span class="hljs-string">&quot;Counter&quot;</span>,
+
+    mount(PlayerGui),
+
+    {
+        ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>,
+        Name = <span class="hljs-string">&quot;Readout&quot;</span>,
+        Size = UDim2.fromOffset(<span class="hljs-number">200</span>, <span class="hljs-number">40</span>),
+
+        event(<span class="hljs-string">&quot;Count&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+            <span class="hljs-built_in">self</span>.Text = `Clicks: {Value}`
+        <span class="hljs-keyword">end</span>),
+
+        ready(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
+            <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;live:&quot;</span>, <span class="hljs-built_in">self</span>.Name)
+        <span class="hljs-keyword">end</span>),
+    },
+})
+
+Interface.Count(<span class="hljs-number">7</span>)
+Interface.Count(<span class="hljs-number">12</span>)
+
+Interface:Mount()</code></pre>
+<p>Nothing is created until <code>Mount</code>. The two writes above coalesce, so the
+label&#39;s callback runs exactly once, with <code>12</code>.</p>
+<h2 id="installing"><a class="anchor" href="#installing">#</a>Installing</h2>
+<p>Vision is a folder of Luau modules with no dependencies. Drop
+<code>src/shared/Vision</code> anywhere your code can require it.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Vision = <span class="hljs-built_in">require</span>(ReplicatedStorage.Shared.Vision)</code></pre>
+<h2 id="ai-disclosure"><a class="anchor" href="#ai-disclosure">#</a>AI disclosure</h2>
+<p>The site had AI assistance on it from Claude. All code by me(Raikin7).</p>
+<h2 id="credits"><a class="anchor" href="#credits">#</a>Credits</h2>
+<p>The structure and source concept of this documentation is adapted from
+<a href="https://github.com/centau/vide">Vide</a> by centau, a reactive UI library for
+Luau. Vide is also the library Vision is measured against in the
+<a href="./comparison.html">comparison</a> - it is worth your time regardless of which you
+end up using.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

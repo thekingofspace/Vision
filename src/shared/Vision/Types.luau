@@ -19,6 +19,7 @@ export type Declaration = {[any]:any}
 
 export type event = (Event:string, InitialValue:any, Callback:(self:Instance, Value:any) -> ()) -> Marker
 export type merge = (Event:string, Callback:(self:Instance, Value:any) -> ()) -> Marker
+export type derive = (Event:string, Compute:(Read:(Event:string) -> any) -> any) -> Marker
 export type ready = (Callback:(self:Instance) -> ()) -> Marker
 export type cleanup = (Callback:(self:Instance) -> ()) -> Marker?
 export type mount = (Target:Instance | string) -> Marker
@@ -35,6 +36,10 @@ export type Scope = {
     SpringValue:(self:Scope, TweenInfo:TweenInfo, Vision:Vision | {Vision}, ValueName:string, TargetValue:any) -> Linker,
     SpringInstance:(self:Scope, TweenInfo:TweenInfo, Instance:Instance | {Instance}, TargetProps:{[string]:any}) -> Linker,
     SpringFunction:(self:Scope, TweenInfo:TweenInfo, TargetFun:(NewValue:any, dt:number) -> (), InitialValue:any, TargetValue:any) -> Linker,
+
+    PhysicsValue:(self:Scope, Period:number, Damping:number, Vision:Vision | {Vision}, ValueName:string, TargetValue:any) -> Linker,
+    PhysicsInstance:(self:Scope, Period:number, Damping:number, Instance:Instance | {Instance}, TargetProps:{[string]:any}) -> Linker,
+    PhysicsFunction:(self:Scope, Period:number, Damping:number, TargetFun:(NewValue:any) -> (), InitialValue:any, TargetValue:any) -> Linker,
 
     Release:(self:Scope) -> ()
 }

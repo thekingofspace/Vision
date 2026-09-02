@@ -33,7 +33,7 @@ Scope:SpringValue(
 ```
 
 Because it writes through the value, anything merged onto `Fill` animates
-too — a bar and its percentage readout stay in step without extra work.
+too - a bar and its percentage readout stay in step without extra work.
 
 ## Animating properties
 
@@ -82,13 +82,13 @@ end)
 ```
 
 A fast mouse cannot leave two tweens fighting over the same property. This
-works per claim — a Vision and value name, or an instance and property name.
+works per claim - a Vision and value name, or an instance and property name.
 
 ::: warning A tween has no momentum
 An interrupted tween restarts from the current value at **zero velocity**, so
 it stops dead before accelerating again. That is inherent to a fixed duration
 and a curve. If you need motion that flows through an interruption, you want
-a physics spring — see the [comparison](/comparison).
+a physics spring - see the [comparison](/comparison).
 :::
 
 ## Overshoot

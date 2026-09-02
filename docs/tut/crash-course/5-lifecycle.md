@@ -30,7 +30,7 @@ Title -> Panel -> ScreenGui
 ## cleanup
 
 `cleanup` runs when the tree is torn down, before anything is disconnected or
-destroyed — so the instance is still usable.
+destroyed - so the instance is still usable.
 
 ```lua
 cleanup(function(self)

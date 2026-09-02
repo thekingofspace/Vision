@@ -34,7 +34,7 @@ Interface:Mount()      -- callback runs once, with 9
 ```
 
 Which means the world can keep updating while your UI is gone, and when it
-comes back it is already correct — it never rebuilds into a stale state and
+comes back it is already correct - it never rebuilds into a stale state and
 then catches up.
 
 ::: tip
@@ -64,8 +64,8 @@ Interface:Mount()      -- scope adopts it again
 local Copy = Interface:Clone()
 ```
 
-The copy shares nothing with the original — its own instances, its own
-values — but it is built from the same declaration, so it mounts to the same
+The copy shares nothing with the original - its own instances, its own
+values - but it is built from the same declaration, so it mounts to the same
 place.
 
 ```lua

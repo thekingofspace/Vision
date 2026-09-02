@@ -11,6 +11,7 @@ export type Declaration = Types.Declaration
 local Vision = {
     event = Symbols.event,
     merge = Symbols.merge,
+    derive = Symbols.derive,
     ready = Symbols.ready,
     cleanup = Symbols.cleanup,
     mount = Symbols.mount,

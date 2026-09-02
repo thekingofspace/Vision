@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Declarations | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a class="active" href="./declarations.html">API</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">API</p>
+<div class="items">
+<a class="active" href="./declarations.html">Declarations</a>
+<a href="./keywords.html">Keywords</a>
+<a href="./scope.html">Scope</a>
+<a href="./vision.html">Vision</a>
+<a href="./animation.html">Animation</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="declarations"><a class="anchor" href="#declarations">#</a>Declarations</h1>
+<p>A declaration is a plain table describing one instance and its subtree. It is
+inert data - building one creates nothing.</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    Name = <span class="hljs-string">&quot;Panel&quot;</span>,
+    Size = UDim2.fromOffset(<span class="hljs-number">300</span>, <span class="hljs-number">200</span>),
+
+    attributes = { Role = <span class="hljs-string">&quot;Panel&quot;</span> },
+    tags = { <span class="hljs-string">&quot;Managed&quot;</span> },
+
+    AttributeChanged = {
+        Role = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span> <span class="hljs-built_in">print</span>(<span class="hljs-built_in">self</span>:GetAttribute(<span class="hljs-string">&quot;Role&quot;</span>)) <span class="hljs-keyword">end</span>,
+    },
+
+    Activated = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span> <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;clicked&quot;</span>, <span class="hljs-built_in">self</span>.Name) <span class="hljs-keyword">end</span>,
+
+    mount(PlayerGui),
+    ready(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span> <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;live&quot;</span>) <span class="hljs-keyword">end</span>),
+
+    { ClassName = <span class="hljs-string">&quot;UICorner&quot;</span>, CornerRadius = UDim.new(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>) },
+}</code></pre>
+<h2 id="classname"><a class="anchor" href="#classname">#</a>ClassName</h2>
+<p>Required. The class passed to <code>Instance.new</code>. A declaration without a string
+<code>ClassName</code> raises <code>Declaration requires a ClassName</code> at capture time.</p>
+<h2 id="properties"><a class="anchor" href="#properties">#</a>Properties</h2>
+<p>Every other string key is a property or an event connection, decided by what
+the member actually is on the created instance:</p>
+<ul>
+<li>if the member is an <code>RBXScriptSignal</code>, the value is <strong>connected</strong></li>
+<li>otherwise the value is <strong>assigned</strong></li>
+</ul>
+<pre class="code"><code class="hljs">Text = <span class="hljs-string">&quot;Hello&quot;</span>,                          <span class="hljs-comment">-- assigned</span>
+Activated = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span> <span class="hljs-keyword">end</span>,          <span class="hljs-comment">-- connected</span></code></pre>
+<p>This is why <code>Text</code> and <code>Activated</code> can sit in the same table without
+ceremony. It also means a typo&#39;d property name errors on mount rather than
+silently doing nothing.</p>
+<div class="callout tip">
+
+<p><strong>Signal callbacks receive the instance first</strong></p>
+<p>A connected callback is called as <code>Callback(Instance, ...)</code> - the instance,
+then whatever the signal passes. This holds for every callback in Vision, so
+you never have to close over the instance to edit it.</p>
+</div>
+
+<h2 id="attributes"><a class="anchor" href="#attributes">#</a>attributes</h2>
+<p>A map of attribute names to values, applied with <code>SetAttribute</code> when the
+instance is created. Both <code>attributes</code> and <code>Attributes</code> are accepted.</p>
+<pre class="code"><code class="hljs">attributes = { Role = <span class="hljs-string">&quot;Panel&quot;</span>, Build = <span class="hljs-number">1</span> },</code></pre>
+<h2 id="tags"><a class="anchor" href="#tags">#</a>tags</h2>
+<p>Tags applied with <code>AddTag</code>. Accepts an array, a set, or a mix. Both <code>tags</code>
+and <code>Tags</code> are accepted.</p>
+<pre class="code"><code class="hljs">tags = { <span class="hljs-string">&quot;Managed&quot;</span>, <span class="hljs-string">&quot;Panel&quot;</span> },
+tags = { Managed = <span class="hljs-literal">true</span> },</code></pre>
+<h2 id="attributechanged"><a class="anchor" href="#attributechanged">#</a>AttributeChanged</h2>
+<p>A map of attribute names to callbacks, connected with
+<code>GetAttributeChangedSignal</code>. The callback receives the instance first.</p>
+<pre class="code"><code class="hljs">AttributeChanged = {
+    Role = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
+        <span class="hljs-built_in">print</span>(<span class="hljs-built_in">self</span>.Name, <span class="hljs-string">&quot;is now&quot;</span>, <span class="hljs-built_in">self</span>:GetAttribute(<span class="hljs-string">&quot;Role&quot;</span>))
+    <span class="hljs-keyword">end</span>,
+},</code></pre>
+<p>Connections are made <strong>after</strong> the declared <code>attributes</code> are applied, so
+setting up initial state does not fire these. They are disconnected by
+<code>Cleanup</code> along with every other connection.</p>
+<h2 id="children"><a class="anchor" href="#children">#</a>Children</h2>
+<p>Any table in the array part that is not a <a href="./keywords.html">keyword</a> is a child
+declaration. By default a child is parented to the declaration that contains
+it.</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+
+    { ClassName = <span class="hljs-string">&quot;UICorner&quot;</span> },
+    { ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>, Text = <span class="hljs-string">&quot;Hi&quot;</span> },
+}</code></pre>
+<h2 id="mounting-by-name"><a class="anchor" href="#mounting-by-name">#</a>Mounting by name</h2>
+<p><code>mount</code> also accepts a string, which resolves to the node in the same tree
+whose declared <code>Name</code> matches. This lets a declaration written anywhere land
+anywhere.</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;ScreenGui&quot;</span>,
+
+    { ClassName = <span class="hljs-string">&quot;Frame&quot;</span>, Name = <span class="hljs-string">&quot;Panel&quot;</span> },
+
+    {
+        ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>,
+        mount(<span class="hljs-string">&quot;Panel&quot;</span>),          <span class="hljs-comment">-- parented into Panel, not the ScreenGui</span>
+    },
+}</code></pre>
+<p>Names are collected during capture, so a <code>mount(&quot;Panel&quot;)</code> may appear before
+the node it targets.</p>
+<h2 id="reserved-keys"><a class="anchor" href="#reserved-keys">#</a>Reserved keys</h2>
+<p>These keys are read by Vision and never assigned to the instance:</p>
+<p><code>ClassName</code>, <code>attributes</code>, <code>Attributes</code>, <code>tags</code>, <code>Tags</code>, <code>AttributeChanged</code></p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

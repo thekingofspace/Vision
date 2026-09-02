@@ -26,7 +26,7 @@ event("Count", 0, function(self, Value)
 end)
 ```
 
-Declaring the same name twice does not create a second value — the second
+Declaring the same name twice does not create a second value - the second
 declaration behaves as a `merge`, adding another binding. The first
 declaration's `InitialValue` wins.
 
@@ -45,7 +45,7 @@ merge(Name: string, Callback: (self: Instance, Value: any) -> ()) -> Marker
 ```
 
 Binds another callback to a value declared elsewhere in the same tree. This
-is how one value drives several instances — each callback receives its own
+is how one value drives several instances - each callback receives its own
 `self`.
 
 ```lua
@@ -65,6 +65,53 @@ is how one value drives several instances — each callback receives its own
 ```
 
 A `merge` may name a value that has not been declared yet.
+
+## derive
+
+```lua
+derive(Name: string, Compute: (Read: (string) -> any) -> any) -> Marker
+```
+
+Declares a value computed from other values. The `Read` you are handed both
+returns a value and records it as a dependency, so the graph is discovered as
+the function runs.
+
+```lua
+event("Price", 10, function() end),
+event("Quantity", 2, function() end),
+
+derive("Total", function(Read)
+    return Read("Price") * Read("Quantity")
+end),
+```
+
+`Total` behaves like any other value: `merge` onto it, read it with
+`Interface.Total()`, animate it. It recomputes whenever a value it read
+changes, and derived values chain, so a derive that reads another derive
+updates after it.
+
+### Tracking is per run
+
+Dependencies are re-recorded on every recompute, so a branch you did not take
+is not a dependency:
+
+```lua
+derive("Shown", function(Read)
+    if Read("UseFallback") then
+        return Read("Fallback")
+    end
+
+    return Read("Primary")
+end),
+```
+
+While `UseFallback` is false, writing `Fallback` recomputes nothing. Flip it
+and `Fallback` becomes live while `Primary` goes quiet.
+
+::: warning Derived values are read only
+`Interface.Total(5)` raises. A derive owns its value. Reading a value from
+itself raises too, as does a cycle between two derives.
+:::
 
 ## ready
 
@@ -100,7 +147,7 @@ end),
 ```
 
 Or called **inside a `ready` callback**, where it registers against the node
-currently running. This is the useful form — it puts a connection and its
+currently running. This is the useful form - it puts a connection and its
 disconnect next to each other:
 
 ```lua
@@ -132,4 +179,4 @@ mount("Panel")
 ```
 
 Without a `mount`, a child parents to the declaration containing it, and a
-root parents to nothing — it is created but left unparented.
+root parents to nothing - it is created but left unparented.

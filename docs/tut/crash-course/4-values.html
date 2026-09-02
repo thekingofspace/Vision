@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Values | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../../assets/logo.svg">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../../index.html">
+<img src="../../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../../index.html">Home</a>
+<a href="./1-introduction.html">Tutorials</a>
+<a href="../../api/declarations.html">API</a>
+<a href="../../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">Crash Course</p>
+<div class="items">
+<a href="./1-introduction.html">Introduction</a>
+<a href="./2-declarations.html">Declarations</a>
+<a href="./3-mounting.html">Staging and Mounting</a>
+<a class="active" href="./4-values.html">Values</a>
+<a href="./5-lifecycle.html">Lifecycle</a>
+<a href="./6-sleeping.html">Sleeping and Cloning</a>
+<a href="./7-animation.html">Animation</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="values"><a class="anchor" href="#values">#</a>Values</h1>
+<p><code>event</code> declares a named value and binds a callback to it.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Interface = Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>,
+    mount(PlayerGui),
+
+    event(<span class="hljs-string">&quot;Count&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+        <span class="hljs-built_in">self</span>.Text = `Clicks: {Value}`
+    <span class="hljs-keyword">end</span>),
+})
+
+Interface:Mount()
+
+Interface.Count(<span class="hljs-number">5</span>)   <span class="hljs-comment">-- label now reads &quot;Clicks: 5&quot;</span></code></pre>
+<p>The name becomes a field on the Vision. Call it with nothing to read, with a
+value to write. A write returns the value, so it composes:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Next = Interface.Count(Interface.Count() + <span class="hljs-number">1</span>)</code></pre>
+<h2 id="staged-writes-coalesce"><a class="anchor" href="#staged-writes-coalesce">#</a>Staged writes coalesce</h2>
+<p>Before mounting, a write only stores:</p>
+<pre class="code"><code class="hljs">Interface.Count(<span class="hljs-number">1</span>)
+Interface.Count(<span class="hljs-number">2</span>)
+Interface.Count(<span class="hljs-number">3</span>)
+<span class="hljs-comment">-- nothing has run</span>
+
+Interface:Mount()
+<span class="hljs-comment">-- the callback runs once, with 3</span></code></pre>
+<h2 id="unchanged-writes-are-skipped"><a class="anchor" href="#unchanged-writes-are-skipped">#</a>Unchanged writes are skipped</h2>
+<p>After mounting, writing the value it already holds does nothing at all:</p>
+<pre class="code"><code class="hljs">Interface.Mode(<span class="hljs-string">&quot;active&quot;</span>)   <span class="hljs-comment">-- callbacks run</span>
+Interface.Mode(<span class="hljs-string">&quot;active&quot;</span>)   <span class="hljs-comment">-- skipped</span></code></pre>
+<p>Which means you can write freely from a loop or a network handler without
+checking first.</p>
+<div class="callout warning">
+
+<p><strong>Warning</strong></p>
+<p>This makes writes idempotent. If you were relying on re-writing the same
+value to re-run a callback, it will not fire.</p>
+</div>
+
+<h2 id="one-value-many-instances"><a class="anchor" href="#one-value-many-instances">#</a>One value, many instances</h2>
+<p>This is where it gets useful. <code>merge</code> binds another callback to a value
+declared elsewhere:</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    mount(PlayerGui),
+
+    {
+        ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>,
+        Name = <span class="hljs-string">&quot;Percent&quot;</span>,
+
+        event(<span class="hljs-string">&quot;Fill&quot;</span>, <span class="hljs-number">0.2</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+            <span class="hljs-built_in">self</span>.Text = <span class="hljs-built_in">string</span>.<span class="hljs-built_in">format</span>(<span class="hljs-string">&quot;%.0f%%&quot;</span>, Value * <span class="hljs-number">100</span>)
+        <span class="hljs-keyword">end</span>),
+    },
+
+    {
+        ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+        Name = <span class="hljs-string">&quot;Bar&quot;</span>,
+
+        merge(<span class="hljs-string">&quot;Fill&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+            <span class="hljs-built_in">self</span>.Size = UDim2.fromScale(Value, <span class="hljs-number">1</span>)
+        <span class="hljs-keyword">end</span>),
+    },
+}</code></pre>
+<p>One write updates both, and each callback gets its own <code>self</code>:</p>
+<pre class="code"><code class="hljs">Interface.Fill(<span class="hljs-number">0.75</span>)</code></pre>
+<p>Declaring the same name with <code>event</code> twice does the same thing as <code>merge</code> -
+the second declaration adds a binding rather than replacing the value. The
+first <code>InitialValue</code> wins.</p>
+<h2 id="next"><a class="anchor" href="#next">#</a>Next</h2>
+<p><a href="./5-lifecycle.html">Lifecycle</a> - running code at the right time.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

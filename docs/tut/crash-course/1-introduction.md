@@ -48,11 +48,11 @@ Three writes, one callback, and the label never displayed a stale value.
 
 ## The three pieces
 
-**Scope** — owns your Visions and the animation runtime.
+**Scope** - owns your Visions and the animation runtime.
 
-**Declaration** — a plain table describing one instance and its children.
+**Declaration** - a plain table describing one instance and its children.
 
-**Vision** — what `Capture` returns. It has `Mount`, `Open` and `Cleanup`,
+**Vision** - what `Capture` returns. It has `Mount`, `Open` and `Cleanup`,
 plus one callable value per name you declared.
 
 ```lua
@@ -62,4 +62,4 @@ local Interface = Scope:Capture({ }) -- 2 in, 3 out
 
 ## Next
 
-[Declarations](/tut/crash-course/2-declarations) — how to describe a tree.
+[Declarations](/tut/crash-course/2-declarations) - how to describe a tree.

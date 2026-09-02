@@ -91,10 +91,10 @@ One write updates both, and each callback gets its own `self`:
 Interface.Fill(0.75)
 ```
 
-Declaring the same name with `event` twice does the same thing as `merge` —
+Declaring the same name with `event` twice does the same thing as `merge` -
 the second declaration adds a binding rather than replacing the value. The
 first `InitialValue` wins.
 
 ## Next
 
-[Lifecycle](/tut/crash-course/5-lifecycle) — running code at the right time.
+[Lifecycle](/tut/crash-course/5-lifecycle) - running code at the right time.

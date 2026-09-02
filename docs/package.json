@@ -3,11 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vitepress dev",
-    "build": "vitepress build",
-    "preview": "vitepress preview"
+    "build": "node build.mjs",
+    "serve": "node serve.mjs"
   },
-  "devDependencies": {
-    "vitepress": "^1.6.3"
+  "dependencies": {
+    "marked": "^15.0.7",
+    "highlight.js": "^11.11.1"
   }
 }

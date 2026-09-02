@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="./declarations.html">API</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">API</p>
+<div class="items">
+<a href="./declarations.html">Declarations</a>
+<a href="./keywords.html">Keywords</a>
+<a href="./scope.html">Scope</a>
+<a class="active" href="./vision.html">Vision</a>
+<a href="./animation.html">Animation</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="vision"><a class="anchor" href="#vision">#</a>Vision</h1>
+<p>What <code>Scope:Capture</code> returns. It holds a staged tree and one CapFunc per
+declared value.</p>
+<pre class="code"><code class="hljs">export <span class="hljs-built_in">type</span> Vision = {
+    Mount: (<span class="hljs-built_in">self</span>: Vision) -&gt; (),
+    Open: (<span class="hljs-built_in">self</span>: Vision) -&gt; Instance,
+    Cleanup: (<span class="hljs-built_in">self</span>: Vision) -&gt; (),
+    Clone: (<span class="hljs-built_in">self</span>: Vision) -&gt; Vision,
+} &amp; { [<span class="hljs-built_in">string</span>]: CapFunc&lt;any&gt; }</code></pre>
+<h2 id="mount"><a class="anchor" href="#mount">#</a>Mount</h2>
+<pre class="code"><code class="hljs">Interface:Mount()</code></pre>
+<p>Creates the tree. In order:</p>
+<ol>
+<li>every instance is created, with properties, attributes, tags and
+connections applied</li>
+<li>children are parented, resolving any <code>mount(&quot;Name&quot;)</code> targets</li>
+<li>every value fires <strong>once</strong>, with the value it holds</li>
+<li>the root is parented to its mount target</li>
+<li><code>ready</code> callbacks run, deepest first</li>
+</ol>
+<p>Calling <code>Mount</code> on a Vision that is already mounted does nothing. Mounting a
+Vision that was cleaned up rebuilds it - see <a href="#cleanup">Cleanup</a>.</p>
+<p>Mount also re-registers the Vision with its scope, so <code>Scope:Release</code> covers
+it again.</p>
+<h2 id="open"><a class="anchor" href="#open">#</a>Open</h2>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Object = Interface:Open()</code></pre>
+<p>Mounts if needed and returns the root instance. Idempotent - calling it twice
+returns the same instance and does not rebuild anything.</p>
+<h2 id="cleanup"><a class="anchor" href="#cleanup">#</a>Cleanup</h2>
+<pre class="code"><code class="hljs">Interface:Cleanup()</code></pre>
+<p>Runs <code>cleanup</code> callbacks deepest first, cancels any links driving this Vision
+or its instances, disconnects every connection, and destroys the root.
+Cleaning up twice does nothing.</p>
+<p><strong>Cleanup does not destroy the Vision.</strong> It puts it to sleep. The declaration
+and every value survive, and mounting again rebuilds the tree as it was:</p>
+<pre class="code"><code class="hljs">Interface.Count(<span class="hljs-number">7</span>)
+Interface:Mount()
+
+Interface:Cleanup()
+<span class="hljs-built_in">print</span>(Interface.Count())   <span class="hljs-comment">--&gt; 7</span>
+
+Interface:Mount()          <span class="hljs-comment">-- rebuilt, callbacks fire once with 7</span></code></pre>
+<p>A sleeping Vision behaves exactly like one that has never been mounted -
+writes store and nothing runs, so it can keep receiving updates while its
+instances are gone, and comes back correct rather than stale.</p>
+<p>The scope forgets a sleeping Vision, so <code>Scope:Release</code> will not touch it.
+Mounting adopts it again.</p>
+<h3 id="declared-cleanups-repeat"><a class="anchor" href="#declared-cleanups-repeat">#</a>Declared cleanups repeat</h3>
+<p>A <code>cleanup</code> declared in the table runs on <strong>every</strong> teardown. A <code>cleanup</code>
+registered from inside <code>ready</code> belongs to that mount only, and is registered
+again the next time <code>ready</code> runs.</p>
+<h2 id="clone"><a class="anchor" href="#clone">#</a>Clone</h2>
+<pre class="code"><code class="hljs">Interface:Clone() -&gt; Vision</code></pre>
+<p>Copies a Vision without building anything. The copy is captured into the same
+scope from the same declaration, so it mounts to the same place, and starts
+with the values the original holds right now.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Row = Card:Clone()
+
+Row.Title(<span class="hljs-string">&quot;Second&quot;</span>)
+Row:Mount()</code></pre>
+<p>The two share nothing after that - separate instances, separate values.
+<code>Scope:Release</code> cleans up clones along with everything else.</p>
+<h2 id="capfunc"><a class="anchor" href="#capfunc">#</a>CapFunc</h2>
+<p>Every name passed to <code>event</code> becomes a field on the Vision:</p>
+<pre class="code"><code class="hljs">export <span class="hljs-built_in">type</span> CapFunc&lt;v&gt; = (i: v?) -&gt; v</code></pre>
+<p>Call it with nothing to read, or with a value to write. <strong>A write returns the
+new value</strong>, so it reads naturally in an expression.</p>
+<pre class="code"><code class="hljs">Interface.Count()        <span class="hljs-comment">-- read</span>
+Interface.Count(<span class="hljs-number">5</span>)       <span class="hljs-comment">-- write, returns 5</span></code></pre>
+<h3 id="writes-before-mount"><a class="anchor" href="#writes-before-mount">#</a>Writes before mount</h3>
+<p>While staged, a write only stores. Nothing runs. At <code>Mount</code> the callback
+fires once with whatever the value holds by then.</p>
+<pre class="code"><code class="hljs">Interface.Count(<span class="hljs-number">1</span>)
+Interface.Count(<span class="hljs-number">2</span>)
+Interface.Count(<span class="hljs-number">3</span>)
+<span class="hljs-comment">-- no callbacks yet</span>
+
+Interface:Mount()
+<span class="hljs-comment">-- callback runs once, with 3</span></code></pre>
+<h3 id="writes-after-mount"><a class="anchor" href="#writes-after-mount">#</a>Writes after mount</h3>
+<p>Every bound callback runs immediately, each with its own instance.</p>
+<h3 id="unchanged-writes-are-skipped"><a class="anchor" href="#unchanged-writes-are-skipped">#</a>Unchanged writes are skipped</h3>
+<p>Writing the value it already holds does nothing - no callbacks, no property
+assignments.</p>
+<pre class="code"><code class="hljs">Interface.Mode(<span class="hljs-string">&quot;active&quot;</span>)   <span class="hljs-comment">-- callbacks run</span>
+Interface.Mode(<span class="hljs-string">&quot;active&quot;</span>)   <span class="hljs-comment">-- skipped entirely</span></code></pre>
+<p>Tables are compared by identity, and a table that is not frozen is always
+treated as changed, so mutating a table in place and writing it back still
+fires.</p>
+<div class="callout warning">
+
+<p><strong>Warning</strong></p>
+<p>This makes writes idempotent. If you were relying on writing the same value
+to re-trigger a callback, it will no longer fire.</p>
+</div>
+
+<h2 id="notes"><a class="anchor" href="#notes">#</a>Notes</h2>
+<p>An event name that collides with <code>Mount</code>, <code>Open</code> or <code>Cleanup</code> raises at
+capture time rather than silently shadowing the method.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

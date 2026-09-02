@@ -142,6 +142,98 @@ function Interpolate.Value(Start: any, Goal: any, Alpha: number): any
     return if Alpha >= 0.5 then Goal else Start
 end
 
+local Shapes: { [string]: { Read: (any) -> { number }, Make: ({ number }) -> any } } = {
+    number = {
+        Read = function(Value: number)
+            return { Value }
+        end,
+        Make = function(Parts)
+            return Parts[1]
+        end,
+    },
+
+    UDim = {
+        Read = function(Value: UDim)
+            return { Value.Scale, Value.Offset }
+        end,
+        Make = function(Parts)
+            return UDim.new(Parts[1], math.round(Parts[2]))
+        end,
+    },
+
+    UDim2 = {
+        Read = function(Value: UDim2)
+            return { Value.X.Scale, Value.X.Offset, Value.Y.Scale, Value.Y.Offset }
+        end,
+        Make = function(Parts)
+            return UDim2.new(Parts[1], math.round(Parts[2]), Parts[3], math.round(Parts[4]))
+        end,
+    },
+
+    Vector2 = {
+        Read = function(Value: Vector2)
+            return { Value.X, Value.Y }
+        end,
+        Make = function(Parts)
+            return Vector2.new(Parts[1], Parts[2])
+        end,
+    },
+
+    Vector3 = {
+        Read = function(Value: Vector3)
+            return { Value.X, Value.Y, Value.Z }
+        end,
+        Make = function(Parts)
+            return Vector3.new(Parts[1], Parts[2], Parts[3])
+        end,
+    },
+
+    Color3 = {
+        Read = function(Value: Color3)
+            return { Value.R, Value.G, Value.B }
+        end,
+        Make = function(Parts)
+            return Color3.new(
+                math.clamp(Parts[1], 0, 1),
+                math.clamp(Parts[2], 0, 1),
+                math.clamp(Parts[3], 0, 1)
+            )
+        end,
+    },
+
+    Rect = {
+        Read = function(Value: Rect)
+            return { Value.Min.X, Value.Min.Y, Value.Max.X, Value.Max.Y }
+        end,
+        Make = function(Parts)
+            return Rect.new(Parts[1], Parts[2], Parts[3], Parts[4])
+        end,
+    },
+
+    NumberRange = {
+        Read = function(Value: NumberRange)
+            return { Value.Min, Value.Max }
+        end,
+        Make = function(Parts)
+            return NumberRange.new(Parts[1], math.max(Parts[1], Parts[2]))
+        end,
+    },
+}
+
+function Interpolate.Components(Value: any): { number }?
+    local Shape = Shapes[typeof(Value)]
+
+    return if Shape then Shape.Read(Value) else nil
+end
+
+function Interpolate.Rebuild(Kind: string, Parts: { number }): any
+    return Shapes[Kind].Make(Parts)
+end
+
+function Interpolate.Solvable(Value: any): boolean
+    return Shapes[typeof(Value)] ~= nil
+end
+
 function Interpolate.Cycle(Info: TweenInfo, Elapsed: number): (number, boolean)
     local Duration = Info.Time
     local Span = Duration * (if Info.Reverses then 2 else 1)

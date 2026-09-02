@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Introduction | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../../assets/logo.svg">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../../index.html">
+<img src="../../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../../index.html">Home</a>
+<a class="active" href="./1-introduction.html">Tutorials</a>
+<a href="../../api/declarations.html">API</a>
+<a href="../../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">Crash Course</p>
+<div class="items">
+<a class="active" href="./1-introduction.html">Introduction</a>
+<a href="./2-declarations.html">Declarations</a>
+<a href="./3-mounting.html">Staging and Mounting</a>
+<a href="./4-values.html">Values</a>
+<a href="./5-lifecycle.html">Lifecycle</a>
+<a href="./6-sleeping.html">Sleeping and Cloning</a>
+<a href="./7-animation.html">Animation</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="introduction"><a class="anchor" href="#introduction">#</a>Introduction</h1>
+<p>Vision is a declarative instance library. You describe a tree as a table, and
+Vision builds it when you say so.</p>
+<p>The idea it is built around: <strong>nothing is created until you mount</strong>.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Vision = <span class="hljs-built_in">require</span>(ReplicatedStorage.Shared.Vision)
+
+<span class="hljs-keyword">local</span> Scope = Vision.Scope()
+
+<span class="hljs-keyword">local</span> Interface = Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    Name = <span class="hljs-string">&quot;Panel&quot;</span>,
+    Size = UDim2.fromOffset(<span class="hljs-number">300</span>, <span class="hljs-number">200</span>),
+})
+
+<span class="hljs-comment">-- PlayerGui is still empty here. Nothing has been made.</span>
+
+Interface:Mount()
+
+<span class="hljs-comment">-- now the Frame exists</span></code></pre>
+<p><code>Capture</code> reads your table and hands back a handle. It creates nothing. That
+gap between describing and building is where the library earns its keep: you
+can stage data into a tree that does not exist yet, and when it finally
+appears it appears already correct.</p>
+<h2 id="why-staging-matters"><a class="anchor" href="#why-staging-matters">#</a>Why staging matters</h2>
+<p>The usual shape of UI code is: create the instances, then correct them as
+data arrives. That means the first frame shows placeholder text, and every
+update between then and now costs a property write.</p>
+<p>With Vision, writes made before <code>Mount</code> only store:</p>
+<pre class="code"><code class="hljs">Interface.Count(<span class="hljs-number">1</span>)
+Interface.Count(<span class="hljs-number">2</span>)
+Interface.Count(<span class="hljs-number">3</span>)
+
+Interface:Mount()   <span class="hljs-comment">-- the callback runs once, with 3</span></code></pre>
+<p>Three writes, one callback, and the label never displayed a stale value.</p>
+<h2 id="the-three-pieces"><a class="anchor" href="#the-three-pieces">#</a>The three pieces</h2>
+<p><strong>Scope</strong> - owns your Visions and the animation runtime.</p>
+<p><strong>Declaration</strong> - a plain table describing one instance and its children.</p>
+<p><strong>Vision</strong> - what <code>Capture</code> returns. It has <code>Mount</code>, <code>Open</code> and <code>Cleanup</code>,
+plus one callable value per name you declared.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Scope = Vision.Scope()          <span class="hljs-comment">-- 1</span>
+<span class="hljs-keyword">local</span> Interface = Scope:Capture({ }) <span class="hljs-comment">-- 2 in, 3 out</span></code></pre>
+<h2 id="next"><a class="anchor" href="#next">#</a>Next</h2>
+<p><a href="./2-declarations.html">Declarations</a> - how to describe a tree.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

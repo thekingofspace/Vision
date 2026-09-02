@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Keywords | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="./declarations.html">API</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">API</p>
+<div class="items">
+<a href="./declarations.html">Declarations</a>
+<a class="active" href="./keywords.html">Keywords</a>
+<a href="./scope.html">Scope</a>
+<a href="./vision.html">Vision</a>
+<a href="./animation.html">Animation</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="keywords"><a class="anchor" href="#keywords">#</a>Keywords</h1>
+<p>The five functions that go in the array part of a declaration. Each returns a
+marker that <code>Capture</code> reads and removes.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> event = Vision.event
+<span class="hljs-keyword">local</span> merge = Vision.merge
+<span class="hljs-keyword">local</span> ready = Vision.ready
+<span class="hljs-keyword">local</span> cleanup = Vision.cleanup
+<span class="hljs-keyword">local</span> mount = Vision.mount</code></pre>
+<h2 id="event"><a class="anchor" href="#event">#</a>event</h2>
+<pre class="code"><code class="hljs">event(Name: <span class="hljs-built_in">string</span>, InitialValue: any, Callback: (<span class="hljs-built_in">self</span>: Instance, Value: any) -&gt; ()) -&gt; Marker</code></pre>
+<p>Declares a named value on the Vision and binds this node&#39;s callback to it.
+The value becomes callable as <code>Interface[Name]</code>, a <a href="./vision.html">CapFunc</a>.</p>
+<pre class="code"><code class="hljs">event(<span class="hljs-string">&quot;Count&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+    <span class="hljs-built_in">self</span>.Text = `Clicks: {Value}`
+<span class="hljs-keyword">end</span>)</code></pre>
+<p>Declaring the same name twice does not create a second value - the second
+declaration behaves as a <code>merge</code>, adding another binding. The first
+declaration&#39;s <code>InitialValue</code> wins.</p>
+<p>The callback runs <strong>once at mount</strong> with the value at that moment, then on
+every change that actually changes it.</p>
+<div class="callout warning">
+
+<p><strong>Reserved names</strong></p>
+<p><code>Mount</code>, <code>Open</code> and <code>Cleanup</code> are methods on the Vision, so an event may not
+use those names. Doing so raises at capture time.</p>
+</div>
+
+<h2 id="merge"><a class="anchor" href="#merge">#</a>merge</h2>
+<pre class="code"><code class="hljs">merge(Name: <span class="hljs-built_in">string</span>, Callback: (<span class="hljs-built_in">self</span>: Instance, Value: any) -&gt; ()) -&gt; Marker</code></pre>
+<p>Binds another callback to a value declared elsewhere in the same tree. This
+is how one value drives several instances - each callback receives its own
+<code>self</code>.</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>,
+    event(<span class="hljs-string">&quot;Fill&quot;</span>, <span class="hljs-number">0.2</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+        <span class="hljs-built_in">self</span>.Text = <span class="hljs-built_in">string</span>.<span class="hljs-built_in">format</span>(<span class="hljs-string">&quot;%.0f%%&quot;</span>, Value * <span class="hljs-number">100</span>)
+    <span class="hljs-keyword">end</span>),
+},
+
+{
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    merge(<span class="hljs-string">&quot;Fill&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+        <span class="hljs-built_in">self</span>.Size = UDim2.fromScale(Value, <span class="hljs-number">1</span>)
+    <span class="hljs-keyword">end</span>),
+},</code></pre>
+<p>A <code>merge</code> may name a value that has not been declared yet.</p>
+<h2 id="derive"><a class="anchor" href="#derive">#</a>derive</h2>
+<pre class="code"><code class="hljs">derive(Name: <span class="hljs-built_in">string</span>, Compute: (Read: (<span class="hljs-built_in">string</span>) -&gt; any) -&gt; any) -&gt; Marker</code></pre>
+<p>Declares a value computed from other values. The <code>Read</code> you are handed both
+returns a value and records it as a dependency, so the graph is discovered as
+the function runs.</p>
+<pre class="code"><code class="hljs">event(<span class="hljs-string">&quot;Price&quot;</span>, <span class="hljs-number">10</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span> <span class="hljs-keyword">end</span>),
+event(<span class="hljs-string">&quot;Quantity&quot;</span>, <span class="hljs-number">2</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span> <span class="hljs-keyword">end</span>),
+
+derive(<span class="hljs-string">&quot;Total&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Read)</span></span>
+    <span class="hljs-keyword">return</span> Read(<span class="hljs-string">&quot;Price&quot;</span>) * Read(<span class="hljs-string">&quot;Quantity&quot;</span>)
+<span class="hljs-keyword">end</span>),</code></pre>
+<p><code>Total</code> behaves like any other value: <code>merge</code> onto it, read it with
+<code>Interface.Total()</code>, animate it. It recomputes whenever a value it read
+changes, and derived values chain, so a derive that reads another derive
+updates after it.</p>
+<h3 id="tracking-is-per-run"><a class="anchor" href="#tracking-is-per-run">#</a>Tracking is per run</h3>
+<p>Dependencies are re-recorded on every recompute, so a branch you did not take
+is not a dependency:</p>
+<pre class="code"><code class="hljs">derive(<span class="hljs-string">&quot;Shown&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Read)</span></span>
+    <span class="hljs-keyword">if</span> Read(<span class="hljs-string">&quot;UseFallback&quot;</span>) <span class="hljs-keyword">then</span>
+        <span class="hljs-keyword">return</span> Read(<span class="hljs-string">&quot;Fallback&quot;</span>)
+    <span class="hljs-keyword">end</span>
+
+    <span class="hljs-keyword">return</span> Read(<span class="hljs-string">&quot;Primary&quot;</span>)
+<span class="hljs-keyword">end</span>),</code></pre>
+<p>While <code>UseFallback</code> is false, writing <code>Fallback</code> recomputes nothing. Flip it
+and <code>Fallback</code> becomes live while <code>Primary</code> goes quiet.</p>
+<div class="callout warning">
+
+<p><strong>Derived values are read only</strong></p>
+<p><code>Interface.Total(5)</code> raises. A derive owns its value. Reading a value from
+itself raises too, as does a cycle between two derives.</p>
+</div>
+
+<h2 id="ready"><a class="anchor" href="#ready">#</a>ready</h2>
+<pre class="code"><code class="hljs">ready(Callback: (<span class="hljs-built_in">self</span>: Instance) -&gt; ()) -&gt; Marker</code></pre>
+<p>Runs after the tree is built and the root is parented. Callbacks run
+<strong>deepest first</strong>, climbing the tree, so a child is always live before its
+parent&#39;s <code>ready</code> runs.</p>
+<pre class="code"><code class="hljs">ready(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
+    <span class="hljs-built_in">print</span>(<span class="hljs-built_in">self</span>.Name, <span class="hljs-string">&quot;is live&quot;</span>, <span class="hljs-built_in">self</span>.AbsoluteSize)
+<span class="hljs-keyword">end</span>)</code></pre>
+<h2 id="cleanup"><a class="anchor" href="#cleanup">#</a>cleanup</h2>
+<pre class="code"><code class="hljs">cleanup(Callback: (<span class="hljs-built_in">self</span>: Instance) -&gt; ()) -&gt; Marker?</code></pre>
+<p>Runs when the Vision is cleaned up, before anything is disconnected or
+destroyed, so the instance is still live.</p>
+<p>It works two ways. In a declaration:</p>
+<pre class="code"><code class="hljs">cleanup(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;releasing&quot;</span>, <span class="hljs-built_in">self</span>.Name)
+<span class="hljs-keyword">end</span>),</code></pre>
+<p>Or called <strong>inside a <code>ready</code> callback</strong>, where it registers against the node
+currently running. This is the useful form - it puts a connection and its
+disconnect next to each other:</p>
+<pre class="code"><code class="hljs">ready(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
+    <span class="hljs-keyword">local</span> Connection = SomeSignal:Connect(Handler)
+
+    cleanup(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+        Connection:Disconnect()
+    <span class="hljs-keyword">end</span>)
+<span class="hljs-keyword">end</span>),</code></pre>
+<p>Callbacks run deepest first across nodes, and <strong>last registered first</strong>
+within a node, so a connection made in <code>ready</code> is released before the
+declared <code>cleanup</code> runs.</p>
+<h2 id="mount"><a class="anchor" href="#mount">#</a>mount</h2>
+<pre class="code"><code class="hljs">mount(Target: Instance | <span class="hljs-built_in">string</span>) -&gt; Marker</code></pre>
+<p>Sets where this node is parented. An <code>Instance</code> parents there directly; a
+<code>string</code> resolves to the node in the same tree with that declared <code>Name</code>.</p>
+<pre class="code"><code class="hljs">mount(PlayerGui)
+mount(<span class="hljs-string">&quot;Panel&quot;</span>)</code></pre>
+<p>Without a <code>mount</code>, a child parents to the declaration containing it, and a
+root parents to nothing - it is created but left unparented.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

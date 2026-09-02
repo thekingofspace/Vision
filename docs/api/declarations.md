@@ -1,7 +1,7 @@
 # Declarations
 
 A declaration is a plain table describing one instance and its subtree. It is
-inert data — building one creates nothing.
+inert data - building one creates nothing.
 
 ```lua
 {
@@ -48,7 +48,7 @@ ceremony. It also means a typo'd property name errors on mount rather than
 silently doing nothing.
 
 ::: tip Signal callbacks receive the instance first
-A connected callback is called as `Callback(Instance, ...)` — the instance,
+A connected callback is called as `Callback(Instance, ...)` - the instance,
 then whatever the signal passes. This holds for every callback in Vision, so
 you never have to close over the instance to edit it.
 :::

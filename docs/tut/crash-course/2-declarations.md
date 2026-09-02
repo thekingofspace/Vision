@@ -50,7 +50,7 @@ than assigned:
 ```
 
 `Text` is assigned, `Activated` is connected, and you did not have to say
-which is which — Vision checks what the member actually is.
+which is which - Vision checks what the member actually is.
 
 Notice the callback receives `self`. **Every** callback in Vision gets the
 instance as its first argument, so you can edit it without closing over a
@@ -105,5 +105,5 @@ where it belongs.
 
 ## Next
 
-[Staging and mounting](/tut/crash-course/3-mounting) — the part that makes
+[Staging and mounting](/tut/crash-course/3-mounting) - the part that makes
 this different.

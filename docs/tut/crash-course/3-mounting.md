@@ -43,7 +43,7 @@ local Object = Interface:Open()
 ```
 
 It mounts if needed and returns the root. Calling it again returns the same
-instance — it does not rebuild.
+instance - it does not rebuild.
 
 ## Cleanup
 
@@ -62,4 +62,4 @@ Scope:Release()
 
 ## Next
 
-[Values](/tut/crash-course/4-values) — one value, many instances.
+[Values](/tut/crash-course/4-values) - one value, many instances.

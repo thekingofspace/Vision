@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Sleeping and cloning | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../../assets/logo.svg">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../../index.html">
+<img src="../../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../../index.html">Home</a>
+<a href="./1-introduction.html">Tutorials</a>
+<a href="../../api/declarations.html">API</a>
+<a href="../../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">Crash Course</p>
+<div class="items">
+<a href="./1-introduction.html">Introduction</a>
+<a href="./2-declarations.html">Declarations</a>
+<a href="./3-mounting.html">Staging and Mounting</a>
+<a href="./4-values.html">Values</a>
+<a href="./5-lifecycle.html">Lifecycle</a>
+<a class="active" href="./6-sleeping.html">Sleeping and Cloning</a>
+<a href="./7-animation.html">Animation</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="sleeping-and-cloning"><a class="anchor" href="#sleeping-and-cloning">#</a>Sleeping and cloning</h1>
+<p><code>Cleanup</code> does not kill a Vision. It puts it to sleep.</p>
+<p>The instances are destroyed and the memory goes back, but the Vision keeps
+its declaration and every value it held. Mount it again and the tree comes
+back exactly as it was.</p>
+<pre class="code"><code class="hljs">Interface.Count(<span class="hljs-number">7</span>)
+Interface:Mount()      <span class="hljs-comment">-- built, label reads 7</span>
+
+Interface:Cleanup()    <span class="hljs-comment">-- instances destroyed, memory freed</span>
+<span class="hljs-built_in">print</span>(Interface.Count())  <span class="hljs-comment">--&gt; 7</span>
+
+Interface:Mount()      <span class="hljs-comment">-- rebuilt, label reads 7 again</span></code></pre>
+<p>This is what makes it practical to close a menu properly instead of just
+hiding it. A hidden <code>ScreenGui</code> still costs you every instance in it. A
+sleeping Vision costs a table.</p>
+<h2 id="writing-while-asleep"><a class="anchor" href="#writing-while-asleep">#</a>Writing while asleep</h2>
+<p>A sleeping Vision behaves exactly like one that has never been mounted:
+writes store, and nothing runs.</p>
+<pre class="code"><code class="hljs">Interface:Cleanup()
+
+Interface.Count(<span class="hljs-number">9</span>)     <span class="hljs-comment">-- stored, no callbacks</span>
+
+Interface:Mount()      <span class="hljs-comment">-- callback runs once, with 9</span></code></pre>
+<p>Which means the world can keep updating while your UI is gone, and when it
+comes back it is already correct - it never rebuilds into a stale state and
+then catches up.</p>
+<div class="callout tip">
+
+<p><strong>Tip</strong></p>
+<p>Every <code>event</code> and <code>merge</code> callback runs once on every mount, with the value
+current at that moment. That is true of the first mount and of every revival
+after it.</p>
+</div>
+
+<h2 id="scope-ownership"><a class="anchor" href="#scope-ownership">#</a>Scope ownership</h2>
+<p>While a Vision is asleep, its scope forgets it, so <code>Scope:Release</code> will not
+touch it. Mounting it again re-registers it. You keep a reference, you keep
+control.</p>
+<pre class="code"><code class="hljs">Interface:Cleanup()    <span class="hljs-comment">-- scope drops it</span>
+Scope:Release()        <span class="hljs-comment">-- does not touch Interface</span>
+
+Interface:Mount()      <span class="hljs-comment">-- scope adopts it again</span></code></pre>
+<h2 id="clone"><a class="anchor" href="#clone">#</a>Clone</h2>
+<p><code>Clone</code> copies a Vision without building anything.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Copy = Interface:Clone()</code></pre>
+<p>The copy shares nothing with the original - its own instances, its own
+values - but it is built from the same declaration, so it mounts to the same
+place.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Card = Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    mount(ListContainer),
+    event(<span class="hljs-string">&quot;Title&quot;</span>, <span class="hljs-string">&quot;Untitled&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+        <span class="hljs-built_in">self</span>.Name = Value
+    <span class="hljs-keyword">end</span>),
+})
+
+<span class="hljs-keyword">for</span> _, Entry <span class="hljs-keyword">in</span> Entries <span class="hljs-keyword">do</span>
+    <span class="hljs-keyword">local</span> Row = Card:Clone()
+
+    Row.Title(Entry.Name)
+    Row:Mount()
+<span class="hljs-keyword">end</span></code></pre>
+<p>A clone starts with the values the original holds right now, so you can set
+up a template once and stamp it out.</p>
+<p>Clones are captured into the same scope, so <code>Scope:Release</code> cleans up all of
+them.</p>
+<h2 id="next"><a class="anchor" href="#next">#</a>Next</h2>
+<p><a href="./7-animation.html">Animation</a>.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

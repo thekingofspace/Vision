@@ -42,14 +42,17 @@ local function Register(State, Name: string)
         Bindings = {},
         Targets = {},
         Handlers = {},
+        Dependents = {},
+        Sources = {},
     }
 
     State.Events[Name] = Event
 
     local Targets = Event.Targets
     local Handlers = Event.Handlers
+    local Dependents = Event.Dependents
 
-    State.Vision[Name] = function(NewValue: any?): any
+    local Write = function(NewValue: any?): any
         if NewValue == nil then
             return Event.Value
         end
@@ -64,8 +67,15 @@ local function Register(State, Name: string)
             Handlers[Index](Targets[Index], NewValue)
         end
 
+        for Derived in Dependents do
+            State.Recompute(Derived)
+        end
+
         return NewValue
     end
+
+    Event.Write = Write
+    State.Vision[Name] = Write
 
     return Event
 end
@@ -126,6 +136,15 @@ local function Parse(State, Declaration, Parent)
                 local Event = Register(State, Entry.Name)
 
                 table.insert(Event.Bindings, { Node = Node, Callback = Entry.Callback })
+            elseif Kind == "Derive" then
+                local Event = Register(State, Entry.Name)
+
+                if Event.Compute then
+                    error(`Vision value "{Entry.Name}" is derived more than once`, 0)
+                end
+
+                Event.Compute = Entry.Callback
+                table.insert(State.Derived, Event)
             elseif Kind == "Ready" then
                 table.insert(Node.Ready, Entry.Callback)
             elseif Kind == "Cleanup" then
@@ -231,6 +250,87 @@ local function Ready(Node)
     Symbols.Sink = Previous
 end
 
+local function Recompute(State, Event, Silent: boolean?)
+    if Event.Running then
+        error(`Vision value "{Event.Name}" depends on itself`, 0)
+    end
+
+    Event.Running = true
+
+    for Source in Event.Sources do
+        Source.Dependents[Event] = nil
+    end
+
+    table.clear(Event.Sources)
+
+    local Read = function(Name: string): any
+        local Source = State.Events[Name]
+
+        if not Source then
+            error(`Vision value "{Event.Name}" reads "{Name}", which is not declared`, 0)
+        end
+
+        if Source == Event then
+            error(`Vision value "{Event.Name}" reads itself`, 0)
+        end
+
+        Event.Sources[Source] = true
+        Source.Dependents[Event] = true
+
+        return Source.Value
+    end
+
+    local Ok, Result = pcall(Event.Compute, Read)
+
+    if not Ok then
+        Event.Running = false
+
+        error(Result, 0)
+    end
+
+    local Wrote = true
+
+    if Silent then
+        Event.Value = Result
+    else
+        Wrote, Result = pcall(Event.Write, Result)
+    end
+
+    Event.Running = false
+
+    if not Wrote then
+        error(Result, 0)
+    end
+
+    return Result
+end
+
+local function Settle(State)
+    local Derived = State.Derived
+
+    if #Derived == 0 then
+        return
+    end
+
+    for _ = 1, #Derived + 1 do
+        local Changed = false
+
+        for _, Event in Derived do
+            local Before = Event.Value
+
+            Recompute(State, Event, true)
+
+            if Event.Value ~= Before then
+                Changed = true
+            end
+        end
+
+        if not Changed then
+            return
+        end
+    end
+end
+
 local function Activate(State)
     for _, Event in State.Events do
         local Bindings = Event.Bindings
@@ -295,6 +395,7 @@ function Methods:Mount()
     end
 
     Activate(State)
+    Settle(State)
 
     for _, Event in State.Events do
         local Targets = Event.Targets
@@ -388,14 +489,29 @@ function Capture.new(Scope, Declaration)
         Vision = Vision,
         Declaration = Declaration,
         Events = {},
+        Derived = {},
         Mounts = {},
         Nodes = {},
         Root = nil,
         Mounted = false,
     }
 
+    State.Recompute = function(Event)
+        Recompute(State, Event)
+    end
+
     Internal[Vision] = State
     State.Root = Parse(State, Declaration, nil)
+
+    for _, Event in State.Derived do
+        State.Vision[Event.Name] = function(NewValue: any?): any
+            if NewValue == nil then
+                return Event.Value
+            end
+
+            error(`Vision value "{Event.Name}" is derived and cannot be written to`, 0)
+        end
+    end
 
     return Vision
 end

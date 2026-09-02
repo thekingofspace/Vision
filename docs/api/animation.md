@@ -2,7 +2,7 @@
 
 Vision's springs are tween-driven. They take a `TweenInfo` and read their
 curve from `TweenService:GetValue`, so the shape is not an approximation of
-TweenService — it *is* TweenService.
+TweenService - it *is* TweenService.
 
 Only the timeline is Vision's own, and it reproduces real `Tween` behaviour
 including delay, repeat and reverses.
@@ -58,7 +58,7 @@ One cycle is `DelayTime + Time * (Reverses and 2 or 1)`, and a tween runs
 ### Repeats land on the goal
 
 At a cycle boundary the goal value is emitted on that frame, and the next
-cycle starts from it. This matters — without it a repeating tween never
+cycle starts from it. This matters - without it a repeating tween never
 visually reaches its target.
 
 This is real TweenService behaviour, confirmed frame by frame against a live
@@ -97,7 +97,7 @@ flips values it cannot interpolate at the midpoint rather than at the end.
 `NumberSequence`, `ColorSequence` and `string` are **not** tweenable by
 TweenService. Vision animates them anyway.
 
-Sequences interpolate keypoint by keypoint — time, value and envelope — and
+Sequences interpolate keypoint by keypoint - time, value and envelope - and
 never insert or remove a waypoint. If the two sequences have different
 keypoint counts there is nothing sensible to interpolate, so the value
 switches at the halfway point instead.
@@ -112,7 +112,7 @@ Scope:SpringValue(TweenInfo.new(0.45), Interface, "Status", "Ready")
 ## Overshoot
 
 `Back` and `Elastic` return alpha outside `0..1`, and Vision does not clamp
-it — an overshooting curve overshoots the value, as it should. `Back`/`Out`
+it - an overshooting curve overshoots the value, as it should. `Back`/`Out`
 peaks at **1.100** at 0.35s of a 0.6s tween.
 
 Leave room for it. A bar tweening to `1.0` scale with `Back` will pass its
@@ -126,4 +126,4 @@ duration and no momentum, so an interrupted animation stops dead before
 re-accelerating.
 
 If you need motion that survives interruption, that is what a physics spring
-is for — see the [comparison](/comparison).
+is for - see the [comparison](/comparison).

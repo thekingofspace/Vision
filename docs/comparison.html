@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Comparison | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="./assets/logo.svg">
+<link rel="stylesheet" href="./assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="./index.html">
+<img src="./assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="./index.html">Home</a>
+<a href="./tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="./api/declarations.html">API</a>
+<a class="active" href="./comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell wide">
+
+<main class="content">
+<h1 id="comparison"><a class="anchor" href="#comparison">#</a>Comparison</h1>
+<p>Vision, <a href="https://github.com/centau/vide">Vide</a> and writing no module at all,
+measured with the same 100 row tree.</p>
+<p>The benchmark lives in <code>src/client/Comparison.luau</code> and prints every number on
+this page. Run the place and read the output - do not trust a table in a
+readme over your own machine.</p>
+<h2 id="behaviour"><a class="anchor" href="#behaviour">#</a>Behaviour</h2>
+<p>This is the part that does not change between runs. Each column builds one
+instance and writes a value five times <em>before</em> the instance is shown.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Vision</th>
+<th>Vide</th>
+<th>No module</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>instances before reveal</td>
+<td><strong>0</strong></td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>updates at declaration</td>
+<td><strong>0</strong></td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>updates for 5 writes</td>
+<td><strong>0</strong></td>
+<td>5</td>
+<td>5</td>
+</tr>
+<tr>
+<td>instances created at reveal</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>updates total</td>
+<td><strong>1</strong></td>
+<td>6</td>
+<td>5</td>
+</tr>
+<tr>
+<td>instances destroyed on teardown</td>
+<td><strong>all</strong></td>
+<td>none</td>
+<td>yours to destroy</td>
+</tr>
+</tbody></table>
+<p>Vision stages. <code>Capture</code> builds no instances, and writes made before <code>Mount</code>
+only store - the callback runs once, with the last value. Vide is reactive:
+the tree exists from <code>mount</code>, and every write re-runs the effects that depend
+on it. Neither is better; they answer different questions.</p>
+<p>The teardown row is a real difference and easy to miss. <code>Scope:Release</code>
+destroys the instances it created. Vide&#39;s destructor tears down the reactive
+graph and leaves the instances alone, so you destroy the container yourself.</p>
+<h2 id="ownership"><a class="anchor" href="#ownership">#</a>Ownership</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Vision</th>
+<th>Vide</th>
+<th>No module</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>when instances exist</td>
+<td>at <code>Mount</code></td>
+<td>at <code>mount</code></td>
+<td>at <code>Instance.new</code></td>
+</tr>
+<tr>
+<td>who assigns the property</td>
+<td>your callback</td>
+<td>the binding</td>
+<td>you</td>
+</tr>
+<tr>
+<td>one value, many targets</td>
+<td><code>event</code> + <code>merge</code></td>
+<td>one source, many effects</td>
+<td>by hand</td>
+</tr>
+<tr>
+<td>unchanged write</td>
+<td>skipped</td>
+<td>skipped</td>
+<td>writes anyway</td>
+</tr>
+<tr>
+<td>derived values</td>
+<td><code>derive</code>, tracked per run</td>
+<td><code>derive</code>, tracked per run</td>
+<td>by hand</td>
+</tr>
+<tr>
+<td>dependency tracking</td>
+<td>explicit <code>Read</code> inside a derive</td>
+<td>ambient, any source read</td>
+<td>none</td>
+</tr>
+<tr>
+<td>tween animation</td>
+<td><code>TweenInfo</code>, real <code>Tween</code> semantics</td>
+<td>not built in</td>
+<td><code>TweenService</code> directly</td>
+</tr>
+<tr>
+<td>physics animation</td>
+<td><code>Physics*</code>, carries velocity</td>
+<td><code>spring</code>, carries velocity</td>
+<td>none</td>
+</tr>
+<tr>
+<td>teardown</td>
+<td><code>Scope:Release</code> destroys</td>
+<td>destructor keeps instances</td>
+<td>you destroy</td>
+</tr>
+<tr>
+<td>sleep and revive</td>
+<td><code>Cleanup</code> then <code>Mount</code>, state kept</td>
+<td>rebuild it yourself</td>
+<td>rebuild it yourself</td>
+</tr>
+</tbody></table>
+<h2 id="performance"><a class="anchor" href="#performance">#</a>Performance</h2>
+<p>Measured in Studio, 100 rows, 100 writes each, best of three rounds in
+rotating order so no implementation always runs first.</p>
+<p>Read the write row carefully. At this size a single <code>TextLabel.Text</code>
+assignment costs roughly <strong>72 µs</strong>, and all three columns pay it 10,000
+times. That one property write is about <strong>99.9%</strong> of the number.</p>
+<p>For scale: Vision&#39;s own dispatch - the loop that calls each bound callback -
+measures <strong>~30 ns</strong> per call over two million calls. Ten thousand of those is
+<strong>0.3 ms</strong> against a total near 700 ms.</p>
+<p>So treat differences of a few percent in the write row as noise, not as a
+ranking. The <code>cost over raw</code> row is the honest one: it subtracts the
+no-module baseline and shows what the framework actually charges you.</p>
+<p>Across four Studio runs on one machine:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Vision</th>
+<th>Vide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>total to on screen</td>
+<td>9.06 – 9.92 ms</td>
+<td>9.14 – 13.87 ms</td>
+</tr>
+<tr>
+<td>100 writes x 100 rows</td>
+<td>707 – 755 ms</td>
+<td>696 – 726 ms</td>
+</tr>
+<tr>
+<td>teardown</td>
+<td>0.49 – 0.72 ms</td>
+<td>0.04 – 0.05 ms</td>
+</tr>
+</tbody></table>
+<p>The teardown gap is not a loss. Vision destroys 101 instances in that time
+and Vide destroys none.</p>
+<h2 id="animation"><a class="anchor" href="#animation">#</a>Animation</h2>
+<p>Both libraries can be made to feel identical, which is worth knowing before
+you conclude one is bouncier than the other.</p>
+<p>Vision uses a <code>TweenInfo</code> and reads its curve from <code>TweenService:GetValue</code>,
+so the shape <em>is</em> TweenService&#39;s. <code>Back</code>/<code>Out</code> overshoots to <strong>1.100</strong> and
+peaks at <strong>0.35s</strong> of a 0.6s tween.</p>
+<p>Vide uses a damped spring, where overshoot is set by the damping ratio:</p>
+<p>$$\text{overshoot} = e^{-\zeta\pi/\sqrt{1-\zeta^2}}$$</p>
+<table>
+<thead>
+<tr>
+<th>damping</th>
+<th>overshoot</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0.70</td>
+<td>+4.6%</td>
+</tr>
+<tr>
+<td>0.62</td>
+<td>+8.4%</td>
+</tr>
+<tr>
+<td>0.60</td>
+<td>+9.5%</td>
+</tr>
+<tr>
+<td><strong>0.59</strong></td>
+<td><strong>+10.1%</strong></td>
+</tr>
+<tr>
+<td>0.58</td>
+<td>+10.7%</td>
+</tr>
+</tbody></table>
+<p>So <code>spring(goal, 0.6, 0.59)</code> peaks at 1.098 at 0.35s - the same bounce, at
+the same moment, as <code>Back</code>/<code>Out</code>. The demo uses exactly that pairing.</p>
+<p>The difference no easing can close is retargeting. Interrupt a <code>TweenInfo</code>
+mid-flight and it restarts from the current value with <strong>zero velocity</strong>;
+a spring carries velocity through the new goal and keeps flowing.</p>
+<h2 id="reactivity"><a class="anchor" href="#reactivity">#</a>Reactivity</h2>
+<p>Both libraries are fine grained in the sense that matters: a write updates
+only what actually depends on it. Neither diffs a tree or re-renders a
+component.</p>
+<p>They differ in how a dependency is discovered.</p>
+<p>Vide tracks <strong>ambiently</strong>. Any source you call inside an effect or a property
+binding is recorded, so a binding is a plain closure:</p>
+<pre class="code"><code class="hljs">Text = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+    <span class="hljs-keyword">return</span> `row {Index} :: {Tick()}`
+<span class="hljs-keyword">end</span></code></pre>
+<p>Vision tracks <strong>explicitly</strong>. A binding names its value up front with <code>event</code>
+or <code>merge</code>, and a <code>derive</code> reads through a <code>Read</code> handed to it:</p>
+<pre class="code"><code class="hljs">derive(<span class="hljs-string">&quot;Total&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Read)</span></span>
+    <span class="hljs-keyword">return</span> Read(<span class="hljs-string">&quot;Price&quot;</span>) * Read(<span class="hljs-string">&quot;Quantity&quot;</span>)
+<span class="hljs-keyword">end</span>)</code></pre>
+<p>The tracking inside a derive is per run, so an untaken branch is not a
+dependency, and the graph changes as conditions change. The trade is
+verbosity for legibility: you can see a Vision value&#39;s dependencies without
+running it, and there is no ambient state to reason about.</p>
+<h2 id="choosing"><a class="anchor" href="#choosing">#</a>Choosing</h2>
+<p>Pick <strong>Vision</strong> when the tree should not exist until the data is ready, when
+you want to sleep a menu and revive it with its state intact, or when you
+want real <code>TweenInfo</code> semantics with a handle you can <code>Await</code> and cancel.</p>
+<p>Pick <strong>Vide</strong> when you want ambient dependency tracking, a component model
+built around closures, and a mature library with a larger surface than this
+one.</p>
+<p>Pick <strong>neither</strong> when you are building three instances. A module earns its
+place at scale, not at three labels - and the benchmark above says the
+runtime cost of either choice is a rounding error next to Roblox&#39;s own
+property writes.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

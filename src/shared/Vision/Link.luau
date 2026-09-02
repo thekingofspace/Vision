@@ -8,11 +8,89 @@ Link.__index = Link
 local Runtime = {}
 Runtime.__index = Runtime
 
-function Link.new(Owner, Info: TweenInfo, Apply: (number, number) -> ())
+local Rate = 240
+local Epsilon = 0.0005
+
+local function Tween(Self, DeltaTime: number): boolean
+    Self.Elapsed += DeltaTime
+
+    local Info = Self.Info
+    local Alpha, Ended = Interpolate.Cycle(Info, Self.Elapsed)
+
+    Self.Apply(Alpha, DeltaTime)
+
+    if not Ended then
+        return false
+    end
+
+    local Repeats = Info.RepeatCount
+
+    if Repeats >= 0 and Self.Cycle >= Repeats then
+        return true
+    end
+
+    Self.Cycle += 1
+    Self.Elapsed = 0
+
+    return false
+end
+
+local function Physics(Self, DeltaTime: number): boolean
+    local Omega = Self.Omega
+    local Damping = Self.Damping
+    local Steps = math.clamp(math.ceil(DeltaTime * Rate), 1, 32)
+    local Slice = DeltaTime / Steps
+    local Settled = true
+
+    for _, Channel in Self.Channels do
+        local Position = Channel.Position
+        local Velocity = Channel.Velocity
+        local Goal = Channel.Goal
+        local Count = #Position
+
+        for _ = 1, Steps do
+            for Index = 1, Count do
+                local Offset = Position[Index] - Goal[Index]
+                local Accel = -(Omega * Omega) * Offset - 2 * Damping * Omega * Velocity[Index]
+
+                Velocity[Index] += Accel * Slice
+                Position[Index] += Velocity[Index] * Slice
+            end
+        end
+
+        local Done = true
+
+        for Index = 1, Count do
+            local Scale = math.max(1, math.abs(Goal[Index]))
+
+            if
+                math.abs(Position[Index] - Goal[Index]) > Epsilon * Scale
+                or math.abs(Velocity[Index]) > Epsilon * Scale
+            then
+                Done = false
+                break
+            end
+        end
+
+        if Done then
+            for Index = 1, Count do
+                Position[Index] = Goal[Index]
+                Velocity[Index] = 0
+            end
+        else
+            Settled = false
+        end
+
+        Channel.Write(Interpolate.Rebuild(Channel.Kind, Position))
+    end
+
+    return Settled
+end
+
+function Link.new(Owner, Update)
     return setmetatable({
         Runtime = Owner,
-        Info = Info,
-        Apply = Apply,
+        Update = Update,
         Elapsed = 0,
         Cycle = 0,
         Finished = false,
@@ -26,27 +104,9 @@ function Link:Step(DeltaTime: number)
         return
     end
 
-    self.Elapsed += DeltaTime
-
-    local Info = self.Info
-    local Alpha, Ended = Interpolate.Cycle(Info, self.Elapsed)
-
-    self.Apply(Alpha, DeltaTime)
-
-    if not Ended then
-        return
-    end
-
-    local Repeats = Info.RepeatCount
-
-    if Repeats >= 0 and self.Cycle >= Repeats then
+    if self.Update(self, DeltaTime) then
         self:Cancel()
-
-        return
     end
-
-    self.Cycle += 1
-    self.Elapsed = 0
 end
 
 function Link:Cancel()
@@ -71,6 +131,7 @@ function Link:Cancel()
     self.Threads = nil
     self.Runtime = nil
     self.Info = nil
+    self.Channels = nil
 
     for _, Thread in Threads do
         task.spawn(Thread)
@@ -208,10 +269,65 @@ function Runtime:Release()
 end
 
 function Runtime:Create(Info: TweenInfo, Apply: (number, number) -> (), Slots: { { any } })
-    local Target = Link.new(self, Info, Apply)
+    local Target = Link.new(self, Tween)
+
+    Target.Info = Info
+    Target.Apply = Apply
 
     for _, Slot in Slots do
         self:Claim(Slot[1], Slot[2], Target)
+    end
+
+    Target:Step(0)
+
+    if not Target.Finished then
+        self:Add(Target)
+    end
+
+    return Target
+end
+
+function Runtime:Velocity(Owner: any, Name: string): { number }?
+    local Slots = self.Claims[Owner]
+
+    if not Slots then
+        return nil
+    end
+
+    local Existing = Slots[Name]
+
+    if not Existing or not Existing.Channels then
+        return nil
+    end
+
+    for _, Channel in Existing.Channels do
+        if Channel.Owner == Owner and Channel.Name == Name then
+            return Channel.Velocity
+        end
+    end
+
+    return nil
+end
+
+function Runtime:Solve(Period: number, Damping: number, Channels: { any })
+    local Target = Link.new(self, Physics)
+
+    Target.Omega = 2 * math.pi / math.max(Period, 1e-4)
+    Target.Damping = math.max(Damping, 0)
+    Target.Channels = Channels
+
+    for _, Channel in Channels do
+        local Carried = self:Velocity(Channel.Owner, Channel.Name)
+
+        if Carried then
+            for Index = 1, math.min(#Carried, #Channel.Velocity) do
+                Channel.Velocity[Index] = Carried[Index]
+            end
+        end
+    end
+
+    for _, Channel in Channels do
+        self:Claim(Channel.Owner, Channel.Name, Target)
     end
 
     Target:Step(0)

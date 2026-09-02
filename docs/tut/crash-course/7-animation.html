@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Animation | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../../assets/logo.svg">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../../index.html">
+<img src="../../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../../index.html">Home</a>
+<a href="./1-introduction.html">Tutorials</a>
+<a href="../../api/declarations.html">API</a>
+<a href="../../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">Crash Course</p>
+<div class="items">
+<a href="./1-introduction.html">Introduction</a>
+<a href="./2-declarations.html">Declarations</a>
+<a href="./3-mounting.html">Staging and Mounting</a>
+<a href="./4-values.html">Values</a>
+<a href="./5-lifecycle.html">Lifecycle</a>
+<a href="./6-sleeping.html">Sleeping and Cloning</a>
+<a class="active" href="./7-animation.html">Animation</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="animation"><a class="anchor" href="#animation">#</a>Animation</h1>
+<p>Vision animates through the scope, not the declaration. Every <code>Spring*</code> call
+returns a <code>Linker</code> you can wait on or cancel.</p>
+<p>They are tween-driven: you pass a <code>TweenInfo</code>, and the curve comes from
+<code>TweenService:GetValue</code>. The shape is not an imitation of TweenService, it
+<em>is</em> TweenService.</p>
+<h2 id="animating-a-value"><a class="anchor" href="#animating-a-value">#</a>Animating a value</h2>
+<p><code>SpringValue</code> drives a name you declared with <code>event</code>. Every callback bound
+to that value runs each frame, so the instances update themselves.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Interface = Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    mount(PlayerGui),
+
+    event(<span class="hljs-string">&quot;Fill&quot;</span>, <span class="hljs-number">0.2</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+        <span class="hljs-built_in">self</span>.Size = UDim2.fromScale(Value, <span class="hljs-number">1</span>)
+    <span class="hljs-keyword">end</span>),
+})
+
+Interface:Mount()
+
+Scope:SpringValue(
+    TweenInfo.new(<span class="hljs-number">0.6</span>, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+    Interface,
+    <span class="hljs-string">&quot;Fill&quot;</span>,
+    <span class="hljs-number">0.8</span>
+)</code></pre>
+<p>Because it writes through the value, anything merged onto <code>Fill</code> animates
+too - a bar and its percentage readout stay in step without extra work.</p>
+<h2 id="animating-properties"><a class="anchor" href="#animating-properties">#</a>Animating properties</h2>
+<p><code>SpringInstance</code> skips the Vision and drives properties directly.</p>
+<pre class="code"><code class="hljs">Scope:SpringInstance(TweenInfo.new(<span class="hljs-number">0.18</span>), Button, {
+    BackgroundColor3 = Color3.fromRGB(<span class="hljs-number">120</span>, <span class="hljs-number">132</span>, <span class="hljs-number">255</span>),
+})</code></pre>
+<h2 id="animating-anything-else"><a class="anchor" href="#animating-anything-else">#</a>Animating anything else</h2>
+<p><code>SpringFunction</code> hands each step to you, with the frame delta.</p>
+<pre class="code"><code class="hljs">Scope:SpringFunction(TweenInfo.new(<span class="hljs-number">0.7</span>), <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Value, DeltaTime)</span></span>
+    Accent.Rotation = Value
+<span class="hljs-keyword">end</span>, <span class="hljs-number">0</span>, <span class="hljs-number">180</span>)</code></pre>
+<h2 id="waiting"><a class="anchor" href="#waiting">#</a>Waiting</h2>
+<p><code>Await</code> yields until the link is done, which makes sequences read top to
+bottom.</p>
+<pre class="code"><code class="hljs">task.spawn(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+    Scope:SpringInstance(Quick, Panel, { Size = Big }):Await()
+    Scope:SpringInstance(Settle, Panel, { Size = Normal })
+<span class="hljs-keyword">end</span>)</code></pre>
+<h2 id="interrupting"><a class="anchor" href="#interrupting">#</a>Interrupting</h2>
+<p>Starting a spring on something already animating cancels the old one first.</p>
+<pre class="code"><code class="hljs">Button.MouseEnter:Connect(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+    Scope:SpringInstance(Fade, Button, { BackgroundColor3 = Hover })
+<span class="hljs-keyword">end</span>)
+
+Button.MouseLeave:Connect(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+    Scope:SpringInstance(Fade, Button, { BackgroundColor3 = Idle })
+<span class="hljs-keyword">end</span>)</code></pre>
+<p>A fast mouse cannot leave two tweens fighting over the same property. This
+works per claim - a Vision and value name, or an instance and property name.</p>
+<div class="callout warning">
+
+<p><strong>A tween has no momentum</strong></p>
+<p>An interrupted tween restarts from the current value at <strong>zero velocity</strong>, so
+it stops dead before accelerating again. That is inherent to a fixed duration
+and a curve. If you need motion that flows through an interruption, you want
+a physics spring - see the <a href="../../comparison.html">comparison</a>.</p>
+</div>
+
+<h2 id="overshoot"><a class="anchor" href="#overshoot">#</a>Overshoot</h2>
+<p><code>Back</code> and <code>Elastic</code> return alpha outside <code>0..1</code>, and Vision does not clamp
+it. <code>Back</code>/<code>Out</code> peaks at <strong>1.100</strong>, so a bar tweening to <code>1.0</code> scale will
+run past its track. Aim at <code>0.8</code> and let the overshoot land inside.</p>
+<h2 id="beyond-tweenservice"><a class="anchor" href="#beyond-tweenservice">#</a>Beyond TweenService</h2>
+<p>Vision animates three types TweenService cannot: <code>NumberSequence</code>,
+<code>ColorSequence</code> and <code>string</code>.</p>
+<pre class="code"><code class="hljs">Scope:SpringValue(TweenInfo.new(<span class="hljs-number">0.45</span>), Interface, <span class="hljs-string">&quot;Status&quot;</span>, <span class="hljs-string">&quot;Ready&quot;</span>)</code></pre>
+<p>Strings type out on UTF-8 boundaries. Sequences interpolate keypoint by
+keypoint and never insert or remove a waypoint.</p>
+<h2 id="cleaning-up"><a class="anchor" href="#cleaning-up">#</a>Cleaning up</h2>
+<p>Links are owned by the scope. <code>Scope:Release</code> cancels everything, and
+<code>Interface:Cleanup</code> cancels whatever was driving that tree.</p>
+<h2 id="done"><a class="anchor" href="#done">#</a>Done</h2>
+<p>That is the whole library. The <a href="../../api/declarations.html">API reference</a> has the
+details.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

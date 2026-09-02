@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Scope | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="./declarations.html">API</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">API</p>
+<div class="items">
+<a href="./declarations.html">Declarations</a>
+<a href="./keywords.html">Keywords</a>
+<a class="active" href="./scope.html">Scope</a>
+<a href="./vision.html">Vision</a>
+<a href="./animation.html">Animation</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="scope"><a class="anchor" href="#scope">#</a>Scope</h1>
+<p>A scope owns the Visions you capture and the animation runtime that drives
+them. It is the only thing you construct directly.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Scope = Vision.Scope()</code></pre>
+<p>One scope per screen, per feature, or per session is all reasonable - the
+runtime inside it costs nothing until something is animating.</p>
+<h2 id="capture"><a class="anchor" href="#capture">#</a>Capture</h2>
+<pre class="code"><code class="hljs">Scope:Capture(Declaration: Declaration) -&gt; Vision</code></pre>
+<p>Reads a declaration tree and returns a <a href="./vision.html">Vision</a>. <strong>Creates no
+instances.</strong> Capture parses the tree, registers values and names, and hands
+back a handle you can write to.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Interface = Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    mount(PlayerGui),
+    event(<span class="hljs-string">&quot;Count&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+        <span class="hljs-built_in">self</span>.Name = `Count{Value}`
+    <span class="hljs-keyword">end</span>),
+})</code></pre>
+<h2 id="springvalue"><a class="anchor" href="#springvalue">#</a>SpringValue</h2>
+<pre class="code"><code class="hljs">Scope:SpringValue(
+    Info: TweenInfo,
+    Target: Vision | { Vision },
+    ValueName: <span class="hljs-built_in">string</span>,
+    TargetValue: any
+) -&gt; Linker</code></pre>
+<p>Animates a Vision&#39;s named value from its current value to <code>TargetValue</code>,
+writing through the CapFunc each frame - so every callback bound to that
+value runs, and the instances update themselves.</p>
+<pre class="code"><code class="hljs">Scope:SpringValue(
+    TweenInfo.new(<span class="hljs-number">0.6</span>, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+    Interface,
+    <span class="hljs-string">&quot;Fill&quot;</span>,
+    <span class="hljs-number">0.8</span>
+)</code></pre>
+<p>Accepts a list of Visions to drive several at once.</p>
+<h2 id="springinstance"><a class="anchor" href="#springinstance">#</a>SpringInstance</h2>
+<pre class="code"><code class="hljs">Scope:SpringInstance(
+    Info: TweenInfo,
+    Target: Instance | { Instance },
+    Properties: { [<span class="hljs-built_in">string</span>]: any }
+) -&gt; Linker</code></pre>
+<p>Animates properties on instances directly, without going through a Vision.</p>
+<pre class="code"><code class="hljs">Scope:SpringInstance(
+    TweenInfo.new(<span class="hljs-number">0.18</span>),
+    Button,
+    { BackgroundColor3 = Hover }
+)</code></pre>
+<h2 id="springfunction"><a class="anchor" href="#springfunction">#</a>SpringFunction</h2>
+<pre class="code"><code class="hljs">Scope:SpringFunction(
+    Info: TweenInfo,
+    Callback: (NewValue: any, DeltaTime: number) -&gt; (),
+    InitialValue: any,
+    TargetValue: any
+) -&gt; Linker</code></pre>
+<p>Animates between two values and hands each step to your callback, along with
+the frame delta. For anything that is neither a Vision value nor a plain
+property.</p>
+<pre class="code"><code class="hljs">Scope:SpringFunction(TweenInfo.new(<span class="hljs-number">0.7</span>), <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Value, DeltaTime)</span></span>
+    Accent.Rotation = Value
+<span class="hljs-keyword">end</span>, <span class="hljs-number">0</span>, <span class="hljs-number">180</span>)</code></pre>
+<h2 id="physicsvalue-physicsinstance-physicsfunction"><a class="anchor" href="#physicsvalue-physicsinstance-physicsfunction">#</a>PhysicsValue, PhysicsInstance, PhysicsFunction</h2>
+<pre class="code"><code class="hljs">Scope:PhysicsValue(Period: number, Damping: number, Target, ValueName, Goal) -&gt; Linker
+Scope:PhysicsInstance(Period: number, Damping: number, Target, Properties) -&gt; Linker
+Scope:PhysicsFunction(Period: number, Damping: number, Callback, Initial, Goal) -&gt; Linker</code></pre>
+<p>The same three shapes as the <code>Spring*</code> methods, driven by a damped spring
+instead of a <code>TweenInfo</code>. There is no duration: <code>Period</code> is the undamped
+period in seconds, <code>Damping</code> is the ratio, and the motion ends when it
+settles.</p>
+<pre class="code"><code class="hljs">Scope:PhysicsValue(<span class="hljs-number">0.6</span>, <span class="hljs-number">0.7</span>, Interface, <span class="hljs-string">&quot;Fill&quot;</span>, <span class="hljs-number">0.8</span>)</code></pre>
+<table>
+<thead>
+<tr>
+<th>damping</th>
+<th>behaviour</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>1</code></td>
+<td>critically damped, no overshoot</td>
+</tr>
+<tr>
+<td><code>0.7</code></td>
+<td>overshoots ~4.6%</td>
+</tr>
+<tr>
+<td><code>0.59</code></td>
+<td>overshoots ~10%, close to <code>Back</code>/<code>Out</code></td>
+</tr>
+<tr>
+<td><code>&gt; 1</code></td>
+<td>overdamped, slow approach</td>
+</tr>
+</tbody></table>
+<h3 id="velocity-survives-interruption"><a class="anchor" href="#velocity-survives-interruption">#</a>Velocity survives interruption</h3>
+<p>This is the reason to reach for these over the tween ones. Retarget a running
+physics spring and it <strong>keeps its velocity</strong>, so the motion flows into the new
+goal instead of stopping dead.</p>
+<pre class="code"><code class="hljs">Scope:PhysicsInstance(<span class="hljs-number">0.6</span>, <span class="hljs-number">1</span>, Panel, { Position = A })
+<span class="hljs-comment">-- mid flight</span>
+Scope:PhysicsInstance(<span class="hljs-number">0.6</span>, <span class="hljs-number">1</span>, Panel, { Position = B })  <span class="hljs-comment">-- carries the speed</span></code></pre>
+<p>A <code>TweenInfo</code> spring cannot do this: it restarts from the current value at
+zero velocity.</p>
+<h3 id="supported-types"><a class="anchor" href="#supported-types">#</a>Supported types</h3>
+<p><code>number</code>, <code>UDim</code>, <code>UDim2</code>, <code>Vector2</code>, <code>Vector3</code>, <code>Color3</code>, <code>Rect</code> and
+<code>NumberRange</code>. Anything else raises, because a solver needs numeric
+components to integrate. Use a tween for <code>CFrame</code>, strings, sequences and
+booleans.</p>
+<h3 id="they-share-the-claim-system"><a class="anchor" href="#they-share-the-claim-system">#</a>They share the claim system</h3>
+<p>A physics spring and a tween spring claim targets the same way, so starting
+either cancels whatever was driving that value or property.</p>
+<h2 id="release"><a class="anchor" href="#release">#</a>Release</h2>
+<pre class="code"><code class="hljs">Scope:Release()</code></pre>
+<p>Cleans up every Vision the scope captured - running <code>cleanup</code> callbacks,
+disconnecting connections and destroying instances - cancels every link, and
+disconnects the runtime.</p>
+<h2 id="conflicts"><a class="anchor" href="#conflicts">#</a>Conflicts</h2>
+<p>Every link claims what it drives: a Vision and value name, an instance and
+property name, or a callback. Starting a new spring on a claim that is
+already held <strong>cancels the old link first</strong>.</p>
+<pre class="code"><code class="hljs">Scope:SpringInstance(Info, Button, { BackgroundColor3 = Hover })
+Scope:SpringInstance(Info, Button, { BackgroundColor3 = Idle })
+<span class="hljs-comment">-- the first link is cancelled; only one tween ever drives that property</span></code></pre>
+<p>This is why a fast mouse cannot leave two colour tweens fighting. A partial
+overlap cancels the whole earlier link - <code>{ Rotation, Transparency }</code>
+followed by <code>{ Rotation }</code> cancels the first entirely.</p>
+<h2 id="the-runtime"><a class="anchor" href="#the-runtime">#</a>The runtime</h2>
+<p>Each scope drives its links from one connection: <code>RenderStepped</code> on the
+client, <code>Heartbeat</code> on the server. It connects when the first link starts and
+disconnects when the last one finishes, so an idle scope costs nothing.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Animation | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="./declarations.html">API</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">API</p>
+<div class="items">
+<a href="./declarations.html">Declarations</a>
+<a href="./keywords.html">Keywords</a>
+<a href="./scope.html">Scope</a>
+<a href="./vision.html">Vision</a>
+<a class="active" href="./animation.html">Animation</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="animation"><a class="anchor" href="#animation">#</a>Animation</h1>
+<p>Vision&#39;s springs are tween-driven. They take a <code>TweenInfo</code> and read their
+curve from <code>TweenService:GetValue</code>, so the shape is not an approximation of
+TweenService - it <em>is</em> TweenService.</p>
+<p>Only the timeline is Vision&#39;s own, and it reproduces real <code>Tween</code> behaviour
+including delay, repeat and reverses.</p>
+<h2 id="linker"><a class="anchor" href="#linker">#</a>Linker</h2>
+<p>Every <code>Spring*</code> call returns one.</p>
+<pre class="code"><code class="hljs">export <span class="hljs-built_in">type</span> Linker = {
+    Cancel: (<span class="hljs-built_in">self</span>: Linker) -&gt; (),
+    Await: (<span class="hljs-built_in">self</span>: Linker) -&gt; (),
+    Finished: boolean,
+}</code></pre>
+<h3 id="await"><a class="anchor" href="#await">#</a>Await</h3>
+<p>Yields the calling thread until the link finishes or is cancelled. Returns
+immediately if it is already done.</p>
+<pre class="code"><code class="hljs">task.spawn(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+    Scope:SpringInstance(Out, Panel, { Size = Big }):Await()
+    Scope:SpringInstance(Back, Panel, { Size = Normal })
+<span class="hljs-keyword">end</span>)</code></pre>
+<h3 id="cancel"><a class="anchor" href="#cancel">#</a>Cancel</h3>
+<p>Stops the link where it is. The value keeps whatever it last held.</p>
+<h3 id="finished"><a class="anchor" href="#finished">#</a>Finished</h3>
+<p><code>true</code> once the link has completed or been cancelled. A finished link drops
+its claims, its callback and its runtime reference, so nothing is retained.</p>
+<h2 id="tweeninfo-support"><a class="anchor" href="#tweeninfo-support">#</a>TweenInfo support</h2>
+<p>Every field is honoured.</p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>behaviour</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Time</code></td>
+<td>length of one direction</td>
+</tr>
+<tr>
+<td><code>EasingStyle</code>, <code>EasingDirection</code></td>
+<td>passed to <code>TweenService:GetValue</code></td>
+</tr>
+<tr>
+<td><code>DelayTime</code></td>
+<td>held at the start value, <strong>re-applied before every repeat</strong></td>
+</tr>
+<tr>
+<td><code>RepeatCount</code></td>
+<td>extra plays after the first; <code>-1</code> never ends</td>
+</tr>
+<tr>
+<td><code>Reverses</code></td>
+<td>plays forward then back, ending at the start value</td>
+</tr>
+</tbody></table>
+<p>One cycle is <code>DelayTime + Time * (Reverses and 2 or 1)</code>, and a tween runs
+<code>RepeatCount + 1</code> of them.</p>
+<h3 id="repeats-land-on-the-goal"><a class="anchor" href="#repeats-land-on-the-goal">#</a>Repeats land on the goal</h3>
+<p>At a cycle boundary the goal value is emitted on that frame, and the next
+cycle starts from it. This matters - without it a repeating tween never
+visually reaches its target.</p>
+<p>This is real TweenService behaviour, confirmed frame by frame against a live
+<code>Tween</code>:</p>
+<pre class="code"><code class="hljs">   t     roblox   vision
+0.283s    94.63    94.63
+0.299s   100.00   100.00   &lt;- the goal, on the boundary frame
+0.317s     5.32     5.32
+0.333s    11.30    11.30</code></pre>
+<p>A consequence worth knowing: because the next cycle starts from the boundary
+<em>frame</em>, a repeating tween&#39;s total runtime is frame-quantised and drifts
+slightly past the arithmetic ideal. Roblox does the same.</p>
+<h2 id="interpolation"><a class="anchor" href="#interpolation">#</a>Interpolation</h2>
+<table>
+<thead>
+<tr>
+<th>type</th>
+<th>behaviour</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>number</code></td>
+<td>linear</td>
+</tr>
+<tr>
+<td><code>Vector2</code>, <code>Vector3</code>, <code>UDim2</code>, <code>CFrame</code>, <code>Color3</code></td>
+<td>Roblox&#39;s own <code>:Lerp</code></td>
+</tr>
+<tr>
+<td><code>UDim</code></td>
+<td>scale linear, <strong>offset rounded</strong></td>
+</tr>
+<tr>
+<td><code>Rect</code>, <code>NumberRange</code></td>
+<td>component-wise</td>
+</tr>
+<tr>
+<td><code>Vector2int16</code>, <code>Vector3int16</code></td>
+<td>component-wise, rounded</td>
+</tr>
+<tr>
+<td><code>NumberSequence</code>, <code>ColorSequence</code></td>
+<td>keypoint-wise</td>
+</tr>
+<tr>
+<td><code>string</code></td>
+<td>typewriter, UTF-8 safe</td>
+</tr>
+<tr>
+<td>anything else</td>
+<td>switches at the halfway point</td>
+</tr>
+</tbody></table>
+<p>That last row covers booleans and EnumItems, and matches TweenService, which
+flips values it cannot interpolate at the midpoint rather than at the end.</p>
+<h3 id="beyond-tweenservice"><a class="anchor" href="#beyond-tweenservice">#</a>Beyond TweenService</h3>
+<p><code>NumberSequence</code>, <code>ColorSequence</code> and <code>string</code> are <strong>not</strong> tweenable by
+TweenService. Vision animates them anyway.</p>
+<p>Sequences interpolate keypoint by keypoint - time, value and envelope - and
+never insert or remove a waypoint. If the two sequences have different
+keypoint counts there is nothing sensible to interpolate, so the value
+switches at the halfway point instead.</p>
+<p>Strings type out: the visible length moves from the start string&#39;s length to
+the goal&#39;s, sliced from the goal on UTF-8 boundaries.</p>
+<pre class="code"><code class="hljs">Scope:SpringValue(TweenInfo.new(<span class="hljs-number">0.45</span>), Interface, <span class="hljs-string">&quot;Status&quot;</span>, <span class="hljs-string">&quot;Ready&quot;</span>)</code></pre>
+<h2 id="overshoot"><a class="anchor" href="#overshoot">#</a>Overshoot</h2>
+<p><code>Back</code> and <code>Elastic</code> return alpha outside <code>0..1</code>, and Vision does not clamp
+it - an overshooting curve overshoots the value, as it should. <code>Back</code>/<code>Out</code>
+peaks at <strong>1.100</strong> at 0.35s of a 0.6s tween.</p>
+<p>Leave room for it. A bar tweening to <code>1.0</code> scale with <code>Back</code> will pass its
+track; tween to <code>0.8</code> instead.</p>
+<h2 id="retargeting"><a class="anchor" href="#retargeting">#</a>Retargeting</h2>
+<p>Starting a spring on a value that is already animating cancels the old link
+and starts from the current value at <strong>zero velocity</strong>. A tween has a fixed
+duration and no momentum, so an interrupted animation stops dead before
+re-accelerating.</p>
+<p>If you need motion that survives interruption, that is what a physics spring
+is for - see the <a href="../comparison.html">comparison</a>.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

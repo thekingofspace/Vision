@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Staging and mounting | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../../assets/logo.svg">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../../index.html">
+<img src="../../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../../index.html">Home</a>
+<a href="./1-introduction.html">Tutorials</a>
+<a href="../../api/declarations.html">API</a>
+<a href="../../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">Crash Course</p>
+<div class="items">
+<a href="./1-introduction.html">Introduction</a>
+<a href="./2-declarations.html">Declarations</a>
+<a class="active" href="./3-mounting.html">Staging and Mounting</a>
+<a href="./4-values.html">Values</a>
+<a href="./5-lifecycle.html">Lifecycle</a>
+<a href="./6-sleeping.html">Sleeping and Cloning</a>
+<a href="./7-animation.html">Animation</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="staging-and-mounting"><a class="anchor" href="#staging-and-mounting">#</a>Staging and mounting</h1>
+<p><code>Capture</code> creates nothing. This is the whole point, so it is worth being
+concrete about what happens when.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Interface = Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;ScreenGui&quot;</span>,
+    mount(PlayerGui),
+    { ClassName = <span class="hljs-string">&quot;Frame&quot;</span>, Name = <span class="hljs-string">&quot;Panel&quot;</span> },
+})
+
+<span class="hljs-built_in">print</span>(PlayerGui:FindFirstChild(<span class="hljs-string">&quot;ScreenGui&quot;</span>))  <span class="hljs-comment">--&gt; nil</span>
+
+Interface:Mount()
+
+<span class="hljs-built_in">print</span>(PlayerGui:FindFirstChild(<span class="hljs-string">&quot;ScreenGui&quot;</span>))  <span class="hljs-comment">--&gt; ScreenGui</span></code></pre>
+<p>Between those two calls you have a tree you can configure, pass around, and
+throw away without ever touching the DataModel.</p>
+<h2 id="what-mount-does"><a class="anchor" href="#what-mount-does">#</a>What Mount does</h2>
+<ol>
+<li>creates every instance, applying properties, attributes, tags and
+connections</li>
+<li>parents the children, resolving <code>mount(&quot;Name&quot;)</code> targets</li>
+<li>fires every value <strong>once</strong></li>
+<li>parents the root</li>
+<li>runs <code>ready</code> callbacks, deepest first</li>
+</ol>
+<p>Step 3 before step 4 is deliberate: the tree is fully configured before it
+becomes visible, so nothing flashes a placeholder. Step 5 after step 4 is
+also deliberate: by the time <code>ready</code> runs, the instance is in the DataModel,
+so <code>AbsoluteSize</code> and friends are real.</p>
+<h2 id="open"><a class="anchor" href="#open">#</a>Open</h2>
+<p>If you want the instance back, use <code>Open</code>:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Object = Interface:Open()</code></pre>
+<p>It mounts if needed and returns the root. Calling it again returns the same
+instance - it does not rebuild.</p>
+<h2 id="cleanup"><a class="anchor" href="#cleanup">#</a>Cleanup</h2>
+<pre class="code"><code class="hljs">Interface:Cleanup()</code></pre>
+<p>Runs your <code>cleanup</code> callbacks, cancels any animation driving this tree,
+disconnects everything and destroys the root.</p>
+<p>Or tear down everything a scope owns at once:</p>
+<pre class="code"><code class="hljs">Scope:Release()</code></pre>
+<h2 id="next"><a class="anchor" href="#next">#</a>Next</h2>
+<p><a href="./4-values.html">Values</a> - one value, many instances.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

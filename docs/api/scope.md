@@ -7,7 +7,7 @@ them. It is the only thing you construct directly.
 local Scope = Vision.Scope()
 ```
 
-One scope per screen, per feature, or per session is all reasonable — the
+One scope per screen, per feature, or per session is all reasonable - the
 runtime inside it costs nothing until something is animating.
 
 ## Capture
@@ -42,7 +42,7 @@ Scope:SpringValue(
 ```
 
 Animates a Vision's named value from its current value to `TargetValue`,
-writing through the CapFunc each frame — so every callback bound to that
+writing through the CapFunc each frame - so every callback bound to that
 value runs, and the instances update themselves.
 
 ```lua
@@ -97,14 +97,65 @@ Scope:SpringFunction(TweenInfo.new(0.7), function(Value, DeltaTime)
 end, 0, 180)
 ```
 
+## PhysicsValue, PhysicsInstance, PhysicsFunction
+
+```lua
+Scope:PhysicsValue(Period: number, Damping: number, Target, ValueName, Goal) -> Linker
+Scope:PhysicsInstance(Period: number, Damping: number, Target, Properties) -> Linker
+Scope:PhysicsFunction(Period: number, Damping: number, Callback, Initial, Goal) -> Linker
+```
+
+The same three shapes as the `Spring*` methods, driven by a damped spring
+instead of a `TweenInfo`. There is no duration: `Period` is the undamped
+period in seconds, `Damping` is the ratio, and the motion ends when it
+settles.
+
+```lua
+Scope:PhysicsValue(0.6, 0.7, Interface, "Fill", 0.8)
+```
+
+| damping | behaviour |
+| --- | --- |
+| `1` | critically damped, no overshoot |
+| `0.7` | overshoots ~4.6% |
+| `0.59` | overshoots ~10%, close to `Back`/`Out` |
+| `> 1` | overdamped, slow approach |
+
+### Velocity survives interruption
+
+This is the reason to reach for these over the tween ones. Retarget a running
+physics spring and it **keeps its velocity**, so the motion flows into the new
+goal instead of stopping dead.
+
+```lua
+Scope:PhysicsInstance(0.6, 1, Panel, { Position = A })
+-- mid flight
+Scope:PhysicsInstance(0.6, 1, Panel, { Position = B })  -- carries the speed
+```
+
+A `TweenInfo` spring cannot do this: it restarts from the current value at
+zero velocity.
+
+### Supported types
+
+`number`, `UDim`, `UDim2`, `Vector2`, `Vector3`, `Color3`, `Rect` and
+`NumberRange`. Anything else raises, because a solver needs numeric
+components to integrate. Use a tween for `CFrame`, strings, sequences and
+booleans.
+
+### They share the claim system
+
+A physics spring and a tween spring claim targets the same way, so starting
+either cancels whatever was driving that value or property.
+
 ## Release
 
 ```lua
 Scope:Release()
 ```
 
-Cleans up every Vision the scope captured — running `cleanup` callbacks,
-disconnecting connections and destroying instances — cancels every link, and
+Cleans up every Vision the scope captured - running `cleanup` callbacks,
+disconnecting connections and destroying instances - cancels every link, and
 disconnects the runtime.
 
 ## Conflicts
@@ -120,7 +171,7 @@ Scope:SpringInstance(Info, Button, { BackgroundColor3 = Idle })
 ```
 
 This is why a fast mouse cannot leave two colour tweens fighting. A partial
-overlap cancels the whole earlier link — `{ Rotation, Transparency }`
+overlap cancels the whole earlier link - `{ Rotation, Transparency }`
 followed by `{ Rotation }` cancels the first entirely.
 
 ## The runtime

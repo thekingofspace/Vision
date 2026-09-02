@@ -54,11 +54,3 @@ benchmark in `src/client`.
 The benchmark compares Vision against [Vide](https://github.com/centau/vide),
 which is gitignored. To run it, clone Vide into `src/shared/vide`; without it
 the comparison is skipped.
-
-## Docs site
-
-```bash
-cd docs
-npm install
-npm run dev
-```
