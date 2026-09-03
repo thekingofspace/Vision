@@ -106,7 +106,7 @@ Strings type out: the visible length moves from the start string's length to
 the goal's, sliced from the goal on UTF-8 boundaries.
 
 ```lua
-Scope:SpringValue(TweenInfo.new(0.45), Interface, "Status", "Ready")
+Scope:SpringEvent(TweenInfo.new(0.45), Interface, { Status = "Ready" })
 ```
 
 ## Overshoot

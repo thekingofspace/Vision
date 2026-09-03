@@ -17,20 +17,37 @@ function Scope.new()
     return setmetatable({
         Runtime = Runtime.new(),
         Visions = {},
+        Owned = setmetatable({}, { __mode = "k" }),
     }, Scope)
 end
 
 function Scope:Capture(Declaration: any)
-    return Capture.new(self, Declaration)
+    const Vision = Capture.new(self, Declaration)
+
+    self.Owned[Vision] = true
+
+    return Vision
+end
+
+function Scope:Update(EventName: string, Value: any)
+    for Vision in self.Owned do
+        if type(Vision[EventName]) == "function" then
+            Vision[EventName](Value)
+        end
+    end
 end
 
 function Scope:Adopt(Vision: any)
+    self.Owned[Vision] = true
+
     if not table.find(self.Visions, Vision) then
         table.insert(self.Visions, Vision)
     end
 end
 
 function Scope:Forget(Vision: any)
+    self.Owned[Vision] = nil
+
     const Index = table.find(self.Visions, Vision)
 
     if Index then
@@ -57,6 +74,31 @@ function Scope:SpringValue(Info: TweenInfo, Vision: any, ValueName: string, Targ
     return self.Runtime:Create(Info, function(Alpha: number)
         for _, Item in Targets do
             Item[ValueName](Interpolate.Value(Starts[Item], TargetValue, Alpha))
+        end
+    end, Slots)
+end
+
+function Scope:SpringEvent(Info: TweenInfo, Vision: any, TargetEvents: { [string]: any })
+    const Targets = AsList(Vision)
+    const Tracks = {}
+    const Slots = {}
+
+    for _, Item in Targets do
+        for Name, Goal in TargetEvents do
+            const Cap = Item[Name]
+
+            if type(Cap) ~= "function" then
+                error(`Vision has no value named "{Name}"`, 0)
+            end
+
+            table.insert(Tracks, { Cap = Cap, Start = Cap(), Goal = Goal })
+            table.insert(Slots, { Item, Name })
+        end
+    end
+
+    return self.Runtime:Create(Info, function(Alpha: number)
+        for _, Track in Tracks do
+            Track.Cap(Interpolate.Value(Track.Start, Track.Goal, Alpha))
         end
     end, Slots)
 end
@@ -147,6 +189,25 @@ function Scope:PhysicsValue(Period: number, Damping: number, Vision: any, ValueN
     return self.Runtime:Solve(Period, Damping, Channels)
 end
 
+function Scope:PhysicsEvent(Period: number, Damping: number, Vision: any, TargetEvents: { [string]: any })
+    const Targets = AsList(Vision)
+    const Channels = {}
+
+    for _, Item in Targets do
+        for Name, Goal in TargetEvents do
+            const Cap = Item[Name]
+
+            if type(Cap) ~= "function" then
+                error(`Vision has no value named "{Name}"`, 0)
+            end
+
+            table.insert(Channels, Channel(Item, Name, Cap(), Goal, Cap))
+        end
+    end
+
+    return self.Runtime:Solve(Period, Damping, Channels)
+end
+
 function Scope:PhysicsInstance(Period: number, Damping: number, Object: any, TargetProps: { [string]: any })
     const Targets = AsList(Object)
     const Channels = {}
@@ -183,6 +244,7 @@ function Scope:Release()
     end
 
     table.clear(self.Visions)
+    table.clear(self.Owned)
     self.Runtime:Release()
 end
 

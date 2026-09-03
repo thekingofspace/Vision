@@ -30,7 +30,50 @@ local Interface = Scope:Capture({
 })
 ```
 
-## SpringValue
+## Update
+
+```lua
+Scope:Update(EventName: string, Value: any)
+```
+
+Writes one value into **every Vision the scope has captured** that declares
+that name. Visions without it are skipped, so a scope holding a mix of trees
+is fine.
+
+```lua
+Scope:Update("Theme", Color3.fromRGB(88, 101, 242))
+```
+
+It reaches everything the scope currently owns: captured Visions that have
+not been mounted yet, and mounted ones. A staged Vision stores the write and
+applies it on its first mount.
+
+`Cleanup` takes a Vision out of the scope, so a cleaned up Vision is **not**
+updated. Mounting it again puts it back and later updates reach it.
+
+```lua
+Interface:Cleanup()
+Scope:Update("Theme", Red)     -- Interface is not touched
+
+Interface:Mount()
+Scope:Update("Theme", Blue)    -- now it is
+```
+
+A derived value is skipped unless its compute handles `"set"`, the same as
+writing it directly.
+
+::: tip
+The scope holds its Visions weakly here, so `Update` never keeps one alive.
+Drop your reference to a Vision and it is still collectable.
+:::
+
+## SpringValue <Badge type="danger" text="deprecated" />
+
+::: danger Deprecated
+Use [SpringEvent](#springevent) instead. It does the same thing and takes any
+number of values in one call, so `SpringEvent(Info, Target, { Fill = 0.8 })`
+replaces `SpringValue(Info, Target, "Fill", 0.8)` directly.
+:::
 
 ```lua
 Scope:SpringValue(
@@ -41,8 +84,10 @@ Scope:SpringValue(
 ) -> Linker
 ```
 
-Animates a Vision's named value from its current value to `TargetValue`,
-writing through the CapFunc each frame - so every callback bound to that
+Animates a single named value. Prefer [SpringEvent](#springevent), which does
+the same thing for any number of values in one call.
+
+Writes through the CapFunc each frame - so every callback bound to that
 value runs, and the instances update themselves.
 
 ```lua
@@ -55,6 +100,37 @@ Scope:SpringValue(
 ```
 
 Accepts a list of Visions to drive several at once.
+
+## SpringEvent
+
+```lua
+Scope:SpringEvent(
+    Info: TweenInfo,
+    Target: Vision | { Vision },
+    Values: { [string]: any }
+) -> Linker
+```
+
+Animates several named values at once, as one link. The table maps value
+names to their targets.
+
+```lua
+Scope:SpringEvent(TweenInfo.new(0.6), Interface, {
+    Fill = 0.8,
+    Tint = Color3.fromRGB(88, 101, 242),
+})
+```
+
+Pass a list of Visions and every one of them animates from the same call, so
+one link can drive a whole grid.
+
+```lua
+Scope:SpringEvent(TweenInfo.new(0.6), Tiles, { Tint = Accent })
+```
+
+Each value keeps its own start, and each Vision keeps its own, so they can be
+at different places when the call is made. Naming a value the Vision does not
+declare raises.
 
 ## SpringInstance
 
@@ -97,10 +173,9 @@ Scope:SpringFunction(TweenInfo.new(0.7), function(Value, DeltaTime)
 end, 0, 180)
 ```
 
-## PhysicsValue, PhysicsInstance, PhysicsFunction
+## PhysicsInstance, PhysicsFunction
 
 ```lua
-Scope:PhysicsValue(Period: number, Damping: number, Target, ValueName, Goal) -> Linker
 Scope:PhysicsInstance(Period: number, Damping: number, Target, Properties) -> Linker
 Scope:PhysicsFunction(Period: number, Damping: number, Callback, Initial, Goal) -> Linker
 ```
@@ -111,8 +186,24 @@ period in seconds, `Damping` is the ratio, and the motion ends when it
 settles.
 
 ```lua
-Scope:PhysicsValue(0.6, 0.7, Interface, "Fill", 0.8)
+Scope:PhysicsInstance(0.6, 0.7, Button, { BackgroundColor3 = Hover })
 ```
+
+## PhysicsValue <Badge type="danger" text="deprecated" />
+
+::: danger Deprecated
+Use [PhysicsEvent](#physicsevent) instead.
+`PhysicsEvent(Period, Damping, Target, { Fill = 0.8 })` replaces
+`PhysicsValue(Period, Damping, Target, "Fill", 0.8)` directly.
+:::
+
+```lua
+Scope:PhysicsValue(Period: number, Damping: number, Target, ValueName, Goal) -> Linker
+```
+
+Animates a single named value with a solver. Still works, still cancels
+against the same claims, but every call it can make `PhysicsEvent` can make
+too.
 
 | damping | behaviour |
 | --- | --- |

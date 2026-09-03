@@ -94,6 +94,13 @@ function StripFrontmatter(Source) {
     return End === -1 ? Source : Source.slice(Source.indexOf("\n", End + 1) + 1)
 }
 
+function Badges(Source) {
+    return Source.replace(
+        /<Badge\s+type="(\w+)"\s+text="([^"]*)"\s*\/>/g,
+        (_, Kind, Text) => `<span class="badge ${Kind}">${Text}</span>`
+    )
+}
+
 function Containers(Source) {
     return Source.replace(/^::: *(tip|warning|danger|info)([^\n]*)\n([\s\S]*?)^:::\s*$/gm, (_, Kind, Title, Body) => {
         const Heading = Title.trim() || Kind[0].toUpperCase() + Kind.slice(1)
@@ -197,7 +204,7 @@ function Build() {
     for (const File of Sources) {
         const Slug = path.relative(Root, File).replace(/\.md$/, "").split(path.sep).join("/")
         const Directory = path.dirname(Slug) === "." ? "" : path.dirname(Slug)
-        const Source = Containers(StripFrontmatter(fs.readFileSync(File, "utf8")))
+        const Source = Badges(Containers(StripFrontmatter(fs.readFileSync(File, "utf8"))))
 
         const Heading = Source.match(/^#\s+(.+)$/m)
         const Title = Heading ? Heading[1].trim() : Site

@@ -492,3 +492,29 @@ blockquote {
         color: #8ab6f0;
     }
 }
+
+.badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.badge.danger {
+    color: #d4574f;
+    border-color: #d4574f;
+    background: transparent;
+}
+
+.badge.warning {
+    color: #d99a24;
+    border-color: #d99a24;
+    background: transparent;
+}

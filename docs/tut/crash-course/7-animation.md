@@ -9,8 +9,8 @@ They are tween-driven: you pass a `TweenInfo`, and the curve comes from
 
 ## Animating a value
 
-`SpringValue` drives a name you declared with `event`. Every callback bound
-to that value runs each frame, so the instances update themselves.
+`SpringEvent` drives names you declared with `event`. Every callback bound to
+those values runs each frame, so the instances update themselves.
 
 ```lua
 local Interface = Scope:Capture({
@@ -24,16 +24,26 @@ local Interface = Scope:Capture({
 
 Interface:Mount()
 
-Scope:SpringValue(
+Scope:SpringEvent(
     TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
     Interface,
-    "Fill",
-    0.8
+    { Fill = 0.8 }
 )
 ```
 
 Because it writes through the value, anything merged onto `Fill` animates
-too - a bar and its percentage readout stay in step without extra work.
+too - a bar and its percentage readout stay in step without extra work. Add
+more names to the table and they all move on one link:
+
+```lua
+Scope:SpringEvent(TweenInfo.new(0.6), Interface, {
+    Fill = 0.8,
+    Tint = Color3.fromRGB(88, 101, 242),
+})
+```
+
+Pass a list of Visions instead of one and every one of them animates from the
+same call.
 
 ## Animating properties
 
@@ -103,7 +113,7 @@ Vision animates three types TweenService cannot: `NumberSequence`,
 `ColorSequence` and `string`.
 
 ```lua
-Scope:SpringValue(TweenInfo.new(0.45), Interface, "Status", "Ready")
+Scope:SpringEvent(TweenInfo.new(0.45), Interface, { Status = "Ready" })
 ```
 
 Strings type out on UTF-8 boundaries. Sequences interpolate keypoint by

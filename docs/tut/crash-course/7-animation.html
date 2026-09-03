@@ -46,8 +46,8 @@ returns a <code>Linker</code> you can wait on or cancel.</p>
 <code>TweenService:GetValue</code>. The shape is not an imitation of TweenService, it
 <em>is</em> TweenService.</p>
 <h2 id="animating-a-value"><a class="anchor" href="#animating-a-value">#</a>Animating a value</h2>
-<p><code>SpringValue</code> drives a name you declared with <code>event</code>. Every callback bound
-to that value runs each frame, so the instances update themselves.</p>
+<p><code>SpringEvent</code> drives names you declared with <code>event</code>. Every callback bound to
+those values runs each frame, so the instances update themselves.</p>
 <pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Interface = Scope:Capture({
     ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
     mount(PlayerGui),
@@ -59,14 +59,20 @@ to that value runs each frame, so the instances update themselves.</p>
 
 Interface:Mount()
 
-Scope:SpringValue(
+Scope:SpringEvent(
     TweenInfo.new(<span class="hljs-number">0.6</span>, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
     Interface,
-    <span class="hljs-string">&quot;Fill&quot;</span>,
-    <span class="hljs-number">0.8</span>
+    { Fill = <span class="hljs-number">0.8</span> }
 )</code></pre>
 <p>Because it writes through the value, anything merged onto <code>Fill</code> animates
-too - a bar and its percentage readout stay in step without extra work.</p>
+too - a bar and its percentage readout stay in step without extra work. Add
+more names to the table and they all move on one link:</p>
+<pre class="code"><code class="hljs">Scope:SpringEvent(TweenInfo.new(<span class="hljs-number">0.6</span>), Interface, {
+    Fill = <span class="hljs-number">0.8</span>,
+    Tint = Color3.fromRGB(<span class="hljs-number">88</span>, <span class="hljs-number">101</span>, <span class="hljs-number">242</span>),
+})</code></pre>
+<p>Pass a list of Visions instead of one and every one of them animates from the
+same call.</p>
 <h2 id="animating-properties"><a class="anchor" href="#animating-properties">#</a>Animating properties</h2>
 <p><code>SpringInstance</code> skips the Vision and drives properties directly.</p>
 <pre class="code"><code class="hljs">Scope:SpringInstance(TweenInfo.new(<span class="hljs-number">0.18</span>), Button, {
@@ -111,7 +117,7 @@ run past its track. Aim at <code>0.8</code> and let the overshoot land inside.</
 <h2 id="beyond-tweenservice"><a class="anchor" href="#beyond-tweenservice">#</a>Beyond TweenService</h2>
 <p>Vision animates three types TweenService cannot: <code>NumberSequence</code>,
 <code>ColorSequence</code> and <code>string</code>.</p>
-<pre class="code"><code class="hljs">Scope:SpringValue(TweenInfo.new(<span class="hljs-number">0.45</span>), Interface, <span class="hljs-string">&quot;Status&quot;</span>, <span class="hljs-string">&quot;Ready&quot;</span>)</code></pre>
+<pre class="code"><code class="hljs">Scope:SpringEvent(TweenInfo.new(<span class="hljs-number">0.45</span>), Interface, { Status = <span class="hljs-string">&quot;Ready&quot;</span> })</code></pre>
 <p>Strings type out on UTF-8 boundaries. Sequences interpolate keypoint by
 keypoint and never insert or remove a waypoint.</p>
 <h2 id="cleaning-up"><a class="anchor" href="#cleaning-up">#</a>Cleaning up</h2>

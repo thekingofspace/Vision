@@ -160,7 +160,7 @@ keypoint counts there is nothing sensible to interpolate, so the value
 switches at the halfway point instead.</p>
 <p>Strings type out: the visible length moves from the start string&#39;s length to
 the goal&#39;s, sliced from the goal on UTF-8 boundaries.</p>
-<pre class="code"><code class="hljs">Scope:SpringValue(TweenInfo.new(<span class="hljs-number">0.45</span>), Interface, <span class="hljs-string">&quot;Status&quot;</span>, <span class="hljs-string">&quot;Ready&quot;</span>)</code></pre>
+<pre class="code"><code class="hljs">Scope:SpringEvent(TweenInfo.new(<span class="hljs-number">0.45</span>), Interface, { Status = <span class="hljs-string">&quot;Ready&quot;</span> })</code></pre>
 <h2 id="overshoot"><a class="anchor" href="#overshoot">#</a>Overshoot</h2>
 <p><code>Back</code> and <code>Elastic</code> return alpha outside <code>0..1</code>, and Vision does not clamp
 it - an overshooting curve overshoots the value, as it should. <code>Back</code>/<code>Out</code>

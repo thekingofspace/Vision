@@ -55,15 +55,49 @@ back a handle you can write to.</p>
         <span class="hljs-built_in">self</span>.Name = `Count{Value}`
     <span class="hljs-keyword">end</span>),
 })</code></pre>
-<h2 id="springvalue"><a class="anchor" href="#springvalue">#</a>SpringValue</h2>
+<h2 id="update"><a class="anchor" href="#update">#</a>Update</h2>
+<pre class="code"><code class="hljs">Scope:Update(EventName: <span class="hljs-built_in">string</span>, Value: any)</code></pre>
+<p>Writes one value into <strong>every Vision the scope has captured</strong> that declares
+that name. Visions without it are skipped, so a scope holding a mix of trees
+is fine.</p>
+<pre class="code"><code class="hljs">Scope:Update(<span class="hljs-string">&quot;Theme&quot;</span>, Color3.fromRGB(<span class="hljs-number">88</span>, <span class="hljs-number">101</span>, <span class="hljs-number">242</span>))</code></pre>
+<p>It reaches everything the scope currently owns: captured Visions that have
+not been mounted yet, and mounted ones. A staged Vision stores the write and
+applies it on its first mount.</p>
+<p><code>Cleanup</code> takes a Vision out of the scope, so a cleaned up Vision is <strong>not</strong>
+updated. Mounting it again puts it back and later updates reach it.</p>
+<pre class="code"><code class="hljs">Interface:Cleanup()
+Scope:Update(<span class="hljs-string">&quot;Theme&quot;</span>, Red)     <span class="hljs-comment">-- Interface is not touched</span>
+
+Interface:Mount()
+Scope:Update(<span class="hljs-string">&quot;Theme&quot;</span>, Blue)    <span class="hljs-comment">-- now it is</span></code></pre>
+<p>A derived value is skipped unless its compute handles <code>&quot;set&quot;</code>, the same as
+writing it directly.</p>
+<div class="callout tip">
+
+<p><strong>Tip</strong></p>
+<p>The scope holds its Visions weakly here, so <code>Update</code> never keeps one alive.
+Drop your reference to a Vision and it is still collectable.</p>
+</div>
+
+<h2 id="springvalue-deprecated"><a class="anchor" href="#springvalue-deprecated">#</a>SpringValue <span class="badge danger">deprecated</span></h2>
+<div class="callout danger">
+
+<p><strong>Deprecated</strong></p>
+<p>Use <a href="#springevent">SpringEvent</a> instead. It does the same thing and takes any
+number of values in one call, so <code>SpringEvent(Info, Target, { Fill = 0.8 })</code>
+replaces <code>SpringValue(Info, Target, &quot;Fill&quot;, 0.8)</code> directly.</p>
+</div>
+
 <pre class="code"><code class="hljs">Scope:SpringValue(
     Info: TweenInfo,
     Target: Vision | { Vision },
     ValueName: <span class="hljs-built_in">string</span>,
     TargetValue: any
 ) -&gt; Linker</code></pre>
-<p>Animates a Vision&#39;s named value from its current value to <code>TargetValue</code>,
-writing through the CapFunc each frame - so every callback bound to that
+<p>Animates a single named value. Prefer <a href="#springevent">SpringEvent</a>, which does
+the same thing for any number of values in one call.</p>
+<p>Writes through the CapFunc each frame - so every callback bound to that
 value runs, and the instances update themselves.</p>
 <pre class="code"><code class="hljs">Scope:SpringValue(
     TweenInfo.new(<span class="hljs-number">0.6</span>, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
@@ -72,6 +106,24 @@ value runs, and the instances update themselves.</p>
     <span class="hljs-number">0.8</span>
 )</code></pre>
 <p>Accepts a list of Visions to drive several at once.</p>
+<h2 id="springevent"><a class="anchor" href="#springevent">#</a>SpringEvent</h2>
+<pre class="code"><code class="hljs">Scope:SpringEvent(
+    Info: TweenInfo,
+    Target: Vision | { Vision },
+    Values: { [<span class="hljs-built_in">string</span>]: any }
+) -&gt; Linker</code></pre>
+<p>Animates several named values at once, as one link. The table maps value
+names to their targets.</p>
+<pre class="code"><code class="hljs">Scope:SpringEvent(TweenInfo.new(<span class="hljs-number">0.6</span>), Interface, {
+    Fill = <span class="hljs-number">0.8</span>,
+    Tint = Color3.fromRGB(<span class="hljs-number">88</span>, <span class="hljs-number">101</span>, <span class="hljs-number">242</span>),
+})</code></pre>
+<p>Pass a list of Visions and every one of them animates from the same call, so
+one link can drive a whole grid.</p>
+<pre class="code"><code class="hljs">Scope:SpringEvent(TweenInfo.new(<span class="hljs-number">0.6</span>), Tiles, { Tint = Accent })</code></pre>
+<p>Each value keeps its own start, and each Vision keeps its own, so they can be
+at different places when the call is made. Naming a value the Vision does not
+declare raises.</p>
 <h2 id="springinstance"><a class="anchor" href="#springinstance">#</a>SpringInstance</h2>
 <pre class="code"><code class="hljs">Scope:SpringInstance(
     Info: TweenInfo,
@@ -97,15 +149,27 @@ property.</p>
 <pre class="code"><code class="hljs">Scope:SpringFunction(TweenInfo.new(<span class="hljs-number">0.7</span>), <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Value, DeltaTime)</span></span>
     Accent.Rotation = Value
 <span class="hljs-keyword">end</span>, <span class="hljs-number">0</span>, <span class="hljs-number">180</span>)</code></pre>
-<h2 id="physicsvalue-physicsinstance-physicsfunction"><a class="anchor" href="#physicsvalue-physicsinstance-physicsfunction">#</a>PhysicsValue, PhysicsInstance, PhysicsFunction</h2>
-<pre class="code"><code class="hljs">Scope:PhysicsValue(Period: number, Damping: number, Target, ValueName, Goal) -&gt; Linker
-Scope:PhysicsInstance(Period: number, Damping: number, Target, Properties) -&gt; Linker
+<h2 id="physicsinstance-physicsfunction"><a class="anchor" href="#physicsinstance-physicsfunction">#</a>PhysicsInstance, PhysicsFunction</h2>
+<pre class="code"><code class="hljs">Scope:PhysicsInstance(Period: number, Damping: number, Target, Properties) -&gt; Linker
 Scope:PhysicsFunction(Period: number, Damping: number, Callback, Initial, Goal) -&gt; Linker</code></pre>
 <p>The same three shapes as the <code>Spring*</code> methods, driven by a damped spring
 instead of a <code>TweenInfo</code>. There is no duration: <code>Period</code> is the undamped
 period in seconds, <code>Damping</code> is the ratio, and the motion ends when it
 settles.</p>
-<pre class="code"><code class="hljs">Scope:PhysicsValue(<span class="hljs-number">0.6</span>, <span class="hljs-number">0.7</span>, Interface, <span class="hljs-string">&quot;Fill&quot;</span>, <span class="hljs-number">0.8</span>)</code></pre>
+<pre class="code"><code class="hljs">Scope:PhysicsInstance(<span class="hljs-number">0.6</span>, <span class="hljs-number">0.7</span>, Button, { BackgroundColor3 = Hover })</code></pre>
+<h2 id="physicsvalue-deprecated"><a class="anchor" href="#physicsvalue-deprecated">#</a>PhysicsValue <span class="badge danger">deprecated</span></h2>
+<div class="callout danger">
+
+<p><strong>Deprecated</strong></p>
+<p>Use <a href="#physicsevent">PhysicsEvent</a> instead.
+<code>PhysicsEvent(Period, Damping, Target, { Fill = 0.8 })</code> replaces
+<code>PhysicsValue(Period, Damping, Target, &quot;Fill&quot;, 0.8)</code> directly.</p>
+</div>
+
+<pre class="code"><code class="hljs">Scope:PhysicsValue(Period: number, Damping: number, Target, ValueName, Goal) -&gt; Linker</code></pre>
+<p>Animates a single named value with a solver. Still works, still cancels
+against the same claims, but every call it can make <code>PhysicsEvent</code> can make
+too.</p>
 <table>
 <thead>
 <tr>

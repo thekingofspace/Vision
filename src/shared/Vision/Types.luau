@@ -32,15 +32,21 @@ export type Linker = {
 
 export type Scope = {
     Capture:(Self:Scope, Declaration:Declaration) -> Vision,
-
+    
+    ---@deprecaited
     SpringValue:(self:Scope, TweenInfo:TweenInfo, Vision:Vision | {Vision}, ValueName:string, TargetValue:any) -> Linker,
+    ---@deprecaited
+    PhysicsValue:(self:Scope, Period:number, Damping:number, Vision:Vision | {Vision}, ValueName:string, TargetValue:any) -> Linker,
+
+    SpringEvent:(self:Scope, TweenInfo:TweenInfo, Vision:Vision | {Vision}, TargetEvents:{[string]:any}) -> Linker,
     SpringInstance:(self:Scope, TweenInfo:TweenInfo, Instance:Instance | {Instance}, TargetProps:{[string]:any}) -> Linker,
     SpringFunction:(self:Scope, TweenInfo:TweenInfo, TargetFun:(NewValue:any, dt:number) -> (), InitialValue:any, TargetValue:any) -> Linker,
 
-    PhysicsValue:(self:Scope, Period:number, Damping:number, Vision:Vision | {Vision}, ValueName:string, TargetValue:any) -> Linker,
+    PhysicsEvent:(self:Scope, Period:number, Damping:number, Vision:Vision | {Vision}, TargetEvents:{[string]:any}) -> Linker,
     PhysicsInstance:(self:Scope, Period:number, Damping:number, Instance:Instance | {Instance}, TargetProps:{[string]:any}) -> Linker,
     PhysicsFunction:(self:Scope, Period:number, Damping:number, TargetFun:(NewValue:any) -> (), InitialValue:any, TargetValue:any) -> Linker,
 
+    Update:(self:Scope, EventName:string, Value:any) -> (),
     Release:(self:Scope) -> ()
 }
 
