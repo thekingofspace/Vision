@@ -40,7 +40,7 @@ local Words = {
     "Ripple", "Summit", "Thicket", "Vellum", "Willow",
 }
 
-local Order = { "Title", "Values", "Motion", "Reactive", "Effects", "Gradient", "Stack", "List" }
+local Order = { "Title", "Values", "Motion", "Reactive", "Effects", "Easing", "Damping", "Gradient", "Particles", "Stack", "List" }
 
 local Digits = {
     [Enum.KeyCode.One] = 1,
@@ -58,7 +58,7 @@ return function()
     local Wearing = "Dark"
     local Toggled = false
 
-    local Title, Values, Motion, Reactive, Effects, Colour, Stack, List, Row
+    local Title, Values, Motion, Reactive, Effects, Easing, Damping, Colour, Motes, Stack, List, Row
     local Shelf, Handle
     local Rows, Made = {}, 0
 
@@ -81,6 +81,7 @@ return function()
             ResetOnSpawn = false,
             IgnoreGuiInset = true,
             DisplayOrder = 40,
+            ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
             mount(PlayerGui),
 
@@ -1226,6 +1227,437 @@ return function()
 
     Stack = Scope:Capture(Page("Stack", "Stack", "K  next screen", Pile))
 
+    ----------------------------------------------------------------- easing
+
+    local Curves = {
+        "Linear", "Sine", "Quad", "Cubic", "Quint",
+        "Exponential", "Circular", "Back", "Elastic", "Bounce",
+    }
+
+    local Ways = { "Out", "InOut", "In" }
+    local Paces = { 1.2, 0.6, 2.4 }
+
+    local WayAt = 1
+    local PaceAt = 1
+    local Thrown = false
+
+    local function Rung(Slot: number): number
+        return 64 + (Slot - 1) * 19
+    end
+
+    local Gallery = {
+        cleanup(function()
+            print("[vision] easing asleep")
+        end),
+    }
+
+    for Slot, Name in Curves do
+        table.insert(Gallery, {
+            ClassName = "TextLabel",
+            Name = `Name{Slot}`,
+            BackgroundTransparency = 1,
+            AnchorPoint = Vector2.new(0, 0.5),
+            Position = UDim2.fromOffset(28, Rung(Slot)),
+            Size = UDim2.fromOffset(86, 16),
+            Font = Enum.Font.Code,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Text = string.lower(Name),
+            TextColor3 = style("Skin")["Dim"],
+
+            mount("Card"),
+        })
+
+        table.insert(Gallery, {
+            ClassName = "Frame",
+            Name = `Rail{Slot}`,
+            AnchorPoint = Vector2.new(0, 0.5),
+            Position = UDim2.fromOffset(120, Rung(Slot)),
+            Size = UDim2.fromOffset(392, 2),
+            BorderSizePixel = 0,
+            BackgroundTransparency = 0.6,
+            BackgroundColor3 = style("Skin")["Rail"],
+
+            mount("Card"),
+        })
+
+        table.insert(Gallery, {
+            ClassName = "Frame",
+            Name = `Ease{Slot}`,
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            Position = UDim2.fromOffset(126, Rung(Slot)),
+            Size = UDim2.fromOffset(11, 11),
+            BorderSizePixel = 0,
+            BackgroundColor3 = style("Skin")["Accent"],
+
+            mount("Card"),
+
+            { ClassName = "UICorner", CornerRadius = UDim.new(1, 0) },
+        })
+    end
+
+    local function Launch(Deck)
+        Thrown = not Thrown
+
+        local Goal = if Thrown then 506 else 126
+
+        for Slot, Name in Curves do
+            Scope:SpringInstance(
+                TweenInfo.new(Paces[PaceAt], Enum.EasingStyle[Name], Enum.EasingDirection[Ways[WayAt]]),
+                Deck:FindFirstChild(`Ease{Slot}`),
+                { Position = UDim2.fromOffset(Goal, Rung(Slot)) }
+            )
+        end
+    end
+
+    table.insert(Gallery, Button("Go", "run them all", UDim2.fromOffset(28, 266), 116, function(self)
+        Launch(self.Parent)
+    end))
+
+    table.insert(Gallery, Button("Way", "direction  Out", UDim2.fromOffset(152, 266), 138, function(self)
+        WayAt = WayAt % #Ways + 1
+        self.Text = `direction  {Ways[WayAt]}`
+
+        Launch(self.Parent)
+    end))
+
+    table.insert(Gallery, Button("Pace", "1.2s", UDim2.fromOffset(298, 266), 92, function(self)
+        PaceAt = PaceAt % #Paces + 1
+        self.Text = `{Paces[PaceAt]}s`
+
+        Launch(self.Parent)
+    end))
+
+    Easing = Scope:Capture(Page("Easing", "Easing", "every curve comes straight from TweenService:GetValue", Gallery))
+
+    ---------------------------------------------------------------- damping
+
+    local Damps = { 0.15, 0.3, 0.5, 0.75, 1, 1.6 }
+    local Periods = { 0.6, 0.3, 1.1 }
+
+    local BeatAt = 1
+    local Flung = false
+
+    local function Step(Slot: number): number
+        return 74 + (Slot - 1) * 26
+    end
+
+    local Ladder = {
+        {
+            ClassName = "TextLabel",
+            Name = "Told",
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(28, 236),
+            Size = UDim2.fromOffset(504, 16),
+            Font = Enum.Font.Code,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextColor3 = style("Skin")["Dim"],
+
+            mount("Card"),
+
+            event("Word", "under 1 rings, 1 is critical, over 1 crawls in without a bounce", function(self, Value)
+                self.Text = Value
+            end),
+        },
+
+        cleanup(function()
+            print("[vision] damping asleep")
+        end),
+    }
+
+    for Slot, Amount in Damps do
+        local Tag = if Amount < 1 then `{Amount}  under` elseif Amount == 1 then "1.00  critical" else `{Amount}  over`
+
+        table.insert(Ladder, {
+            ClassName = "TextLabel",
+            Name = `Tag{Slot}`,
+            BackgroundTransparency = 1,
+            AnchorPoint = Vector2.new(0, 0.5),
+            Position = UDim2.fromOffset(28, Step(Slot)),
+            Size = UDim2.fromOffset(104, 16),
+            Font = Enum.Font.Code,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Text = Tag,
+            TextColor3 = style("Skin")["Dim"],
+
+            mount("Card"),
+        })
+
+        table.insert(Ladder, {
+            ClassName = "Frame",
+            Name = `Mark{Slot}`,
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            Position = UDim2.fromOffset(360, Step(Slot)),
+            Size = UDim2.fromOffset(2, 18),
+            BorderSizePixel = 0,
+            BackgroundTransparency = 0.7,
+            BackgroundColor3 = style("Skin")["Rail"],
+
+            mount("Card"),
+        })
+
+        table.insert(Ladder, {
+            ClassName = "Frame",
+            Name = `Bob{Slot}`,
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            Position = UDim2.fromOffset(148, Step(Slot)),
+            Size = UDim2.fromOffset(16, 16),
+            BorderSizePixel = 0,
+            BackgroundColor3 = style("Skin")["Accent"],
+
+            mount("Card"),
+
+            { ClassName = "UICorner", CornerRadius = UDim.new(0, 5) },
+        })
+    end
+
+    local function Fling(Deck, Goal: number)
+        for Slot, Amount in Damps do
+            Scope:PhysicsInstance(Periods[BeatAt], Amount, Deck:FindFirstChild(`Bob{Slot}`), {
+                Position = UDim2.fromOffset(Goal, Step(Slot)),
+            })
+        end
+    end
+
+    table.insert(Ladder, Button("Toss", "launch", UDim2.fromOffset(28, 266), 100, function(self)
+        Flung = not Flung
+
+        Damping.Word("one goal, six damping values, watch them arrive differently")
+        Fling(self.Parent, if Flung then 500 else 148)
+    end))
+
+    table.insert(Ladder, Button("Turn", "retarget", UDim2.fromOffset(136, 266), 104, function(self)
+        Flung = not Flung
+
+        Damping.Word("retargeted in flight, every one keeps the speed it had")
+        Fling(self.Parent, if Flung then 500 else 148)
+    end))
+
+    table.insert(Ladder, Button("Beat", "period  0.6s", UDim2.fromOffset(248, 266), 124, function(self)
+        BeatAt = BeatAt % #Periods + 1
+        self.Text = `period  {Periods[BeatAt]}s`
+
+        Damping.Word(`period {Periods[BeatAt]}s, the same shape stretched in time`)
+    end))
+
+    Damping = Scope:Capture(Page("Damping", "Damping", "K  next screen", Ladder))
+
+    -------------------------------------------------------------- particles
+
+    local Pool = {}
+    local Flying = {}
+    local Stage
+    local Spraying = false
+
+    local Mote = Scope:Capture({
+        ClassName = "Frame",
+        Name = "Mote",
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromOffset(280, 150),
+        Size = UDim2.fromOffset(8, 8),
+        BorderSizePixel = 0,
+        BackgroundColor3 = Color3.fromRGB(122, 162, 255),
+        ZIndex = 5,
+
+        { ClassName = "UICorner", CornerRadius = UDim.new(0, 3) },
+
+        event("Tint", Color3.fromRGB(122, 162, 255), function(self, Value)
+            self.BackgroundColor3 = Value
+        end),
+    })
+
+    local function Hue(): Color3
+        return Color3.fromHSV(math.random(), 0.62, 1)
+    end
+
+    local function Recycle(Entry)
+        if Entry.Done then
+            return
+        end
+
+        Entry.Done = true
+
+        local Slot = table.find(Flying, Entry)
+
+        if Slot then
+            table.remove(Flying, Slot)
+        end
+
+        Entry.Link:Cancel()
+
+        -- asleep, not gone: the declaration stays and the next spawn wakes it
+        Entry.Item:Cleanup()
+        table.insert(Pool, Entry.Item)
+
+        if Motes then
+            Motes.Count(#Flying)
+        end
+    end
+
+    local function Emit(X, Y, Push, Rise, Pull, Life, Spin, Wide)
+        if not Stage then
+            return
+        end
+
+        local Item = table.remove(Pool) or Mote:Clone()
+
+        Item.Tint(Hue())
+
+        local Body = Item:Open()
+        Body.Parent = Stage
+        Body.Position = UDim2.fromOffset(X, Y)
+        Body.Size = UDim2.fromOffset(Wide, Wide)
+        Body.Rotation = 0
+        Body.BackgroundTransparency = 0
+
+        local Entry = { Item = Item, Done = false }
+
+        -- one link per mote, a linear clock the callback turns into a trajectory
+        Entry.Link = Scope:SpringFunction(TweenInfo.new(Life, Enum.EasingStyle.Linear), function(Alpha)
+            local Age = Alpha * Life
+            local Shrink = Wide * (1 - Alpha * 0.6)
+
+            Body.Position = UDim2.fromOffset(X + Push * Age, Y + Rise * Age + 0.5 * Pull * Age * Age)
+            Body.Size = UDim2.fromOffset(Shrink, Shrink)
+            Body.Rotation = Spin * Age
+            Body.BackgroundTransparency = Alpha * Alpha
+        end, 0, 1)
+
+        table.insert(Flying, Entry)
+        Motes.Count(#Flying)
+
+        task.spawn(function()
+            Entry.Link:Await()
+            Recycle(Entry)
+        end)
+    end
+
+    local function Burst()
+        for Slot = 1, 44 do
+            local Angle = math.rad(Slot / 44 * 360 + math.random() * 9)
+            local Speed = 170 + math.random() * 190
+
+            Emit(
+                280,
+                146,
+                math.cos(Angle) * Speed,
+                math.sin(Angle) * Speed,
+                620,
+                1.1,
+                (math.random() - 0.5) * 420,
+                6 + math.random() * 5
+            )
+        end
+    end
+
+    local function Confetti()
+        for _ = 1, 40 do
+            Emit(
+                60 + math.random() * 440,
+                26,
+                (math.random() - 0.5) * 130,
+                40 + math.random() * 70,
+                430,
+                1.7,
+                (math.random() - 0.5) * 720,
+                7 + math.random() * 5
+            )
+        end
+    end
+
+    local function Spray()
+        Spraying = not Spraying
+
+        if not Spraying then
+            return
+        end
+
+        task.spawn(function()
+            while Spraying and Alive and Stage do
+                for _ = 1, 2 do
+                    local Angle = math.rad(-90 + (math.random() - 0.5) * 48)
+                    local Speed = 330 + math.random() * 170
+
+                    Emit(
+                        280 + (math.random() - 0.5) * 34,
+                        258,
+                        math.cos(Angle) * Speed,
+                        math.sin(Angle) * Speed,
+                        900,
+                        1.15,
+                        0,
+                        7 + math.random() * 4
+                    )
+                end
+
+                task.wait(0.05)
+            end
+        end)
+    end
+
+    local Cloud = {
+        {
+            ClassName = "TextLabel",
+            Name = "Meter",
+            BackgroundTransparency = 1,
+            AnchorPoint = Vector2.new(1, 0),
+            Position = UDim2.new(1, -28, 0, 22),
+            Size = UDim2.fromOffset(220, 26),
+            Font = Enum.Font.Code,
+            TextSize = 12,
+            TextXAlignment = Enum.TextXAlignment.Right,
+            TextColor3 = style("Skin")["Dim"],
+
+            mount("Card"),
+
+            event("Count", 0, function(self, Value)
+                self.Text = `{Value} in flight   {#Pool} asleep`
+            end),
+        },
+
+        {
+            ClassName = "TextLabel",
+            Name = "Told",
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(28, 232),
+            Size = UDim2.fromOffset(504, 16),
+            Font = Enum.Font.Code,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Text = "every mote is one cloned declaration, slept when it dies and woken for the next one",
+            TextColor3 = style("Skin")["Dim"],
+
+            mount("Card"),
+        },
+
+        cleanup(function()
+            print("[vision] particles asleep,", #Pool, "motes kept in the pool")
+        end),
+    }
+
+    table.insert(Cloud, Button("Pop", "burst", UDim2.fromOffset(28, 266), 94, function()
+        Burst()
+    end))
+
+    table.insert(Cloud, Button("Jet", "fountain", UDim2.fromOffset(130, 266), 104, function(self)
+        Spray()
+        self.Text = if Spraying then "stop" else "fountain"
+    end))
+
+    table.insert(Cloud, Button("Fall", "confetti", UDim2.fromOffset(242, 266), 100, function()
+        Confetti()
+    end))
+
+    table.insert(Cloud, Button("Sweep", "clear", UDim2.fromOffset(350, 266), 90, function()
+        for _, Entry in table.clone(Flying) do
+            Recycle(Entry)
+        end
+    end))
+
+    Motes = Scope:Capture(Page("Particles", "Particles", "K  next screen", Cloud))
+
     ------------------------------------------------------------------- list
 
     local Rack = {
@@ -1389,7 +1821,10 @@ return function()
         Motion = Motion,
         Reactive = Reactive,
         Effects = Effects,
+        Easing = Easing,
+        Damping = Damping,
         Gradient = Colour,
+        Particles = Motes,
         Stack = Stack,
         List = List,
     }
@@ -1407,6 +1842,13 @@ return function()
         if Which == "Stack" then
             Sheet:Mount()
             Deck = Sheet:Open():FindFirstChild("Card")
+
+            return
+        end
+
+        if Which == "Particles" then
+            Sheet:Mount()
+            Stage = Sheet:Open():FindFirstChild("Card")
 
             return
         end
@@ -1447,6 +1889,14 @@ return function()
             table.clear(Notes)
 
             Deck = nil
+        elseif Which == "Particles" then
+            Spraying = false
+
+            for _, Entry in table.clone(Flying) do
+                Recycle(Entry)
+            end
+
+            Stage = nil
         elseif Which == "List" then
             for _, Item in Rows do
                 Item:Cleanup()
