@@ -30,6 +30,36 @@ local Interface = Scope:Capture({
 })
 ```
 
+## LoadStyle
+
+```lua
+Scope:LoadStyle(Declaration: { name: string, [string]: any }) -> Style
+```
+
+Creates or updates a named style and returns the sheet. Declarations bind to
+its fields with the [style](/api/keywords#style) keyword, and changing a
+field updates every instance bound to it.
+
+```lua
+const Dark = Scope:LoadStyle({
+    name = "Dark",
+    Surface = Color3.fromRGB(20, 20, 26),
+    Ink = Color3.fromRGB(240, 240, 250),
+})
+
+Dark:Set("Surface", Accent)
+```
+
+Styles can also be animated, so a theme change can crossfade instead of
+snapping:
+
+```lua
+Scope:SpringStyle(TweenInfo.new(0.4), Dark, { Surface = Paper, Ink = Coal })
+Scope:PhysicsStyle(0.5, 0.7, "Dark", { Radius = 20 })
+```
+
+See [Style](/api/style) for the full page.
+
 ## Update
 
 ```lua

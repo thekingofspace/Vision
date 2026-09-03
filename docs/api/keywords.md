@@ -288,6 +288,26 @@ On the server there is no camera, so the viewport reads as `Vector2.zero` and
 the callback runs once at mount and never again.
 :::
 
+## style
+
+```lua
+style(Name: string)[Field: string]
+```
+
+Binds a property to a field of a loaded style. The property takes the field's
+value at mount and follows it afterwards, so changing the field updates every
+instance using it.
+
+```lua
+{
+    ClassName = "Frame",
+    BackgroundColor3 = style("Dark")["Surface"],
+    ...
+}
+```
+
+See [Style](/api/style) for loading, updating and the lifecycle rules.
+
 ## mount
 
 ```lua

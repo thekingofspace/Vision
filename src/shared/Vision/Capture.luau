@@ -205,7 +205,7 @@ const function Parse(State, Declaration, Parent)
     return Node
 end
 
-const function Raise(Node)
+const function Raise(State, Node)
     const Object = Instance.new(Node.ClassName)
 
     Node.Instance = Object
@@ -215,6 +215,19 @@ const function Raise(Node)
     table.clear(Pending)
 
     for Key, Value in Node.Properties do
+        if Symbols.Styled(Value) then
+            const Sheet = State.Scope.Styles[Value.Style]
+
+            if not Sheet then
+                error(`style "{Value.Style}" is not loaded on this scope`, 0)
+            end
+
+            Object[Key] = Sheet:Get(Value.Field)
+            table.insert(Node.Connections, Sheet:Attach(Object, Key, Value.Field))
+
+            continue
+        end
+
         const Member = Object[Key]
 
         if typeof(Member) == "RBXScriptSignal" then
@@ -250,11 +263,11 @@ const function Raise(Node)
 
 end
 
-const function Build(Node)
-    Raise(Node)
+const function Build(State, Node)
+    Raise(State, Node)
 
     for _, Child in Node.Children do
-        Build(Child)
+        Build(State, Child)
     end
 end
 
@@ -511,7 +524,7 @@ function Methods:Mount()
     State.Generation += 1
     State.Scope:Adopt(self)
 
-    Build(State.Root)
+    Build(State, State.Root)
 
     for _, Node in State.Nodes do
         if Node ~= State.Root then
@@ -561,7 +574,7 @@ function Methods:MountAsync(Budget: number?)
     end
 
     for Index = 1, #Nodes do
-        Raise(Nodes[Index])
+        Raise(State, Nodes[Index])
         table.insert(Built, Nodes[Index].Instance)
 
         if Spent() then

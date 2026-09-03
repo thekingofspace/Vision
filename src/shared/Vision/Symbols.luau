@@ -3,6 +3,8 @@ const Symbols = {}
 const Marker = {}
 Marker.__index = Marker
 
+const Token = {}
+
 function Symbols.Is(Value: any): boolean
     return type(Value) == "table" and getmetatable(Value) == Marker
 end
@@ -54,6 +56,18 @@ function Symbols.drawcall(Callback: (Instance, Vector2) -> ())
         Kind = "Draw",
         Callback = Callback,
     }, Marker)
+end
+
+function Symbols.Styled(Value: any): boolean
+    return type(Value) == "table" and getmetatable(Value) == Token
+end
+
+function Symbols.style(Name: string)
+    return setmetatable({}, {
+        __index = function(_, Field: string)
+            return setmetatable({ Style = Name, Field = Field }, Token)
+        end,
+    })
 end
 
 function Symbols.mount(Target: Instance | string)

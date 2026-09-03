@@ -32,6 +32,7 @@
 <a href="./declarations.html">Declarations</a>
 <a href="./keywords.html">Keywords</a>
 <a class="active" href="./scope.html">Scope</a>
+<a href="./style.html">Style</a>
 <a href="./vision.html">Vision</a>
 <a href="./animation.html">Animation</a>
 </div>
@@ -55,6 +56,23 @@ back a handle you can write to.</p>
         <span class="hljs-built_in">self</span>.Name = `Count{Value}`
     <span class="hljs-keyword">end</span>),
 })</code></pre>
+<h2 id="loadstyle"><a class="anchor" href="#loadstyle">#</a>LoadStyle</h2>
+<pre class="code"><code class="hljs">Scope:LoadStyle(Declaration: { name: <span class="hljs-built_in">string</span>, [<span class="hljs-built_in">string</span>]: any }) -&gt; Style</code></pre>
+<p>Creates or updates a named style and returns the sheet. Declarations bind to
+its fields with the <a href="./keywords.html#style">style</a> keyword, and changing a
+field updates every instance bound to it.</p>
+<pre class="code"><code class="hljs">const Dark = Scope:LoadStyle({
+    name = <span class="hljs-string">&quot;Dark&quot;</span>,
+    Surface = Color3.fromRGB(<span class="hljs-number">20</span>, <span class="hljs-number">20</span>, <span class="hljs-number">26</span>),
+    Ink = Color3.fromRGB(<span class="hljs-number">240</span>, <span class="hljs-number">240</span>, <span class="hljs-number">250</span>),
+})
+
+Dark:Set(<span class="hljs-string">&quot;Surface&quot;</span>, Accent)</code></pre>
+<p>Styles can also be animated, so a theme change can crossfade instead of
+snapping:</p>
+<pre class="code"><code class="hljs">Scope:SpringStyle(TweenInfo.new(<span class="hljs-number">0.4</span>), Dark, { Surface = Paper, Ink = Coal })
+Scope:PhysicsStyle(<span class="hljs-number">0.5</span>, <span class="hljs-number">0.7</span>, <span class="hljs-string">&quot;Dark&quot;</span>, { Radius = <span class="hljs-number">20</span> })</code></pre>
+<p>See <a href="./style.html">Style</a> for the full page.</p>
 <h2 id="update"><a class="anchor" href="#update">#</a>Update</h2>
 <pre class="code"><code class="hljs">Scope:Update(EventName: <span class="hljs-built_in">string</span>, Value: any)</code></pre>
 <p>Writes one value into <strong>every Vision the scope has captured</strong> that declares

@@ -32,6 +32,7 @@
 <a href="./declarations.html">Declarations</a>
 <a class="active" href="./keywords.html">Keywords</a>
 <a href="./scope.html">Scope</a>
+<a href="./style.html">Style</a>
 <a href="./vision.html">Vision</a>
 <a href="./animation.html">Animation</a>
 </div>
@@ -255,6 +256,17 @@ camera being swapped out.</p>
 the callback runs once at mount and never again.</p>
 </div>
 
+<h2 id="style"><a class="anchor" href="#style">#</a>style</h2>
+<pre class="code"><code class="hljs">style(Name: <span class="hljs-built_in">string</span>)[Field: <span class="hljs-built_in">string</span>]</code></pre>
+<p>Binds a property to a field of a loaded style. The property takes the field&#39;s
+value at mount and follows it afterwards, so changing the field updates every
+instance using it.</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    BackgroundColor3 = style(<span class="hljs-string">&quot;Dark&quot;</span>)[<span class="hljs-string">&quot;Surface&quot;</span>],
+    ...
+}</code></pre>
+<p>See <a href="./style.html">Style</a> for loading, updating and the lifecycle rules.</p>
 <h2 id="mount"><a class="anchor" href="#mount">#</a>mount</h2>
 <pre class="code"><code class="hljs">mount(Target: Instance | <span class="hljs-built_in">string</span>) -&gt; Marker</code></pre>
 <p>Sets where this node is parented. An <code>Instance</code> parents there directly; a

@@ -37,6 +37,7 @@ const Sidebars = [
             { text: "Declarations", link: "/api/declarations" },
             { text: "Keywords", link: "/api/keywords" },
             { text: "Scope", link: "/api/scope" },
+            { text: "Style", link: "/api/style" },
             { text: "Vision", link: "/api/vision" },
             { text: "Animation", link: "/api/animation" },
         ],

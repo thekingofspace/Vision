@@ -1,6 +1,7 @@
 local Runtime = require(script.Parent.Link)
 const Capture = require(script.Parent.Capture)
 const Interpolate = require(script.Parent.Interpolate)
+const Style = require(script.Parent.Style)
 
 const Scope = {}
 Scope.__index = Scope
@@ -13,10 +14,49 @@ const function AsList(Value: any): { any }
     return Value
 end
 
+const function Sheet(self, Value: any)
+    if Style.Is(Value) then
+        return Value
+    end
+
+    const Found = self.Styles[Value]
+
+    if not Found then
+        error(`style "{tostring(Value)}" is not loaded on this scope`, 0)
+    end
+
+    return Found
+end
+
+const function AsSheets(self, Value: any): { any }
+    if type(Value) == "string" or Style.Is(Value) then
+        return { Sheet(self, Value) }
+    end
+
+    const Out = {}
+
+    for _, Item in Value do
+        table.insert(Out, Sheet(self, Item))
+    end
+
+    return Out
+end
+
+const function Start(Target, Field: string): any
+    const Current = Target:Get(Field)
+
+    if Current == nil then
+        error(`style "{Target.Name}" has no field "{Field}" to animate from`, 0)
+    end
+
+    return Current
+end
+
 function Scope.new()
     return setmetatable({
         Runtime = Runtime.new(),
         Visions = {},
+        Styles = {},
         Owned = setmetatable({}, { __mode = "k" }),
     }, Scope)
 end
@@ -27,6 +67,25 @@ function Scope:Capture(Declaration: any)
     self.Owned[Vision] = true
 
     return Vision
+end
+
+function Scope:LoadStyle(Declaration: any)
+    const Name = Declaration.name or Declaration.Name
+
+    if type(Name) ~= "string" then
+        error("a style declaration needs a name", 0)
+    end
+
+    local Sheet = self.Styles[Name]
+
+    if not Sheet then
+        Sheet = Style.new(Name)
+        self.Styles[Name] = Sheet
+    end
+
+    Sheet:Load(Declaration)
+
+    return Sheet
 end
 
 function Scope:Update(EventName: string, Value: any)
@@ -99,6 +158,25 @@ function Scope:SpringEvent(Info: TweenInfo, Vision: any, TargetEvents: { [string
     return self.Runtime:Create(Info, function(Alpha: number)
         for _, Track in Tracks do
             Track.Cap(Interpolate.Value(Track.Start, Track.Goal, Alpha))
+        end
+    end, Slots)
+end
+
+function Scope:SpringStyle(Info: TweenInfo, Target: any, TargetFields: { [string]: any })
+    const Sheets = AsSheets(self, Target)
+    const Tracks = {}
+    const Slots = {}
+
+    for _, Book in Sheets do
+        for Field, Goal in TargetFields do
+            table.insert(Tracks, { Book = Book, Field = Field, Start = Start(Book, Field), Goal = Goal })
+            table.insert(Slots, { Book, Field })
+        end
+    end
+
+    return self.Runtime:Create(Info, function(Alpha: number)
+        for _, Track in Tracks do
+            Track.Book:Set(Track.Field, Interpolate.Value(Track.Start, Track.Goal, Alpha))
         end
     end, Slots)
 end
@@ -208,6 +286,24 @@ function Scope:PhysicsEvent(Period: number, Damping: number, Vision: any, Target
     return self.Runtime:Solve(Period, Damping, Channels)
 end
 
+function Scope:PhysicsStyle(Period: number, Damping: number, Target: any, TargetFields: { [string]: any })
+    const Sheets = AsSheets(self, Target)
+    const Channels = {}
+
+    for _, Book in Sheets do
+        for Field, Goal in TargetFields do
+            table.insert(
+                Channels,
+                Channel(Book, Field, Start(Book, Field), Goal, function(Value)
+                    Book:Set(Field, Value)
+                end)
+            )
+        end
+    end
+
+    return self.Runtime:Solve(Period, Damping, Channels)
+end
+
 function Scope:PhysicsInstance(Period: number, Damping: number, Object: any, TargetProps: { [string]: any })
     const Targets = AsList(Object)
     const Channels = {}
@@ -243,8 +339,13 @@ function Scope:Release()
         Vision:Cleanup()
     end
 
+    for _, Sheet in self.Styles do
+        Sheet:Release()
+    end
+
     table.clear(self.Visions)
     table.clear(self.Owned)
+    table.clear(self.Styles)
     self.Runtime:Release()
 end
 

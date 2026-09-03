@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Style | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="./declarations.html">API</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">API</p>
+<div class="items">
+<a href="./declarations.html">Declarations</a>
+<a href="./keywords.html">Keywords</a>
+<a href="./scope.html">Scope</a>
+<a class="active" href="./style.html">Style</a>
+<a href="./vision.html">Vision</a>
+<a href="./animation.html">Animation</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="style"><a class="anchor" href="#style">#</a>Style</h1>
+<p>A style is a named bag of values that declarations bind to. Change a field
+and every instance bound to it updates, everywhere, immediately.</p>
+<p>It exists because the same handful of properties end up copied across every
+button, every card, every label. A style names them once.</p>
+<pre class="code"><code class="hljs">Scope:LoadStyle({
+    name = <span class="hljs-string">&quot;Dark&quot;</span>,
+    Surface = Color3.fromRGB(<span class="hljs-number">20</span>, <span class="hljs-number">20</span>, <span class="hljs-number">26</span>),
+    Ink = Color3.fromRGB(<span class="hljs-number">240</span>, <span class="hljs-number">240</span>, <span class="hljs-number">250</span>),
+    Accent = Color3.fromRGB(<span class="hljs-number">88</span>, <span class="hljs-number">101</span>, <span class="hljs-number">242</span>),
+    Title = Enum.Font.GothamBold,
+    Radius = <span class="hljs-number">12</span>,
+})</code></pre>
+<pre class="code"><code class="hljs">Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    BackgroundColor3 = style(<span class="hljs-string">&quot;Dark&quot;</span>)[<span class="hljs-string">&quot;Surface&quot;</span>],
+
+    {
+        ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>,
+        TextColor3 = style(<span class="hljs-string">&quot;Dark&quot;</span>)[<span class="hljs-string">&quot;Ink&quot;</span>],
+        Font = style(<span class="hljs-string">&quot;Dark&quot;</span>)[<span class="hljs-string">&quot;Title&quot;</span>],
+    },
+})</code></pre>
+<p>A field is just a value, so a style is not limited to colours. Fonts, sizes,
+numbers, <code>UDim2</code>, <code>EnumItem</code> - anything you would assign to a property.</p>
+<h2 id="scopeloadstyle"><a class="anchor" href="#scopeloadstyle">#</a>Scope:LoadStyle</h2>
+<pre class="code"><code class="hljs">Scope:LoadStyle(Declaration: { name: <span class="hljs-built_in">string</span>, [<span class="hljs-built_in">string</span>]: any }) -&gt; Style</code></pre>
+<p>Creates the style if it does not exist, updates it if it does, and returns
+the sheet. <code>name</code> identifies it and is not itself a field.</p>
+<pre class="code"><code class="hljs">const Dark = Scope:LoadStyle({ name = <span class="hljs-string">&quot;Dark&quot;</span>, Surface = Ink, Radius = <span class="hljs-number">12</span> })</code></pre>
+<p>Calling it again with the same name updates in bulk. <strong>Fields you do not
+mention are left alone</strong>, so you can nudge two values without restating the
+whole style.</p>
+<pre class="code"><code class="hljs">Scope:LoadStyle({ name = <span class="hljs-string">&quot;Dark&quot;</span>, Surface = Accent, Radius = <span class="hljs-number">20</span> })</code></pre>
+<p>A declaration without a string <code>name</code> raises.</p>
+<h2 id="style"><a class="anchor" href="#style">#</a>style</h2>
+<pre class="code"><code class="hljs">style(Name: <span class="hljs-built_in">string</span>)[Field: <span class="hljs-built_in">string</span>]</code></pre>
+<p>The declaration keyword. Reads as <code>style(&quot;Dark&quot;)[&quot;Surface&quot;]</code>, or
+<code>style(&quot;Dark&quot;).Surface</code> if you prefer - they are the same thing.</p>
+<p>It produces a binding, not a value. The property is filled in at <strong>mount</strong>,
+which means a tree can be declared before its style exists:</p>
+<pre class="code"><code class="hljs">const Interface = Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    BackgroundColor3 = style(<span class="hljs-string">&quot;Dark&quot;</span>)[<span class="hljs-string">&quot;Surface&quot;</span>],
+})
+
+Scope:LoadStyle({ name = <span class="hljs-string">&quot;Dark&quot;</span>, Surface = Ink })   <span class="hljs-comment">-- still fine</span>
+
+Interface:Mount()</code></pre>
+<p>Naming a style that was never loaded raises at mount and tells you which one.</p>
+<div class="callout warning">
+
+<p><strong>Properties only</strong></p>
+<p>Bindings work on properties. <code>attributes</code> and <code>tags</code> take literal values.</p>
+</div>
+
+<h2 id="the-sheet"><a class="anchor" href="#the-sheet">#</a>The sheet</h2>
+<p><code>LoadStyle</code> returns a <code>Style</code>.</p>
+<h3 id="get"><a class="anchor" href="#get">#</a>Get</h3>
+<pre class="code"><code class="hljs">Dark:Get(<span class="hljs-string">&quot;Radius&quot;</span>)   <span class="hljs-comment">--&gt; 12</span></code></pre>
+<h3 id="set"><a class="anchor" href="#set">#</a>Set</h3>
+<pre class="code"><code class="hljs">Dark:Set(<span class="hljs-string">&quot;Surface&quot;</span>, Accent)</code></pre>
+<p>Writes one field and updates every bound instance. Writing the value it
+already holds does nothing, so setting a style in a loop or re-loading it on
+a heartbeat is cheap and will not churn <code>Changed</code>.</p>
+<h3 id="name"><a class="anchor" href="#name">#</a>Name</h3>
+<pre class="code"><code class="hljs">Dark.Name   <span class="hljs-comment">--&gt; &quot;Dark&quot;</span></code></pre>
+<h2 id="fields-cannot-be-tables"><a class="anchor" href="#fields-cannot-be-tables">#</a>Fields cannot be tables</h2>
+<pre class="code"><code class="hljs">Scope:LoadStyle({ name = <span class="hljs-string">&quot;Bad&quot;</span>, Layout = { <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span> } })
+<span class="hljs-comment">--&gt; style &quot;Bad&quot; field &quot;Layout&quot; cannot be a table</span></code></pre>
+<p>A field has to be a single assignable value. Roblox datatypes are fine -
+<code>Color3</code>, <code>UDim2</code>, <code>Vector2</code> and friends are not Lua tables, so they pass.</p>
+<h2 id="lifecycle"><a class="anchor" href="#lifecycle">#</a>Lifecycle</h2>
+<p>Bindings follow the same rules as every other connection in Vision.</p>
+<table>
+<thead>
+<tr>
+<th>when</th>
+<th>what happens</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Mount</code></td>
+<td>fields are read and the instances subscribe</td>
+</tr>
+<tr>
+<td>field changes</td>
+<td>every bound instance is written</td>
+</tr>
+<tr>
+<td><code>Cleanup</code></td>
+<td>the tree unsubscribes; a destroyed instance is never written again</td>
+</tr>
+<tr>
+<td><code>Mount</code> again</td>
+<td>rebinds, and wakes with whatever the field holds <strong>now</strong></td>
+</tr>
+<tr>
+<td><code>Clone</code></td>
+<td>the copy inherits the bindings</td>
+</tr>
+<tr>
+<td><code>Scope:Release</code></td>
+<td>every sheet drops its users</td>
+</tr>
+</tbody></table>
+<p>A sleeping Vision costs a style nothing. It is not subscribed, it is not
+written to, and it picks up the current values when it wakes - not the ones
+that were current when it went to sleep.</p>
+<div class="callout tip">
+
+<p><strong>Nothing is pinned</strong></p>
+<p>A style holds its bound instances weakly and unsubscribes on cleanup, so it
+can never keep a discarded or sleeping Vision alive.</p>
+</div>
+
+<h2 id="swapping-themes"><a class="anchor" href="#swapping-themes">#</a>Swapping themes</h2>
+<p>Because a field updates in place, a theme swap is a handful of writes rather
+than a rebuild.</p>
+<pre class="code"><code class="hljs">const Themes = {
+    Dark = { Surface = Color3.fromRGB(<span class="hljs-number">20</span>, <span class="hljs-number">20</span>, <span class="hljs-number">26</span>), Ink = Color3.fromRGB(<span class="hljs-number">240</span>, <span class="hljs-number">240</span>, <span class="hljs-number">250</span>) },
+    Light = { Surface = Color3.fromRGB(<span class="hljs-number">246</span>, <span class="hljs-number">246</span>, <span class="hljs-number">250</span>), Ink = Color3.fromRGB(<span class="hljs-number">24</span>, <span class="hljs-number">24</span>, <span class="hljs-number">30</span>) },
+}
+
+const <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Wear</span><span class="hljs-params">(Which: string)</span></span>
+    const Skin = Themes[Which]
+
+    Scope:LoadStyle({
+        name = <span class="hljs-string">&quot;Dark&quot;</span>,
+        Surface = Skin.Surface,
+        Ink = Skin.Ink,
+    })
+<span class="hljs-keyword">end</span></code></pre>
+<p>Nothing rebuilds, nothing remounts, and any tree that is asleep picks up the
+new values the next time it mounts.</p>
+<p>To fade between themes rather than snap, animate the fields.</p>
+<h2 id="animating-a-style"><a class="anchor" href="#animating-a-style">#</a>Animating a style</h2>
+<pre class="code"><code class="hljs">Scope:SpringStyle(Info: TweenInfo, Target, Fields: { [<span class="hljs-built_in">string</span>]: any }) -&gt; Linker
+Scope:PhysicsStyle(Period: number, Damping: number, Target, Fields) -&gt; Linker</code></pre>
+<p>Animates the fields themselves, so every instance bound to them moves at
+once. <code>Target</code> is a sheet, a style name, or a list of either.</p>
+<pre class="code"><code class="hljs">Scope:SpringStyle(TweenInfo.new(<span class="hljs-number">0.4</span>), Dark, {
+    Surface = Color3.fromRGB(<span class="hljs-number">246</span>, <span class="hljs-number">246</span>, <span class="hljs-number">250</span>),
+    Ink = Color3.fromRGB(<span class="hljs-number">24</span>, <span class="hljs-number">24</span>, <span class="hljs-number">30</span>),
+})</code></pre>
+<p>That is a whole theme crossfading, in one call, however many trees are using
+it. The solver form carries velocity through an interruption:</p>
+<pre class="code"><code class="hljs">Scope:PhysicsStyle(<span class="hljs-number">0.5</span>, <span class="hljs-number">0.7</span>, <span class="hljs-string">&quot;Dark&quot;</span>, { Radius = <span class="hljs-number">20</span> })</code></pre>
+<p>Both return a <a href="./animation.html#linker">Linker</a> you can <code>Await</code> or <code>Cancel</code>,
+and both claim <code>(sheet, field)</code>, so starting a new animation on a field
+cancels whatever was driving it. That is the same claim system the instance
+and value animations use, so a style animation and a <code>SpringInstance</code> on the
+same property still resolve sanely.</p>
+<p>A field with no current value cannot be animated from, and raises saying so.
+<code>PhysicsStyle</code> also raises on a field whose type has no numeric components,
+such as an <code>EnumItem</code> - use <code>SpringStyle</code> for those, which switches at the
+halfway point.</p>
+<p>Sleeping trees are not written to during a style animation and pick up the
+finished value when they wake.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>
