@@ -40,6 +40,39 @@ Stops the link where it is. The value keeps whatever it last held.
 `true` once the link has completed or been cancelled. A finished link drops
 its claims, its callback and its runtime reference, so nothing is retained.
 
+## Lifetime
+
+A link is owned by the runtime while it runs, so **you do not have to keep the
+`Linker`**. Start an animation, drop the handle, and it plays to completion.
+
+```lua
+Scope:SpringEvent(TweenInfo.new(0.6), Interface, { Fill = 0.8 })
+```
+
+When it finishes it removes itself from the runtime, releases its claims, and
+drops its callback and targets, so nothing is retained afterwards. Keep the
+handle only if you want to `Await` or `Cancel` it.
+
+### Destroyed instances
+
+If an instance being animated is destroyed, the link driving it is cancelled
+on the spot. That matters most for a tween with `RepeatCount = -1`, which
+would otherwise write to a dead instance forever and keep it alive.
+
+```lua
+const Link = Scope:SpringInstance(Endless, Spinner, { Rotation = 90 })
+
+Spinner:Destroy()
+print(Link.Finished)   --> true
+```
+
+Only the link driving that instance stops. Other animations are untouched.
+
+::: tip
+`Vision:Cleanup` already cancels the animations driving its own tree, so this
+is about instances destroyed from outside Vision.
+:::
+
 ## TweenInfo support
 
 Every field is honoured.

@@ -2,7 +2,7 @@ const Workspace = game:GetService("Workspace")
 
 const Viewport = {}
 
-const Listeners = {}
+const Listeners = setmetatable({}, { __mode = "k" })
 
 local Size = Vector2.zero
 local Bound
@@ -13,6 +13,8 @@ const function Measure(): Vector2
 
     return if Camera then Camera.ViewportSize else Vector2.zero
 end
+
+local Rest
 
 const function Publish()
     const Next = Measure()
@@ -25,6 +27,10 @@ const function Publish()
 
     for Listener in Listeners do
         Listener(Size)
+    end
+
+    if next(Listeners) == nil then
+        Rest()
     end
 end
 
@@ -43,7 +49,7 @@ const function Bind()
     Publish()
 end
 
-const function Rest()
+function Rest()
     if Bound then
         Bound:Disconnect()
         Bound = nil

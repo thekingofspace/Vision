@@ -630,6 +630,7 @@ function Methods:Cleanup()
         end
 
         table.clear(Node.Connections)
+        table.clear(Node.Pending)
 
         if Linked and Node.Instance then
             Runtime:CancelOwner(Node.Instance)

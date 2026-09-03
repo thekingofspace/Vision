@@ -63,6 +63,29 @@ immediately if it is already done.</p>
 <h3 id="finished"><a class="anchor" href="#finished">#</a>Finished</h3>
 <p><code>true</code> once the link has completed or been cancelled. A finished link drops
 its claims, its callback and its runtime reference, so nothing is retained.</p>
+<h2 id="lifetime"><a class="anchor" href="#lifetime">#</a>Lifetime</h2>
+<p>A link is owned by the runtime while it runs, so <strong>you do not have to keep the
+<code>Linker</code></strong>. Start an animation, drop the handle, and it plays to completion.</p>
+<pre class="code"><code class="hljs">Scope:SpringEvent(TweenInfo.new(<span class="hljs-number">0.6</span>), Interface, { Fill = <span class="hljs-number">0.8</span> })</code></pre>
+<p>When it finishes it removes itself from the runtime, releases its claims, and
+drops its callback and targets, so nothing is retained afterwards. Keep the
+handle only if you want to <code>Await</code> or <code>Cancel</code> it.</p>
+<h3 id="destroyed-instances"><a class="anchor" href="#destroyed-instances">#</a>Destroyed instances</h3>
+<p>If an instance being animated is destroyed, the link driving it is cancelled
+on the spot. That matters most for a tween with <code>RepeatCount = -1</code>, which
+would otherwise write to a dead instance forever and keep it alive.</p>
+<pre class="code"><code class="hljs">const Link = Scope:SpringInstance(Endless, Spinner, { Rotation = <span class="hljs-number">90</span> })
+
+Spinner:Destroy()
+<span class="hljs-built_in">print</span>(Link.Finished)   <span class="hljs-comment">--&gt; true</span></code></pre>
+<p>Only the link driving that instance stops. Other animations are untouched.</p>
+<div class="callout tip">
+
+<p><strong>Tip</strong></p>
+<p><code>Vision:Cleanup</code> already cancels the animations driving its own tree, so this
+is about instances destroyed from outside Vision.</p>
+</div>
+
 <h2 id="tweeninfo-support"><a class="anchor" href="#tweeninfo-support">#</a>TweenInfo support</h2>
 <p>Every field is honoured.</p>
 <table>

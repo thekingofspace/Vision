@@ -96,6 +96,7 @@ function Link.new(Owner, Update)
         Finished = false,
         Claims = {},
         Threads = {},
+        Watchers = {},
     }, Link)
 end
 
@@ -118,6 +119,12 @@ function Link:Cancel()
 
     const Owner = self.Runtime
 
+    for _, Watcher in self.Watchers do
+        Watcher:Disconnect()
+    end
+
+    table.clear(self.Watchers)
+
     for _, Claim in self.Claims do
         Owner:Unclaim(Claim[1], Claim[2], self)
     end
@@ -132,6 +139,7 @@ function Link:Cancel()
     self.Runtime = nil
     self.Info = nil
     self.Channels = nil
+    self.Watchers = nil
 
     for _, Thread in Threads do
         task.spawn(Thread)
@@ -268,15 +276,37 @@ function Runtime:Release()
     self:Stop()
 end
 
+const function Guard(Target, Owners)
+    const Seen = {}
+
+    for _, Owner in Owners do
+        if typeof(Owner) == "Instance" and not Seen[Owner] then
+            Seen[Owner] = true
+
+            table.insert(
+                Target.Watchers,
+                Owner.Destroying:Connect(function()
+                    Target:Cancel()
+                end)
+            )
+        end
+    end
+end
+
 function Runtime:Create(Info: TweenInfo, Apply: (number, number) -> (), Slots: { { any } })
     const Target = Link.new(self, Tween)
 
     Target.Info = Info
     Target.Apply = Apply
 
+    const Owners = {}
+
     for _, Slot in Slots do
         self:Claim(Slot[1], Slot[2], Target)
+        table.insert(Owners, Slot[1])
     end
+
+    Guard(Target, Owners)
 
     Target:Step(0)
 
@@ -326,9 +356,14 @@ function Runtime:Solve(Period: number, Damping: number, Channels: { any })
         end
     end
 
+    const Owners = {}
+
     for _, Channel in Channels do
         self:Claim(Channel.Owner, Channel.Name, Target)
+        table.insert(Owners, Channel.Owner)
     end
+
+    Guard(Target, Owners)
 
     Target:Step(0)
 
