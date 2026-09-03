@@ -3,9 +3,9 @@
 Vision, [Vide](https://github.com/centau/vide) and writing no module at all,
 measured with the same 100 row tree.
 
-The benchmark lives in `src/client/Comparison.luau` and prints every number on
-this page. Run the place and read the output - do not trust a table in a
-readme over your own machine.
+Every number on this page came from running all three side by side on one
+machine. Treat them as a shape, not a promise - measure on your own hardware
+before you trust a table in a readme.
 
 ## Behaviour
 

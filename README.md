@@ -48,9 +48,9 @@ the library.
 rojo serve
 ```
 
-Builds the full test place from `default.project.json`, including the
-benchmark in `src/client`.
+Builds the full test place from `default.project.json`, including the showcase
+in `src/client`.
 
-The benchmark compares Vision against [Vide](https://github.com/centau/vide),
-which is gitignored. To run it, clone Vide into `src/shared/vide`; without it
-the comparison is skipped.
+The showcase is four screens covering every feature in the library - values,
+derives, styles, both spring families, cloning, async mounting and sleep and
+revive. Press `K` to move between them and `T` to swap the theme.

@@ -8,8 +8,36 @@ Link.__index = Link
 local Runtime = {}
 Runtime.__index = Runtime
 
-const Rate = 240
 const Epsilon = 0.0005
+const Critical = 1e-4
+
+const function Coefficients(Omega: number, Damping: number, DeltaTime: number)
+    const Decay = Damping * Omega
+
+    if Damping < 1 - Critical then
+        const Ring = Omega * math.sqrt(1 - Damping * Damping)
+        const Fade = math.exp(-Decay * DeltaTime)
+        const Cos = math.cos(Ring * DeltaTime)
+        const Sin = math.sin(Ring * DeltaTime) / Ring
+
+        return Fade * (Cos + Decay * Sin), Fade * Sin, -Fade * Omega * Omega * Sin, Fade * (Cos - Decay * Sin)
+    end
+
+    if Damping <= 1 + Critical then
+        const Fade = math.exp(-Omega * DeltaTime)
+        const Span = Fade * DeltaTime
+
+        return Fade + Omega * Span, Span, -Omega * Omega * Span, Fade - Omega * Span
+    end
+
+    const Root = Omega * math.sqrt(Damping * Damping - 1)
+    const Fast = math.exp((Root - Decay) * DeltaTime)
+    const Slow = math.exp((-Root - Decay) * DeltaTime)
+    const Cosh = (Fast + Slow) * 0.5
+    const Sinh = (Fast - Slow) * 0.5 / Root
+
+    return Cosh + Decay * Sinh, Sinh, -Omega * Omega * Sinh, Cosh - Decay * Sinh
+end
 
 const function Tween(Self, DeltaTime: number): boolean
     Self.Elapsed += DeltaTime
@@ -36,10 +64,7 @@ const function Tween(Self, DeltaTime: number): boolean
 end
 
 const function Physics(Self, DeltaTime: number): boolean
-    const Omega = Self.Omega
-    const Damping = Self.Damping
-    const Steps = math.clamp(math.ceil(DeltaTime * Rate), 1, 32)
-    const Slice = DeltaTime / Steps
+    const Carry, Push, Pull, Keep = Coefficients(Self.Omega, Self.Damping, DeltaTime)
     local Settled = true
 
     for _, Channel in Self.Channels do
@@ -48,14 +73,12 @@ const function Physics(Self, DeltaTime: number): boolean
         const Goal = Channel.Goal
         const Count = #Position
 
-        for _ = 1, Steps do
-            for Index = 1, Count do
-                const Offset = Position[Index] - Goal[Index]
-                const Accel = -(Omega * Omega) * Offset - 2 * Damping * Omega * Velocity[Index]
+        for Index = 1, Count do
+            const Offset = Position[Index] - Goal[Index]
+            const Speed = Velocity[Index]
 
-                Velocity[Index] += Accel * Slice
-                Position[Index] += Velocity[Index] * Slice
-            end
+            Position[Index] = Goal[Index] + Carry * Offset + Push * Speed
+            Velocity[Index] = Pull * Offset + Keep * Speed
         end
 
         local Done = true

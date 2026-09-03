@@ -1,6 +1,3 @@
-const Screens = require(script.Showcase)
+local Showcase = require(script.Showcase)
 
--- const Comparison = require(script.Comparison)
--- Comparison()
-
-Screens()
+Showcase()

@@ -160,3 +160,23 @@ re-accelerating.
 
 If you need motion that survives interruption, that is what a physics spring
 is for - see the [comparison](/comparison).
+
+## Frame rate
+
+Physics springs are solved in closed form rather than stepped, so the position
+after a given amount of elapsed time is the same no matter how that time was
+split into frames.
+
+```
+same spring, same total time, 40 frames
+  even frames    97.880964
+  uneven frames  97.880964
+  drift          0.000000000
+```
+
+This matters more than it sounds. A substepping solver changes its step size
+as the frame time moves, which changes its own error frame to frame - and that
+shows up as jitter on anything small or slow moving, like a progress bar.
+
+It also means a long frame is handled exactly rather than approximated, so a
+hitch cannot make a spring overshoot or blow up.
