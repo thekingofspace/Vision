@@ -61,10 +61,32 @@ connections applied</li>
 Vision that was cleaned up rebuilds it - see <a href="#cleanup">Cleanup</a>.</p>
 <p>Mount also re-registers the Vision with its scope, so <code>Scope:Release</code> covers
 it again.</p>
+<h2 id="mountasync"><a class="anchor" href="#mountasync">#</a>MountAsync</h2>
+<pre class="code"><code class="hljs">Interface:MountAsync(Budget: number?)</code></pre>
+<p>Builds the tree across frames instead of in one go, yielding whenever the
+frame budget is spent. <code>Budget</code> is seconds per frame, defaulting to <code>0.002</code>.
+It yields, so call it from a thread.</p>
+<pre class="code"><code class="hljs">task.spawn(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+    Interface:MountAsync()
+<span class="hljs-keyword">end</span>)</code></pre>
+<p><strong>Nothing appears until the whole tree is ready.</strong> The root is parented last,
+exactly as in <code>Mount</code>, so a partially built tree is never on screen. You get
+the hitch spread out, not a half drawn interface.</p>
+<p>Use it when a tree is big enough to drop a frame. A hundred rows costs a few
+milliseconds and is fine synchronously; a thousand is not.</p>
+<p>Calling it on a Vision that is already mounted does nothing, and <code>Cleanup</code>
+during the build aborts it cleanly, destroying anything already created.</p>
 <h2 id="open"><a class="anchor" href="#open">#</a>Open</h2>
 <pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Object = Interface:Open()</code></pre>
 <p>Mounts if needed and returns the root instance. Idempotent - calling it twice
 returns the same instance and does not rebuild anything.</p>
+<div class="callout warning">
+
+<p><strong>Warning</strong></p>
+<p><code>Open</code> mounts synchronously. During a <code>MountAsync</code> that has not finished, the
+root instance does not exist yet and <code>Open</code> returns <code>nil</code>.</p>
+</div>
+
 <h2 id="cleanup"><a class="anchor" href="#cleanup">#</a>Cleanup</h2>
 <pre class="code"><code class="hljs">Interface:Cleanup()</code></pre>
 <p>Runs <code>cleanup</code> callbacks deepest first, cancels any links driving this Vision

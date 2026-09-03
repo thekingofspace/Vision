@@ -247,6 +247,47 @@ A declared `cleanup` persists for the life of the Vision and runs on every
 teardown. One registered from `ready` belongs to that mount only, and is
 registered again the next time `ready` runs.
 
+## drawcall
+
+```lua
+drawcall(Callback: (self: Instance, Viewport: Vector2) -> ()) -> Marker
+```
+
+Runs when the viewport size changes, and once at mount so the first frame is
+already correct. This is how you respond to a phone rotating, a window
+resizing, or a device that simply is not the size you designed for.
+
+```lua
+{
+    ClassName = "Frame",
+    Name = "Panel",
+
+    drawcall(function(self, Viewport)
+        if Viewport.X < 700 then
+            self.Size = UDim2.fromScale(1, 1)
+            self.Position = UDim2.fromScale(0, 0)
+        else
+            self.Size = UDim2.fromOffset(620, 420)
+            self.Position = UDim2.fromScale(0.5, 0.5)
+        end
+    end),
+}
+```
+
+The initial call happens **before the tree is parented**, alongside the value
+fire, so the UI is laid out for the current screen before it appears. There
+is no resize flash.
+
+Vision keeps one connection to the camera no matter how many `drawcall`s you
+declare, and a resize to the same size does not re-run anything. The hook is
+released on `Cleanup` and re-established on the next mount, and it follows the
+camera being swapped out.
+
+::: tip
+On the server there is no camera, so the viewport reads as `Vector2.zero` and
+the callback runs once at mount and never again.
+:::
+
 ## mount
 
 ```lua

@@ -49,6 +49,13 @@ function Symbols.cleanup(Callback: (Instance) -> ())
     }, Marker)
 end
 
+function Symbols.drawcall(Callback: (Instance, Vector2) -> ())
+    return setmetatable({
+        Kind = "Draw",
+        Callback = Callback,
+    }, Marker)
+end
+
 function Symbols.mount(Target: Instance | string)
     return setmetatable({
         Kind = "Mount",

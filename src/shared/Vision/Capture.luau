@@ -1,4 +1,5 @@
 const Symbols = require(script.Parent.Symbols)
+const Viewport = require(script.Parent.Viewport)
 
 const Capture = {}
 
@@ -21,6 +22,7 @@ const Settling = 64
 
 const Protected = {
     Mount = true,
+    MountAsync = true,
     Open = true,
     Cleanup = true,
     Clone = true,
@@ -134,6 +136,7 @@ const function Parse(State, Declaration, Parent)
         Properties = {},
         Children = {},
         Ready = {},
+        Draw = {},
         Cleanup = {},
         Transient = {},
         Connections = {},
@@ -189,6 +192,8 @@ const function Parse(State, Declaration, Parent)
                 table.insert(Node.Ready, Entry.Callback)
             elseif Kind == "Cleanup" then
                 table.insert(Node.Cleanup, Entry.Callback)
+            elseif Kind == "Draw" then
+                table.insert(Node.Draw, Entry.Callback)
             elseif Kind == "Mount" then
                 Node.Target = Entry.Target
             end
@@ -200,7 +205,7 @@ const function Parse(State, Declaration, Parent)
     return Node
 end
 
-const function Build(Node)
+const function Raise(Node)
     const Object = Instance.new(Node.ClassName)
 
     Node.Instance = Object
@@ -242,6 +247,11 @@ const function Build(Node)
             table.insert(Pending, Callback)
         end
     end
+
+end
+
+const function Build(Node)
+    Raise(Node)
 
     for _, Child in Node.Children do
         Build(Child)
@@ -285,6 +295,38 @@ const function Attach(Node)
     end
 
     table.clear(Pending)
+end
+
+const function Paint(Node, Size: Vector2)
+    for _, Child in Node.Children do
+        Paint(Child, Size)
+    end
+
+    for _, Callback in Node.Draw do
+        Callback(Node.Instance, Size)
+    end
+end
+
+const function Observe(Node)
+    for _, Child in Node.Children do
+        Observe(Child)
+    end
+
+    if #Node.Draw == 0 then
+        return
+    end
+
+    const Object = Node.Instance
+    const Draw = Node.Draw
+
+    table.insert(
+        Node.Connections,
+        Viewport.Listen(function(Size: Vector2)
+            for _, Callback in Draw do
+                Callback(Object, Size)
+            end
+        end)
+    )
 end
 
 local function Ready(Node)
@@ -435,24 +477,7 @@ const function Teardown(Node)
     end
 end
 
-function Methods:Mount()
-    const State = Internal[self]
-
-    if State.Mounted then
-        return
-    end
-
-    State.Mounted = true
-    State.Scope:Adopt(self)
-
-    Build(State.Root)
-
-    for _, Node in State.Nodes do
-        if Node ~= State.Root then
-            Node.Instance.Parent = Resolve(State, Node)
-        end
-    end
-
+const function Finish(State)
     Activate(State)
     Settle(State)
 
@@ -466,10 +491,97 @@ function Methods:Mount()
         end
     end
 
+    Paint(State.Root, Viewport.Current())
+
     State.Root.Instance.Parent = Resolve(State, State.Root)
 
     Ready(State.Root)
     Attach(State.Root)
+    Observe(State.Root)
+end
+
+function Methods:Mount()
+    const State = Internal[self]
+
+    if State.Mounted then
+        return
+    end
+
+    State.Mounted = true
+    State.Generation += 1
+    State.Scope:Adopt(self)
+
+    Build(State.Root)
+
+    for _, Node in State.Nodes do
+        if Node ~= State.Root then
+            Node.Instance.Parent = Resolve(State, Node)
+        end
+    end
+
+    Finish(State)
+end
+
+function Methods:MountAsync(Budget: number?)
+    const State = Internal[self]
+
+    if State.Mounted then
+        return
+    end
+
+    State.Mounted = true
+    State.Generation += 1
+    State.Scope:Adopt(self)
+
+    const Mark = State.Generation
+    const Slice = Budget or 0.002
+    const Nodes = State.Nodes
+    const Built = {}
+
+    local Clock = os.clock()
+
+    const function Spent(): boolean
+        if os.clock() - Clock <= Slice then
+            return false
+        end
+
+        task.wait()
+
+        Clock = os.clock()
+
+        if State.Generation ~= Mark then
+            for _, Object in Built do
+                Object:Destroy()
+            end
+
+            return true
+        end
+
+        return false
+    end
+
+    for Index = 1, #Nodes do
+        Raise(Nodes[Index])
+        table.insert(Built, Nodes[Index].Instance)
+
+        if Spent() then
+            return
+        end
+    end
+
+    for Index = 1, #Nodes do
+        const Node = Nodes[Index]
+
+        if Node ~= State.Root then
+            Node.Instance.Parent = Resolve(State, Node)
+        end
+
+        if Spent() then
+            return
+        end
+    end
+
+    Finish(State)
 end
 
 function Methods:Open(): Instance
@@ -488,6 +600,7 @@ function Methods:Cleanup()
     end
 
     State.Mounted = false
+    State.Generation += 1
 
     Teardown(State.Root)
 
@@ -554,6 +667,7 @@ function Capture.new(Scope, Declaration)
         Nodes = {},
         Root = nil,
         Mounted = false,
+        Generation = 0,
     }
 
     State.Recompute = function(Event)

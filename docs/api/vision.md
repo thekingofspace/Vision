@@ -33,6 +33,32 @@ Vision that was cleaned up rebuilds it - see [Cleanup](#cleanup).
 Mount also re-registers the Vision with its scope, so `Scope:Release` covers
 it again.
 
+## MountAsync
+
+```lua
+Interface:MountAsync(Budget: number?)
+```
+
+Builds the tree across frames instead of in one go, yielding whenever the
+frame budget is spent. `Budget` is seconds per frame, defaulting to `0.002`.
+It yields, so call it from a thread.
+
+```lua
+task.spawn(function()
+    Interface:MountAsync()
+end)
+```
+
+**Nothing appears until the whole tree is ready.** The root is parented last,
+exactly as in `Mount`, so a partially built tree is never on screen. You get
+the hitch spread out, not a half drawn interface.
+
+Use it when a tree is big enough to drop a frame. A hundred rows costs a few
+milliseconds and is fine synchronously; a thousand is not.
+
+Calling it on a Vision that is already mounted does nothing, and `Cleanup`
+during the build aborts it cleanly, destroying anything already created.
+
 ## Open
 
 ```lua
@@ -41,6 +67,11 @@ local Object = Interface:Open()
 
 Mounts if needed and returns the root instance. Idempotent - calling it twice
 returns the same instance and does not rebuild anything.
+
+::: warning
+`Open` mounts synchronously. During a `MountAsync` that has not finished, the
+root instance does not exist yet and `Open` returns `nil`.
+:::
 
 ## Cleanup
 

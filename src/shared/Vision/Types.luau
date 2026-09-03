@@ -4,6 +4,7 @@ export type Vision = {
     Cleanup:(self:Vision) -> (),
     Mount:(self:Vision) -> (),
     Open:(self:Vision) -> Instance,
+    MountAsync:(self:Vision, Budget:number?) -> (),
     Clone:(self:Vision) -> Vision
 } & {[string]:CapFunc<any>}
 
@@ -22,6 +23,7 @@ export type merge = (Event:string, Callback:(self:Instance, Value:any) -> ()) ->
 export type derive = (Event:string, Compute:(Mode:string, Read:(Event:string) -> any, Write:(Event:string, Value:any) -> any, Value:any) -> any) -> Marker
 export type ready = (Callback:(self:Instance, cleanup:(Callback:(self:Instance) -> ()) -> ()) -> ()) -> Marker
 export type cleanup = (Callback:(self:Instance) -> ()) -> Marker
+export type drawcall = (Callback:(self:Instance, Viewport:Vector2) -> ()) -> Marker
 export type mount = (Target:Instance | string) -> Marker
 
 export type Linker = {

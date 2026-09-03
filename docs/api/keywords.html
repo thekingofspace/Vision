@@ -222,6 +222,39 @@ you declared in the table.</p>
 <p>A declared <code>cleanup</code> persists for the life of the Vision and runs on every
 teardown. One registered from <code>ready</code> belongs to that mount only, and is
 registered again the next time <code>ready</code> runs.</p>
+<h2 id="drawcall"><a class="anchor" href="#drawcall">#</a>drawcall</h2>
+<pre class="code"><code class="hljs">drawcall(Callback: (<span class="hljs-built_in">self</span>: Instance, Viewport: Vector2) -&gt; ()) -&gt; Marker</code></pre>
+<p>Runs when the viewport size changes, and once at mount so the first frame is
+already correct. This is how you respond to a phone rotating, a window
+resizing, or a device that simply is not the size you designed for.</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    Name = <span class="hljs-string">&quot;Panel&quot;</span>,
+
+    drawcall(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Viewport)</span></span>
+        <span class="hljs-keyword">if</span> Viewport.X &lt; <span class="hljs-number">700</span> <span class="hljs-keyword">then</span>
+            <span class="hljs-built_in">self</span>.Size = UDim2.fromScale(<span class="hljs-number">1</span>, <span class="hljs-number">1</span>)
+            <span class="hljs-built_in">self</span>.Position = UDim2.fromScale(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>)
+        <span class="hljs-keyword">else</span>
+            <span class="hljs-built_in">self</span>.Size = UDim2.fromOffset(<span class="hljs-number">620</span>, <span class="hljs-number">420</span>)
+            <span class="hljs-built_in">self</span>.Position = UDim2.fromScale(<span class="hljs-number">0.5</span>, <span class="hljs-number">0.5</span>)
+        <span class="hljs-keyword">end</span>
+    <span class="hljs-keyword">end</span>),
+}</code></pre>
+<p>The initial call happens <strong>before the tree is parented</strong>, alongside the value
+fire, so the UI is laid out for the current screen before it appears. There
+is no resize flash.</p>
+<p>Vision keeps one connection to the camera no matter how many <code>drawcall</code>s you
+declare, and a resize to the same size does not re-run anything. The hook is
+released on <code>Cleanup</code> and re-established on the next mount, and it follows the
+camera being swapped out.</p>
+<div class="callout tip">
+
+<p><strong>Tip</strong></p>
+<p>On the server there is no camera, so the viewport reads as <code>Vector2.zero</code> and
+the callback runs once at mount and never again.</p>
+</div>
+
 <h2 id="mount"><a class="anchor" href="#mount">#</a>mount</h2>
 <pre class="code"><code class="hljs">mount(Target: Instance | <span class="hljs-built_in">string</span>) -&gt; Marker</code></pre>
 <p>Sets where this node is parented. An <code>Instance</code> parents there directly; a
