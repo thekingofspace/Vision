@@ -5,6 +5,7 @@ Marker.__index = Marker
 
 const Token = {}
 const Graft = {}
+const Frame = {}
 
 function Symbols.Is(Value: any): boolean
     return type(Value) == "table" and getmetatable(Value) == Marker
@@ -91,6 +92,27 @@ function Symbols.mount(Target: Instance | string)
         Kind = "Mount",
         Target = Target,
     }, Marker)
+end
+
+function Symbols.Framed(Value: any): boolean
+    return type(Value) == "table" and getmetatable(Value) == Frame
+end
+
+function Symbols.Keyframe(Easing: any, Time: number, Properties: any, Events: any?)
+    if type(Time) ~= "number" then
+        error("a keyframe needs a time in seconds", 0)
+    end
+
+    if type(Properties) ~= "table" then
+        error("a keyframe needs a table of properties", 0)
+    end
+
+    return setmetatable({
+        Easing = Easing,
+        Time = Time,
+        Properties = Properties,
+        Events = Events,
+    }, Frame)
 end
 
 Symbols.Token = Token

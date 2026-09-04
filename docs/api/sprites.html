@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Sprites | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="./declarations.html">API</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">API</p>
+<div class="items">
+<a href="./declarations.html">Declarations</a>
+<a href="./keywords.html">Keywords</a>
+<a href="./scope.html">Scope</a>
+<a href="./style.html">Style</a>
+<a href="./vision.html">Vision</a>
+<a href="./animation.html">Animation</a>
+<a href="./timeline.html">Timeline</a>
+<a class="active" href="./sprites.html">Sprites</a>
+<a href="./tools.html">Tools</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="sprites"><a class="anchor" href="#sprites">#</a>Sprites</h1>
+<p>A sheet names the windows into one image. A flipbook steps through those names
+on a clock.</p>
+<h2 id="sheet"><a class="anchor" href="#sheet">#</a>Sheet</h2>
+<pre class="code"><code class="hljs">Vision.Sheet(Declaration) -&gt; Sheet</code></pre>
+<p>No scope needed - a sheet is plain data you can build once and share.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Sprites = Vision.Sheet({
+    Image = <span class="hljs-string">&quot;rbxassetid://1234&quot;</span>,
+    Size = Vector2.new(<span class="hljs-number">64</span>, <span class="hljs-number">64</span>),
+
+    Idle = Vector2.new(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>),
+    Walk = Vector2.new(<span class="hljs-number">64</span>, <span class="hljs-number">0</span>),
+    Tall = { Vector2.new(<span class="hljs-number">128</span>, <span class="hljs-number">0</span>), Vector2.new(<span class="hljs-number">64</span>, <span class="hljs-number">128</span>) },
+})</code></pre>
+<p><code>Image</code> and <code>Size</code> are the defaults for the whole sheet and are both optional.
+Every other key is a sprite: a <code>Vector2</code> position, or a <code>{ Position, Size }</code>
+pair when that sprite is a different shape to the rest.</p>
+<p>If you would rather keep names and positions in order, the array form does the
+same thing:</p>
+<pre class="code"><code class="hljs">Vision.Sheet({
+    Size = Vector2.new(<span class="hljs-number">32</span>, <span class="hljs-number">32</span>),
+
+    { <span class="hljs-string">&quot;Idle&quot;</span>, Vector2.new(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>) },
+    { <span class="hljs-string">&quot;Walk&quot;</span>, Vector2.new(<span class="hljs-number">32</span>, <span class="hljs-number">0</span>) },
+    { <span class="hljs-string">&quot;Tall&quot;</span>, Vector2.new(<span class="hljs-number">64</span>, <span class="hljs-number">0</span>), Vector2.new(<span class="hljs-number">32</span>, <span class="hljs-number">64</span>) },
+})</code></pre>
+<h3 id="showing-a-sprite"><a class="anchor" href="#showing-a-sprite">#</a>Showing a sprite</h3>
+<p>The sheet is callable.</p>
+<pre class="code"><code class="hljs">Sprites(Icon, <span class="hljs-string">&quot;Walk&quot;</span>)</code></pre>
+<p>That sets <code>ImageRectOffset</code> and <code>ImageRectSize</code>, and <code>Image</code> too if the sheet
+declared one. <code>Sprites:Apply(Icon, &quot;Walk&quot;)</code> is the same call written out.</p>
+<p>A name the sheet does not know is an error rather than a silent blank frame,
+because a typo is the usual cause.</p>
+<table>
+<thead>
+<tr>
+<th>member</th>
+<th>behaviour</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Sheet:Apply(Object, Name)</code></td>
+<td>show that sprite, returns the object</td>
+</tr>
+<tr>
+<td><code>Sheet:Has(Name)</code></td>
+<td>is that sprite declared</td>
+</tr>
+<tr>
+<td><code>Sheet:Frames()</code></td>
+<td>every sprite name, sorted</td>
+</tr>
+</tbody></table>
+<p>A sheet needs a size for every sprite, either its own or the sheet&#39;s default,
+and says so at build time if one is missing.</p>
+<h2 id="flipbook"><a class="anchor" href="#flipbook">#</a>FlipBook</h2>
+<pre class="code"><code class="hljs">Scope:FlipBook(Sheet, Object, Frames: { <span class="hljs-built_in">string</span> }, Rate: number?) -&gt; FlipBook</code></pre>
+<p>Steps one instance through a list of sprite names. <code>Rate</code> is frames per second
+and defaults to <code>12</code>. Every name is checked against the sheet up front, so a
+bad frame fails when you build the flipbook rather than part way through
+playing it.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Run = Scope:FlipBook(Sprites, Icon, { <span class="hljs-string">&quot;Idle&quot;</span>, <span class="hljs-string">&quot;Walk&quot;</span>, <span class="hljs-string">&quot;Tall&quot;</span> }, <span class="hljs-number">10</span>)
+
+Run.Looped = <span class="hljs-literal">true</span>
+Run:Play()</code></pre>
+<p>Unlike an animation, a flipbook <strong>does not start on its own</strong> - it waits for
+<code>Play</code>. Sprites snap from one frame to the next; nothing is interpolated.</p>
+<table>
+<thead>
+<tr>
+<th>member</th>
+<th>behaviour</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Run:Play()</code></td>
+<td>start again from the first frame, showing it at once</td>
+</tr>
+<tr>
+<td><code>Run:Stop()</code></td>
+<td>stop, leaving the current sprite showing</td>
+</tr>
+<tr>
+<td><code>Run:Await()</code></td>
+<td>yield until it ends or is stopped</td>
+</tr>
+<tr>
+<td><code>Run:Destroy()</code></td>
+<td>stop it and drop everything it holds</td>
+</tr>
+<tr>
+<td><code>Run.Looped</code></td>
+<td>wrap at the end instead of stopping</td>
+</tr>
+<tr>
+<td><code>Run.Speed</code></td>
+<td>multiplier on the rate, <code>0</code> pauses</td>
+</tr>
+<tr>
+<td><code>Run.Rate</code></td>
+<td>frames per second, changeable while playing</td>
+</tr>
+<tr>
+<td><code>Run.Frame</code></td>
+<td>the frame number currently showing</td>
+</tr>
+<tr>
+<td><code>Run.Finished</code></td>
+<td>true when it is not playing</td>
+</tr>
+</tbody></table>
+<p><code>Looped</code> can be turned off mid-run and it will finish at the end of the pass.
+<code>Frame</code> keeps reporting the sprite on screen after it stops, since that is
+still what you are looking at.</p>
+<p>A flipbook claims <code>ImageRectOffset</code> on its instance, so starting a spring on
+that property takes it over and stops the flipbook. Destroying the instance
+stops it too.</p>
+<p>After <code>Destroy</code> nothing holds the flipbook and it can fall out of scope.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

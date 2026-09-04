@@ -263,4 +263,8 @@ function Interpolate.Cycle(Info: TweenInfo, Elapsed: number): (number, boolean)
     return TweenService:GetValue(math.clamp(Alpha, 0, 1), Info.EasingStyle, Info.EasingDirection), false
 end
 
+function Interpolate.Curve(Info: TweenInfo, Alpha: number): number
+    return TweenService:GetValue(math.clamp(Alpha, 0, 1), Info.EasingStyle, Info.EasingDirection)
+end
+
 return Interpolate

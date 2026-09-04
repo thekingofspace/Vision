@@ -14,6 +14,7 @@ local style = Vision.style
 local mount = Vision.mount
 local inject = Vision.inject
 local receive = Vision.receive
+local Keyframe = Vision.Keyframe
 
 local PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
@@ -42,7 +43,7 @@ local Words = {
     "Ripple", "Summit", "Thicket", "Vellum", "Willow",
 }
 
-local Order = { "Title", "Values", "Motion", "Reactive", "Effects", "Easing", "Damping", "Gradient", "Particles", "Stack", "Inject", "List" }
+local Order = { "Title", "Values", "Motion", "Reactive", "Effects", "Easing", "Damping", "Gradient", "Particles", "Stack", "Inject", "Timeline", "List" }
 
 local Digits = {
     [Enum.KeyCode.One] = 1,
@@ -1826,6 +1827,196 @@ return function()
         Scope:PhysicsInstance(0.32, 0.5, Body, { Size = UDim2.new(1, 0, 0, 24) })
     end
 
+    --------------------------------------------------------------- timeline
+
+    local Glide = TweenInfo.new(0, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+    local Snap = TweenInfo.new(0, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
+    -- size and colour are only named at the ends, so they span the middle key
+    local Path = {
+        Keyframe(Glide, 0, {
+            Position = UDim2.fromOffset(100, 112),
+            Rotation = 0,
+            Size = UDim2.fromOffset(44, 44),
+            BackgroundColor3 = Themes.Dark.Accent,
+        }, { Mark = { "start" } }),
+
+        Keyframe(Snap, 1, {
+            Position = UDim2.fromOffset(280, 112),
+            Rotation = 180,
+        }, { Mark = { "middle key, size and colour ignore it" } }),
+
+        Keyframe(Glide, 2, {
+            Position = UDim2.fromOffset(460, 112),
+            Rotation = 360,
+            Size = UDim2.fromOffset(70, 70),
+            BackgroundColor3 = Color3.fromRGB(255, 120, 90),
+        }, { Mark = { "end" } }),
+    }
+
+    local Bump = {
+        Keyframe({ Damping = 0.35, Period = 0.45 }, 0, { Position = UDim2.fromOffset(100, 196) }),
+        Keyframe({ Damping = 0.35, Period = 0.45 }, 1, { Position = UDim2.fromOffset(460, 196) }),
+        Keyframe({ Damping = 0.35, Period = 0.45 }, 2, { Position = UDim2.fromOffset(100, 196) }),
+    }
+
+    local Rates = { 1, 0.5, 2 }
+    local Loops = {
+        { Text = "loop  off", Round = false, Ease = false },
+        { Text = "loop  on", Round = true, Ease = false },
+        { Text = "loop  smooth", Round = true, Ease = true },
+    }
+
+    local RateAt = 1
+    local LoopAt = 1
+
+    local Reel, Rolls
+    local Cast, Wipe
+
+    local function Lane(Name: string, Text: string, Y: number)
+        return {
+            ClassName = "TextLabel",
+            Name = Name,
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(28, Y),
+            Size = UDim2.fromOffset(240, 14),
+            Font = Enum.Font.Code,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Text = Text,
+            TextColor3 = style("Skin")["Dim"],
+
+            mount("Card"),
+        }
+    end
+
+    local function Mover(Name: string, Y: number, Wide: number)
+        return {
+            ClassName = "Frame",
+            Name = Name,
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            Position = UDim2.fromOffset(100, Y),
+            Size = UDim2.fromOffset(Wide, Wide),
+            BorderSizePixel = 0,
+            BackgroundColor3 = style("Skin")["Accent"],
+
+            mount("Card"),
+
+            { ClassName = "UICorner", CornerRadius = UDim.new(0, 10) },
+        }
+    end
+
+    local Strip = {
+        Lane("TweenCap", "tween keyframes  -  position, rotation, size and colour", 58),
+        Mover("Runner", 112, 44),
+
+        Lane("SpringCap", "physics keyframes  -  same timeline, sprung", 152),
+        Mover("Bouncer", 196, 30),
+
+        {
+            ClassName = "TextLabel",
+            Name = "Told",
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(28, 232),
+            Size = UDim2.fromOffset(504, 16),
+            Font = Enum.Font.Code,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextColor3 = style("Skin")["Dim"],
+
+            mount("Card"),
+
+            event("Word", "press play, the keyframes carry their own events", function(self, Value)
+                self.Text = Value
+            end),
+        },
+
+        cleanup(function()
+            print("[vision] timeline asleep")
+        end),
+    }
+
+    table.insert(Strip, Button("Roll", "play", UDim2.fromOffset(28, 266), 88, function()
+        Cast()
+    end))
+
+    table.insert(Strip, Button("Ring", "loop  off", UDim2.fromOffset(120, 266), 112, function(self)
+        LoopAt = LoopAt % #Loops + 1
+
+        const Mode = Loops[LoopAt]
+
+        self.Text = Mode.Text
+        Reel.Word(
+            if Mode.Ease
+                then "smooth loop, it walks back to the first keyframe"
+                elseif Mode.Round then "hard loop, it snaps back to the first keyframe"
+                else "looping off, it will stop at the end"
+        )
+
+        for _, Run in Rolls do
+            Run.Looped = Mode.Round
+            Run.SmoothLoop = Mode.Ease
+        end
+    end))
+
+    table.insert(Strip, Button("Rate", "speed  1x", UDim2.fromOffset(240, 266), 104, function(self)
+        RateAt = RateAt % #Rates + 1
+        self.Text = `speed  {Rates[RateAt]}x`
+
+        for _, Run in Rolls do
+            Run.Speed = Rates[RateAt]
+        end
+    end))
+
+    table.insert(Strip, Button("Halt", "stop", UDim2.fromOffset(352, 266), 80, function()
+        for _, Run in Rolls do
+            Run:Stop()
+        end
+
+        Reel.Word("stopped, every property frozen where it stood")
+    end))
+
+    table.insert(Strip, Button("Drop", "destroy", UDim2.fromOffset(440, 266), 92, function()
+        Wipe()
+        Reel.Word("destroyed, nothing holds them and the listeners went too")
+    end))
+
+    Reel = Scope:Capture(Page("Timeline", "Timeline", "K  next screen", Strip))
+
+    Rolls = {}
+
+    function Wipe()
+        for _, Run in Rolls do
+            Run:Destroy()
+        end
+
+        table.clear(Rolls)
+    end
+
+    function Cast()
+        Wipe()
+
+        local Deck = Reel:Open():FindFirstChild("Card")
+
+        local Runner = Scope:Animate(Path, Deck:FindFirstChild("Runner"))
+        local Bouncer = Scope:Animate(Bump, Deck:FindFirstChild("Bouncer"))
+
+        Runner:Bind("Mark", function(_, Where)
+            Reel.Word(`keyframe event  -  {Where}`)
+        end)
+
+        const Mode = Loops[LoopAt]
+
+        for _, Run in { Runner, Bouncer } do
+            Run.Looped = Mode.Round
+            Run.SmoothLoop = Mode.Ease
+            Run.RestageTime = 0.6
+            Run.Speed = Rates[RateAt]
+
+            table.insert(Rolls, Run)
+        end
+    end
+
     ------------------------------------------------------------------- list
 
     local Rack = {
@@ -1995,6 +2186,7 @@ return function()
         Particles = Motes,
         Stack = Stack,
         Inject = Bay,
+        Timeline = Reel,
         List = List,
     }
 
@@ -2068,6 +2260,8 @@ return function()
             end
 
             table.clear(Chips)
+        elseif Which == "Timeline" then
+            Wipe()
         elseif Which == "Particles" then
             Spraying = false
 

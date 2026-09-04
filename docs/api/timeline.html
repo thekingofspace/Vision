@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Timeline | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="./declarations.html">API</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">API</p>
+<div class="items">
+<a href="./declarations.html">Declarations</a>
+<a href="./keywords.html">Keywords</a>
+<a href="./scope.html">Scope</a>
+<a href="./style.html">Style</a>
+<a href="./vision.html">Vision</a>
+<a href="./animation.html">Animation</a>
+<a class="active" href="./timeline.html">Timeline</a>
+<a href="./sprites.html">Sprites</a>
+<a href="./tools.html">Tools</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="timeline"><a class="anchor" href="#timeline">#</a>Timeline</h1>
+<p>Keyframe animation for 2D instances. You write the keyframes, Vision walks
+them, interpolating each property and firing events on the way past.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Run = Scope:Animate({
+    Vision.Keyframe(TweenInfo.new(<span class="hljs-number">0</span>, Enum.EasingStyle.Sine), <span class="hljs-number">0</span>, { BackgroundColor3 = White }),
+    Vision.Keyframe(TweenInfo.new(<span class="hljs-number">0</span>, Enum.EasingStyle.Sine), <span class="hljs-number">1</span>, { BackgroundColor3 = Black }),
+}, Panel)</code></pre>
+<p>It starts playing immediately. The keyframe list is plain data, so the same
+list can be handed to <code>Animate</code> again for another instance.</p>
+<h2 id="keyframe"><a class="anchor" href="#keyframe">#</a>Keyframe</h2>
+<pre class="code"><code class="hljs">Vision.Keyframe(Easing, Time: number, Properties: { [<span class="hljs-built_in">string</span>]: any }, Events: { [<span class="hljs-built_in">string</span>]: { any } }?)</code></pre>
+<p><code>Time</code> is in seconds from the start. Keyframes do not have to be in order -
+they are sorted for you.</p>
+<h3 id="easing-arrives-at-the-keyframe"><a class="anchor" href="#easing-arrives-at-the-keyframe">#</a>Easing arrives at the keyframe</h3>
+<p>A keyframe&#39;s easing describes how the animation <strong>gets to it</strong>, not how it
+leaves. The first keyframe&#39;s easing is therefore never used, which matches
+Roblox&#39;s own animation editor.</p>
+<p>Only <code>EasingStyle</code> and <code>EasingDirection</code> are read from a <code>TweenInfo</code>. Timing
+comes from the keyframe times, so <code>Time</code>, <code>DelayTime</code>, <code>RepeatCount</code> and
+<code>Reverses</code> are all ignored.</p>
+<p>Pass <strong><code>0</code></strong> as the time. <code>TweenInfo</code> is here for the shape of the curve, not
+its length, and Roblox refuses <code>nil</code> for that first argument.</p>
+<pre class="code"><code class="hljs">TweenInfo.new(<span class="hljs-number">0</span>, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)</code></pre>
+<h3 id="physics-keyframes"><a class="anchor" href="#physics-keyframes">#</a>Physics keyframes</h3>
+<p>Pass a table instead of a <code>TweenInfo</code> and that leg is solved as a spring.</p>
+<pre class="code"><code class="hljs">Vision.Keyframe({ Damping = <span class="hljs-number">0.3</span>, Period = <span class="hljs-number">0.4</span> }, <span class="hljs-number">1</span>, { Rotation = <span class="hljs-number">90</span> })</code></pre>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Damping</code> or <code>Dampening</code></td>
+<td>damping ratio, under 1 rings, 1 is critical</td>
+</tr>
+<tr>
+<td><code>Period</code></td>
+<td>seconds per bounce, defaults to the length of the leg</td>
+</tr>
+</tbody></table>
+<p>A spring is not obliged to arrive on time. When the next keyframe comes round
+the spring is simply retargeted, keeping the velocity it had, so a run of
+physics keyframes flows rather than stepping. If it is the last keyframe, the
+animation stays alive until the spring settles.</p>
+<p>Springs need a solvable type - <code>number</code>, <code>UDim</code>, <code>UDim2</code>, <code>Vector2</code>,
+<code>Vector3</code>, <code>Color3</code>, <code>Rect</code>, <code>NumberRange</code>. Anything else needs a <code>TweenInfo</code>.</p>
+<h3 id="one-track-per-property"><a class="anchor" href="#one-track-per-property">#</a>One track per property</h3>
+<p>Each property gets its own timeline, built from the keyframes that mention it.
+A property does not have to appear in every keyframe.</p>
+<pre class="code"><code class="hljs">Vision.Keyframe(Ease, <span class="hljs-number">0</span>, { Rotation = <span class="hljs-number">0</span>, BackgroundTransparency = <span class="hljs-number">0</span> }),
+Vision.Keyframe(Ease, <span class="hljs-number">1</span>, { Rotation = <span class="hljs-number">100</span> }),
+Vision.Keyframe(Ease, <span class="hljs-number">2</span>, { BackgroundTransparency = <span class="hljs-number">1</span> }),</code></pre>
+<p>Rotation finishes at one second and holds. Transparency keeps going to two.</p>
+<p>A property also <strong>spans the keyframes that do not mention it</strong>. If colour is
+set at keyframe one and again at keyframe three, it interpolates across the
+whole gap - keyframe two is simply not a waypoint for that property.</p>
+<pre class="code"><code class="hljs">Vision.Keyframe(Ease, <span class="hljs-number">1</span>, { BackgroundColor3 = White }),
+Vision.Keyframe(Ease, <span class="hljs-number">2</span>, { Rotation = <span class="hljs-number">90</span> }),
+Vision.Keyframe(Ease, <span class="hljs-number">3</span>, { BackgroundColor3 = Red }),</code></pre>
+<p>Colour eases from white to red over the full two seconds while rotation does
+its own thing at the halfway mark. A property with only one keyframe is simply
+applied when that time arrives.</p>
+<p>A track holds its value before its first keyframe and after its last, and
+lands on the authored value exactly rather than wherever the final frame
+happened to fall.</p>
+<h2 id="events"><a class="anchor" href="#events">#</a>Events</h2>
+<p>The fourth argument maps an event name to its arguments.</p>
+<pre class="code"><code class="hljs">Vision.Keyframe(Ease, <span class="hljs-number">0</span>, { Rotation = <span class="hljs-number">0</span> }, { Step = { <span class="hljs-string">&quot;left&quot;</span>, <span class="hljs-number">3</span> } })</code></pre>
+<pre class="code"><code class="hljs">Run:Bind(<span class="hljs-string">&quot;Step&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Object, Side, Count)</span></span>
+    <span class="hljs-built_in">print</span>(Object.Name, Side, Count)
+<span class="hljs-keyword">end</span>)</code></pre>
+<p>The instance is always the first argument, as everywhere else in Vision.
+Events at time zero fire on the first frame, <strong>after</strong> <code>Animate</code> returns, so
+there is always time to bind to them. <code>Bind</code> returns a handle with
+<code>Disconnect</code>.</p>
+<h2 id="playback"><a class="anchor" href="#playback">#</a>Playback</h2>
+<pre class="code"><code class="hljs">Run.Speed = <span class="hljs-number">2</span>           <span class="hljs-comment">-- twice as fast</span>
+Run.Speed = <span class="hljs-number">0.5</span>         <span class="hljs-comment">-- half</span>
+Run.Speed = <span class="hljs-number">0</span>           <span class="hljs-comment">-- paused, still alive</span>
+Run.Looped = <span class="hljs-literal">true</span>       <span class="hljs-comment">-- wraps at the end and fires its events again</span>
+Run.SmoothLoop = <span class="hljs-literal">true</span>   <span class="hljs-comment">-- eases across the seam instead of cutting</span></code></pre>
+<p><code>Speed</code> is a multiplier on elapsed time and cannot be negative. <code>Looped</code> can
+be turned off mid-run, and the animation then finishes at the end of the
+current pass.</p>
+<h3 id="smoothloop"><a class="anchor" href="#smoothloop">#</a>SmoothLoop</h3>
+<p>A loop normally cuts: at the end of a pass every property snaps back to its
+first keyframe. That is right for a cycle that already ends where it began,
+and jarring for one that does not.</p>
+<p>With <code>SmoothLoop</code> on, the animation instead <strong>restages</strong>. Time holds at the
+start while every property travels from where it ended back to its first
+keyframe, and the next pass begins once they have all arrived.</p>
+<pre class="code"><code class="hljs">Run.Looped = <span class="hljs-literal">true</span>
+Run.SmoothLoop = <span class="hljs-literal">true</span>
+Run.RestageTime = <span class="hljs-number">0.4</span></code></pre>
+<p><code>RestageTime</code> is how long that walk back takes, in seconds, and defaults to
+<code>0.25</code>. Setting it to <code>0</code> turns the restage back into a hard cut.</p>
+<p>Each property restages on <strong>its own last keyframe&#39;s easing</strong>, so a property
+that ends on a <code>Sine</code> tween eases back, and one that ends on a spring springs
+back - overshooting the start and settling, rather than sliding flatly into
+it. A sprung property is allowed to finish settling even if that outlasts
+<code>RestageTime</code>.</p>
+<p><code>SmoothLoop</code> does nothing unless <code>Looped</code> is on.</p>
+<h2 id="jumping"><a class="anchor" href="#jumping">#</a>Jumping</h2>
+<pre class="code"><code class="hljs">Run:Jump(Time: number)</code></pre>
+<p>Moves the playhead to that point in seconds and applies the pose there
+immediately, without waiting a frame. The time is clamped to the length of the
+timeline, so <code>Jump(0)</code> rewinds and a time past the end parks it on the last
+keyframe.</p>
+<pre class="code"><code class="hljs">Run.Speed = <span class="hljs-number">0</span>
+Run:Jump(<span class="hljs-number">1.5</span>)     <span class="hljs-comment">-- scrub to a moment and hold there</span></code></pre>
+<p>Events <strong>between where you were and where you land do not fire</strong> - a jump is a
+seek, not a fast forward. Events after the new position still fire as the
+animation reaches them, and jumping backwards re-arms the ones you passed.</p>
+<p>Jumping cancels a restage in progress, and a sprung property restarts its
+spring from the pose at the new time, since a spring has no meaningful state
+part way through a seek.</p>
+<p>Jumping a stopped or destroyed animation does nothing.</p>
+<h2 id="stopping"><a class="anchor" href="#stopping">#</a>Stopping</h2>
+<table>
+<thead>
+<tr>
+<th>member</th>
+<th>behaviour</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Run:Stop()</code></td>
+<td>freezes every property where it stands</td>
+</tr>
+<tr>
+<td><code>Run:Destroy()</code></td>
+<td>stops it and drops every listener</td>
+</tr>
+<tr>
+<td><code>Run:Jump(Time)</code></td>
+<td>seek to a point in seconds</td>
+</tr>
+<tr>
+<td><code>Run:Await()</code></td>
+<td>yields until it finishes or is stopped</td>
+</tr>
+<tr>
+<td><code>Run.Finished</code></td>
+<td>true once it has ended</td>
+</tr>
+</tbody></table>
+<p>An animation is owned by the runtime while it plays, so you can drop the
+handle and let it run. Keep it if you want to stop it, retime it, or bind to
+its events.</p>
+<p>After <code>Destroy</code> nothing holds the animation and nothing holds the functions
+you bound to it.</p>
+<h2 id="sharing-properties"><a class="anchor" href="#sharing-properties">#</a>Sharing properties</h2>
+<p>An animation claims each property it drives, the same way a spring does.
+Starting a spring on a property an animation is driving cancels the
+animation, and starting an animation cancels the springs it overlaps. Last
+call wins.</p>
+<p>Destroying the instance stops the animation on the spot.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

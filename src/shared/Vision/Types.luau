@@ -39,6 +39,48 @@ export type lint = (Declaration:Declaration) -> {string}
 export type create = (Declaration:Declaration) -> Instance
 export type style = (Name:string) -> {[string]:any}
 
+export type Keyframe = {
+    Easing:TweenInfo | {Period:number?, Damping:number?, Dampening:number?},
+    Time:number,
+    Properties:{[string]:any},
+    Events:{[string]:{any}}?
+}
+
+export type Bond = {Disconnect:(self:Bond) -> ()}
+
+export type Sheet = {
+    Has:(self:Sheet, Name:string) -> boolean,
+    Frames:(self:Sheet) -> {string},
+    Apply:(self:Sheet, Object:Instance, Name:string) -> Instance
+}
+
+export type FlipBook = {
+    Play:(self:FlipBook) -> FlipBook,
+    Stop:(self:FlipBook) -> FlipBook,
+    Await:(self:FlipBook) -> (),
+    Destroy:(self:FlipBook) -> (),
+    Looped:boolean,
+    Speed:number,
+    Rate:number,
+    Frame:number,
+    Finished:boolean
+}
+
+export type Animation = {
+    Bind:(self:Animation, Name:string, Callback:(self:Instance, ...any) -> ()) -> Bond,
+    Jump:(self:Animation, Time:number) -> Animation,
+    Await:(self:Animation) -> (),
+    Stop:(self:Animation) -> (),
+    Destroy:(self:Animation) -> (),
+    Looped:boolean,
+    SmoothLoop:boolean,
+    RestageTime:number,
+    Speed:number,
+    Finished:boolean
+}
+
+export type keyframe = (Easing:any, Time:number, Properties:{[string]:any}, Events:{[string]:{any}}?) -> Keyframe
+
 export type Linker = {
     Cancel:(self:Linker) -> (),
     Await:(self:Linker) -> (),
@@ -64,6 +106,8 @@ export type Scope = {
     PhysicsInstance:(self:Scope, Period:number, Damping:number, Instance:Instance | {Instance}, TargetProps:{[string]:any}) -> Linker,
     PhysicsFunction:(self:Scope, Period:number, Damping:number, TargetFun:(NewValue:any) -> (), InitialValue:any, TargetValue:any) -> Linker,
 
+    Animate:(self:Scope, Keyframes:{Keyframe}, Instance:Instance) -> Animation,
+    FlipBook:(self:Scope, Sheet:Sheet, Instance:Instance, Frames:{string}, Rate:number?) -> FlipBook,
     Update:(self:Scope, EventName:string, Value:any) -> (),
     Release:(self:Scope) -> ()
 }

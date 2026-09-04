@@ -2,6 +2,8 @@ local Runtime = require(script.Parent.Link)
 const Capture = require(script.Parent.Capture)
 const Interpolate = require(script.Parent.Interpolate)
 const Style = require(script.Parent.Style)
+const Animation = require(script.Parent.Animate)
+const Flipbook = require(script.Parent.Flipbook)
 
 const Scope = {}
 Scope.__index = Scope
@@ -82,6 +84,14 @@ function Scope:LoadStyle(Declaration: any)
     Sheet:Load(Declaration)
 
     return Sheet
+end
+
+function Scope:Animate(Keyframes: { any }, Object: Instance)
+    return Animation.new(self, Keyframes, Object)
+end
+
+function Scope:FlipBook(Sheet: any, Object: Instance, Frames: { string }, Rate: number?)
+    return Flipbook.new(self, Sheet, Object, Frames, Rate)
 end
 
 function Scope:Update(EventName: string, Value: any)

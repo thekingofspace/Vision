@@ -3,6 +3,7 @@ const Scope = require(script.Scope)
 const Types = require(script.Types)
 const Lint = require(script.Lint)
 const Create = require(script.Create)
+const Page = require(script.Sheet)
 
 export type CapFunc<v> = Types.CapFunc<v>
 export type Vision = Types.Vision
@@ -21,6 +22,9 @@ const Vision = {
     mount = Symbols.mount,
     inject = Symbols.inject,
     receive = Symbols.receive,
+    Keyframe = Symbols.Keyframe,
+
+    Sheet = Page.new,
 
     lint = Lint,
     create = Create,
