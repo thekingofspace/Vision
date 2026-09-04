@@ -239,6 +239,7 @@ const function Channel(Owner: any, Name: string, Current: any, Goal: any, Write:
         Owner = Owner,
         Name = Name,
         Kind = Kind,
+        Make = Interpolate.Maker(Kind),
         Position = Position,
         Velocity = Velocity,
         Goal = Target,

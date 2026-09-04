@@ -230,6 +230,10 @@ function Interpolate.Rebuild(Kind: string, Parts: { number }): any
     return Shapes[Kind].Make(Parts)
 end
 
+function Interpolate.Maker(Kind: string)
+    return Shapes[Kind].Make
+end
+
 function Interpolate.Solvable(Value: any): boolean
     return Shapes[typeof(Value)] ~= nil
 end

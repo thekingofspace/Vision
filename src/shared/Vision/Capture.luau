@@ -1,4 +1,6 @@
 const Symbols = require(script.Parent.Symbols)
+
+const Token = Symbols.Token
 const Viewport = require(script.Parent.Viewport)
 
 const Capture = {}
@@ -133,7 +135,8 @@ const function Parse(State, Declaration, Parent)
         Attributes = Declaration.attributes or Declaration.Attributes,
         AttributeChanged = Declaration.AttributeChanged,
         Tags = Declaration.tags or Declaration.Tags,
-        Properties = {},
+        Fields = nil,
+        Painted = nil,
         Children = {},
         Ready = {},
         Receive = {},
@@ -149,15 +152,32 @@ const function Parse(State, Declaration, Parent)
 
     table.insert(State.Nodes, Node)
 
+    const Fields = {}
+    const Name = Declaration.Name
+    local Painted
+    local Slot = 0
+
     for Key, Value in Declaration do
         if type(Key) ~= "string" or Reserved[Key] then
             continue
         end
 
-        Node.Properties[Key] = Value
+        if type(Value) == "table" and getmetatable(Value) == Token then
+            if not Painted then
+                Painted = {}
+            end
+
+            table.insert(Painted, Key)
+            table.insert(Painted, Value)
+        else
+            Fields[Slot + 1] = Key
+            Fields[Slot + 2] = Value
+            Slot += 2
+        end
     end
 
-    local Name = Node.Properties.Name
+    Node.Fields = Fields
+    Node.Painted = Painted
 
     if type(Name) == "string" then
         State.Mounts[Name] = Node
@@ -208,36 +228,65 @@ const function Parse(State, Declaration, Parent)
     return Node
 end
 
+const Wired = {}
+
 const function Raise(State, Node)
-    const Object = Instance.new(Node.ClassName)
+    const ClassName = Node.ClassName
+    const Object = Instance.new(ClassName)
 
     Node.Instance = Object
 
     const Pending = Node.Pending
+    const Fields = Node.Fields
 
     table.clear(Pending)
 
-    for Key, Value in Node.Properties do
-        if Symbols.Styled(Value) then
-            const Sheet = State.Scope.Styles[Value.Style]
+    local Known = Wired[ClassName]
 
-            if not Sheet then
-                error(`style "{Value.Style}" is not loaded on this scope`, 0)
-            end
+    if not Known then
+        Known = {}
+        Wired[ClassName] = Known
+    end
 
-            Object[Key] = Sheet:Get(Value.Field)
-            table.insert(Node.Connections, Sheet:Attach(Object, Key, Value.Field))
+    local Slot = 0
 
-            continue
+    for Index = 1, #Fields, 2 do
+        const Key = Fields[Index]
+        const Value = Fields[Index + 1]
+
+        local Signal = Known[Key]
+
+        if Signal == nil then
+            Signal = typeof(Object[Key]) == "RBXScriptSignal"
+            Known[Key] = Signal
         end
 
-        const Member = Object[Key]
-
-        if typeof(Member) == "RBXScriptSignal" then
-            table.insert(Pending, Member)
-            table.insert(Pending, Value)
+        if Signal then
+            Pending[Slot + 1] = Object[Key]
+            Pending[Slot + 2] = Value
+            Slot += 2
         else
             Object[Key] = Value
+        end
+    end
+
+    const Painted = Node.Painted
+
+    if Painted then
+        const Sheets = State.Scope.Styles
+        const Connections = Node.Connections
+
+        for Index = 1, #Painted, 2 do
+            const Key = Painted[Index]
+            const Token = Painted[Index + 1]
+            const Sheet = Sheets[Token.Style]
+
+            if not Sheet then
+                error(`style "{Token.Style}" is not loaded on this scope`, 0)
+            end
+
+            Object[Key] = Sheet:Get(Token.Field)
+            Connections[#Connections + 1] = Sheet:Attach(Object, Key, Token.Field)
         end
     end
 
@@ -259,18 +308,18 @@ const function Raise(State, Node)
 
     if Node.AttributeChanged then
         for Key, Callback in Node.AttributeChanged do
-            table.insert(Pending, Object:GetAttributeChangedSignal(Key))
-            table.insert(Pending, Callback)
+            Pending[Slot + 1] = Object:GetAttributeChangedSignal(Key)
+            Pending[Slot + 2] = Callback
+            Slot += 2
         end
     end
-
 end
 
-const function Build(State, Node)
-    Raise(State, Node)
+const function Build(State)
+    const Nodes = State.Nodes
 
-    for _, Child in Node.Children do
-        Build(State, Child)
+    for Index = 1, #Nodes do
+        Raise(State, Nodes[Index])
     end
 end
 
@@ -592,7 +641,7 @@ function Methods:Mount()
     State.Generation += 1
     State.Scope:Adopt(self)
 
-    Build(State, State.Root)
+    Build(State)
 
     for _, Node in State.Nodes do
         if Node ~= State.Root then

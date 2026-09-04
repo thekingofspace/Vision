@@ -104,7 +104,7 @@ const function Physics(Self, DeltaTime: number): boolean
             Settled = false
         end
 
-        Channel.Write(Interpolate.Rebuild(Channel.Kind, Position))
+        Channel.Write(Channel.Make(Position))
     end
 
     return Settled
@@ -181,6 +181,7 @@ end
 function Runtime.new()
     return setmetatable({
         Links = {},
+        Buffer = {},
         Claims = setmetatable({}, { __mode = "k" }),
         Connection = nil,
     }, Runtime)
@@ -283,7 +284,22 @@ function Runtime:Stop()
 end
 
 function Runtime:Step(DeltaTime: number)
-    for _, Target in table.clone(self.Links) do
+    const Links = self.Links
+    const Count = #Links
+
+    if Count == 0 then
+        return
+    end
+
+    const Buffer = self.Buffer
+
+    table.move(Links, 1, Count, 1, Buffer)
+
+    for Index = 1, Count do
+        const Target = Buffer[Index]
+
+        Buffer[Index] = nil
+
         if not Target.Finished then
             Target:Step(DeltaTime)
         end

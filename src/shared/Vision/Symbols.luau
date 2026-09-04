@@ -93,4 +93,7 @@ function Symbols.mount(Target: Instance | string)
     }, Marker)
 end
 
+Symbols.Token = Token
+Symbols.Graft = Graft
+
 return Symbols
