@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Tools | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="./declarations.html">API</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">API</p>
+<div class="items">
+<a href="./declarations.html">Declarations</a>
+<a href="./keywords.html">Keywords</a>
+<a href="./scope.html">Scope</a>
+<a href="./style.html">Style</a>
+<a href="./vision.html">Vision</a>
+<a href="./animation.html">Animation</a>
+<a class="active" href="./tools.html">Tools</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="tools"><a class="anchor" href="#tools">#</a>Tools</h1>
+<p>Two plain functions on the module. Neither needs a scope.</p>
+<h2 id="lint"><a class="anchor" href="#lint">#</a>lint</h2>
+<pre class="code"><code class="hljs">Vision.lint(Declaration: Declaration) -&gt; { <span class="hljs-built_in">string</span> }</code></pre>
+<p>Reads a declaration and reports things that are legal but probably not what
+you meant. It returns the list of notes and also writes each one through
+<code>warn</code>, so calling it and ignoring the result is fine.</p>
+<pre class="code"><code class="hljs">Vision.lint({
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    Name = <span class="hljs-string">&quot;Row&quot;</span>,
+
+    event(<span class="hljs-string">&quot;Count&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span> <span class="hljs-keyword">end</span>),
+
+    { ClassName = <span class="hljs-string">&quot;Frame&quot;</span>, Name = <span class="hljs-string">&quot;Row&quot;</span> },
+})</code></pre>
+<pre class="code"><code class="hljs">[vision lint] two nodes are both named "Row" (Frame(Row) and Frame(Row) &gt; Frame(Row)),
+              mount by name reaches only the last one</code></pre>
+<p>It checks for:</p>
+<table>
+<thead>
+<tr>
+<th>note</th>
+<th>why it matters</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>two nodes sharing a <code>Name</code></td>
+<td><code>mount(&quot;Name&quot;)</code> resolves to the last one declared</td>
+</tr>
+<tr>
+<td>a node with no <code>ClassName</code></td>
+<td>capturing it errors</td>
+</tr>
+<tr>
+<td>the same value declared by <code>event</code> twice</td>
+<td>the later initial value silently wins</td>
+</tr>
+<tr>
+<td>an <code>event</code> whose initial value is a table</td>
+<td>every <code>Clone</code> shares that one table</td>
+</tr>
+<tr>
+<td>the same value <code>derive</code>d twice</td>
+<td>capturing it errors</td>
+</tr>
+<tr>
+<td>a value named <code>Mount</code>, <code>Open</code>, <code>Cleanup</code>, <code>MountAsync</code> or <code>Clone</code></td>
+<td>collides with a method, capturing errors</td>
+</tr>
+<tr>
+<td>a <code>merge</code> on a value nothing declares</td>
+<td>the value stays <code>nil</code> forever</td>
+</tr>
+<tr>
+<td>a <code>mount</code> to a name not in the tree</td>
+<td>the node is never parented</td>
+</tr>
+<tr>
+<td>an <code>inject</code> with no hosts</td>
+<td>the node is never parented</td>
+</tr>
+</tbody></table>
+<p>An empty list means nothing looked wrong. It is a linter, not a validator -
+passing it is not a promise that mounting will work.</p>
+<h2 id="create"><a class="anchor" href="#create">#</a>create</h2>
+<pre class="code"><code class="hljs">Vision.<span class="hljs-built_in">create</span>(Declaration: Declaration) -&gt; Instance</code></pre>
+<p>Builds one instance tree from a declaration and returns the root, immediately.
+No scope, no Vision, no staging, no values - just the instances.</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Panel = Vision.<span class="hljs-built_in">create</span>({
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    Name = <span class="hljs-string">&quot;Panel&quot;</span>,
+    Size = UDim2.fromOffset(<span class="hljs-number">200</span>, <span class="hljs-number">80</span>),
+
+    attributes = { Mood = <span class="hljs-string">&quot;calm&quot;</span> },
+    tags = { <span class="hljs-string">&quot;Panel&quot;</span> },
+
+    Activated = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
+        <span class="hljs-built_in">print</span>(<span class="hljs-built_in">self</span>.Name)
+    <span class="hljs-keyword">end</span>,
+
+    { ClassName = <span class="hljs-string">&quot;UICorner&quot;</span>, CornerRadius = UDim.new(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>) },
+})</code></pre>
+<p>It honours properties, <code>attributes</code>, <code>tags</code>, <code>AttributeChanged</code>, signal
+properties (the instance is still the first argument), children, and a
+<code>mount</code> marker holding an <code>Instance</code>.</p>
+<p>Everything else is ignored - <code>event</code>, <code>merge</code>, <code>derive</code>, <code>ready</code>, <code>cleanup</code>,
+<code>drawcall</code> and <code>receive</code> need a Vision to mean anything. A <code>style</code> token
+errors, because styles live on a scope.</p>
+<p>Reach for it when you want a static tree written in the same shape as the rest
+of your interface, without paying for a Vision you will never write to.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

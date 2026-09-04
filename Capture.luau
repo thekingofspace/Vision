@@ -1,5 +1,5 @@
-const Symbols = require(script.Parent.Symbols)
-const Viewport = require(script.Parent.Viewport)
+const Symbols = require("./Symbols")
+const Viewport = require("./Viewport")
 
 const Capture = {}
 
@@ -289,6 +289,10 @@ const function Offer(Host, Pending: Instance, Source): Instance?
                 const Taken = Callback(Object, Pending, Source)
 
                 if typeof(Taken) == "Instance" then
+                    if Source ~= nil then
+                        Other.Grafted[Source] = true
+                    end
+
                     return Taken
                 end
             end
@@ -298,35 +302,52 @@ const function Offer(Host, Pending: Instance, Source): Instance?
     return nil
 end
 
-const function Graft(State, Node, Target, Source): Instance?
+const function Graft(Node, Target, Source): Instance?
     const Pending = Node.Instance
 
     if not Pending then
         return nil
     end
 
-    const Handle = State.Handle
-
     for _, Host in Target.Hosts do
         const Spot = Offer(Host, Pending, Source)
 
         if Spot then
-            table.insert(
-                Node.Connections,
-                Pending.Destroying:Connect(function()
-                    const Owner = Handle[1]
-
-                    if Owner then
-                        Owner:Cleanup()
-                    end
-                end)
-            )
-
             return Spot
         end
     end
 
     return nil
+end
+
+const function Ungraft(State, Source)
+    for _, Node in State.Nodes do
+        const Target = Node.Target
+
+        if Symbols.Injected(Target) then
+            for _, Host in Target.Hosts do
+                const Other = Internal[Host]
+
+                if Other then
+                    Other.Grafted[Source] = nil
+                end
+            end
+        end
+    end
+end
+
+const function Sweep(State)
+    const Doomed = {}
+
+    for Child in State.Grafted do
+        table.insert(Doomed, Child)
+    end
+
+    table.clear(State.Grafted)
+
+    for _, Child in Doomed do
+        Child:Cleanup()
+    end
 end
 
 const function Resolve(State, Node, Source): Instance?
@@ -343,7 +364,7 @@ const function Resolve(State, Node, Source): Instance?
     end
 
     if Symbols.Injected(Target) then
-        return Graft(State, Node, Target, Source)
+        return Graft(Node, Target, Source)
     end
 
     return if Node.Parent then Node.Parent.Instance else nil
@@ -683,6 +704,9 @@ function Methods:Cleanup()
     State.Mounted = false
     State.Generation += 1
 
+    Sweep(State)
+    Ungraft(State, self)
+
     Teardown(State.Root)
 
     const Runtime = State.Scope.Runtime
@@ -747,7 +771,7 @@ function Capture.new(Scope, Declaration)
         Derived = {},
         Mounts = {},
         Nodes = {},
-        Handle = setmetatable({}, { __mode = "v" }),
+        Grafted = setmetatable({}, { __mode = "k" }),
         Root = nil,
         Mounted = false,
         Generation = 0,
@@ -758,7 +782,6 @@ function Capture.new(Scope, Declaration)
     end
 
     Internal[Vision] = State
-    State.Handle[1] = Vision
     State.Root = Parse(State, Declaration, nil)
 
     for _, Event in State.Derived do

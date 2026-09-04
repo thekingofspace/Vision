@@ -20,6 +20,11 @@ Reads a declaration tree and returns a [Vision](/api/vision). **Creates no
 instances.** Capture parses the tree, registers values and names, and hands
 back a handle you can write to.
 
+A captured Vision is **not held by the scope**. Until it is mounted the scope
+does not know about it, `Scope:Update` skips it, and dropping it lets it be
+collected - exactly the same state a Vision returns to after `Cleanup`. Mount
+is what hands ownership to the scope.
+
 ```lua
 local Interface = Scope:Capture({
     ClassName = "Frame",

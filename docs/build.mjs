@@ -40,6 +40,7 @@ const Sidebars = [
             { text: "Style", link: "/api/style" },
             { text: "Vision", link: "/api/vision" },
             { text: "Animation", link: "/api/animation" },
+            { text: "Tools", link: "/api/tools" },
         ],
     },
 ]

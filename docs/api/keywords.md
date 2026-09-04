@@ -324,3 +324,119 @@ mount("Panel")
 
 Without a `mount`, a child parents to the declaration containing it, and a
 root parents to nothing - it is created but left unparented.
+
+## inject
+
+```lua
+inject(...: Vision) -> Graft
+```
+
+Used as a `mount` target. Instead of naming a place, it asks other Visions
+where to put this one.
+
+```lua
+mount(inject(Panel))
+mount(inject(Panel, Fallback))
+```
+
+On mount, each host is tried in order. A host that is **not currently mounted
+is skipped**, and the next one is tried. The first host that accepts wins.
+
+If no host accepts - none are mounted, or every [receive](#receive) declines -
+the Vision is still built, it is simply **left unparented**. Nothing errors.
+Mounting it again retries the placement, so this is the normal pattern:
+
+```lua
+Guest:Mount()   -- host is down, nothing is parented
+Panel:Mount()
+Guest:Mount()   -- retries, and lands
+```
+
+## receive
+
+```lua
+receive(Callback: (self: Instance, Target: Instance, Source: Vision) -> Instance?) -> Marker
+```
+
+Marks a node as a landing site for [inject](#inject). The callback gets the
+node's own instance, the instance asking to be parented, and the Vision it
+belongs to.
+
+Return an `Instance` to accept - that instance becomes the parent. Return
+anything falsy to decline and let the next `receive` try.
+
+```lua
+Scope:Capture({
+    ClassName = "Frame",
+    Name = "Panel",
+
+    receive(function(self, Target, Source)
+        return Source.Kind() == "tool" and self
+    end),
+
+    {
+        ClassName = "Frame",
+        Name = "Tray",
+
+        receive(function(self)
+            return self
+        end),
+    },
+})
+```
+
+A host may hold as many `receive` markers as it likes; they are offered the
+instance in declaration order, outermost first. A host with no `receive` never
+accepts anything.
+
+Because the callback is handed the incoming Vision, one host can sort many
+different guests into different places inside itself.
+
+### Chaining
+
+A guest can host guests of its own, as deep as you like.
+
+```lua
+Shell:Mount()
+Panel:Mount()   -- lands in Shell
+Widget:Mount()  -- lands in Panel
+```
+
+### Who holds who
+
+The link runs **one way**. A guest holds its hosts, because the `inject` marker
+lives in the guest's own declaration and has to survive a `Cleanup` so the guest
+can be mounted again.
+
+A host holds **nothing**. It keeps no list of its guests, weak or otherwise. A
+guest instead watches its own instance, and cleans itself up if that instance is
+ever destroyed - which is what happens when the host tears its tree down.
+
+```lua
+Shell:Cleanup()   -- Panel and Widget clean themselves up too
+```
+
+That gives four properties worth relying on:
+
+- Cleaning a host **cascades** to everything grafted into it, and down the
+  chain from there.
+- The cascade runs **outermost first**: the host's own `cleanup` callbacks run,
+  then each guest's as its instance is destroyed.
+- Remounting a host brings back **only the host**. It has no idea what used to
+  live inside it, so nothing is dragged along.
+- A cleaned guest can be dropped on its own, and holding a guest keeps its hosts
+  reachable but never the reverse.
+
+So a whole chain of linked Visions, once cleaned and let go of, collects
+together - including one that links back on itself.
+
+A cascaded guest is only asleep, not gone. Mount it again and it relinks:
+
+```lua
+Shell:Cleanup()
+Shell:Mount()   -- empty
+Panel:Mount()   -- back inside Shell
+```
+
+Because the cascade rides on `Destroying`, destroying a grafted instance from
+outside Vision cleans its guest up too.

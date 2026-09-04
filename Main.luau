@@ -1,8 +1,8 @@
-const Symbols = require(script.Symbols)
-const Scope = require(script.Scope)
-const Types = require(script.Types)
-const Lint = require(script.Lint)
-const Create = require(script.Create)
+const Symbols = require("./Symbols")
+const Scope = require("./Scope")
+const Types = require("./Types")
+const Lint = require("./Lint")
+const Create = require("./Create")
 
 export type CapFunc<v> = Types.CapFunc<v>
 export type Vision = Types.Vision

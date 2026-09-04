@@ -27,11 +27,13 @@ Creates the tree. In order:
 4. the root is parented to its mount target
 5. `ready` callbacks run, deepest first
 
-Calling `Mount` on a Vision that is already mounted does nothing. Mounting a
-Vision that was cleaned up rebuilds it - see [Cleanup](#cleanup).
+Calling `Mount` on a Vision that is already mounted does nothing, with one
+exception: a Vision mounted through [inject](/api/keywords#inject) that found
+no host retries its placement, so mounting again once the host is up parents
+it. Mounting a Vision that was cleaned up rebuilds it - see [Cleanup](#cleanup).
 
-Mount also re-registers the Vision with its scope, so `Scope:Release` covers
-it again.
+Mount is also what registers the Vision with its scope. Before the first mount,
+and after every `Cleanup`, the scope holds no reference to it at all.
 
 ## MountAsync
 

@@ -35,6 +35,7 @@
 <a href="./style.html">Style</a>
 <a href="./vision.html">Vision</a>
 <a href="./animation.html">Animation</a>
+<a href="./tools.html">Tools</a>
 </div>
 </aside>
 <main class="content">
@@ -49,6 +50,10 @@ runtime inside it costs nothing until something is animating.</p>
 <p>Reads a declaration tree and returns a <a href="./vision.html">Vision</a>. <strong>Creates no
 instances.</strong> Capture parses the tree, registers values and names, and hands
 back a handle you can write to.</p>
+<p>A captured Vision is <strong>not held by the scope</strong>. Until it is mounted the scope
+does not know about it, <code>Scope:Update</code> skips it, and dropping it lets it be
+collected - exactly the same state a Vision returns to after <code>Cleanup</code>. Mount
+is what hands ownership to the scope.</p>
 <pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Interface = Scope:Capture({
     ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
     mount(PlayerGui),

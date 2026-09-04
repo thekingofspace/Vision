@@ -35,6 +35,7 @@
 <a href="./style.html">Style</a>
 <a class="active" href="./vision.html">Vision</a>
 <a href="./animation.html">Animation</a>
+<a href="./tools.html">Tools</a>
 </div>
 </aside>
 <main class="content">
@@ -58,10 +59,12 @@ connections applied</li>
 <li>the root is parented to its mount target</li>
 <li><code>ready</code> callbacks run, deepest first</li>
 </ol>
-<p>Calling <code>Mount</code> on a Vision that is already mounted does nothing. Mounting a
-Vision that was cleaned up rebuilds it - see <a href="#cleanup">Cleanup</a>.</p>
-<p>Mount also re-registers the Vision with its scope, so <code>Scope:Release</code> covers
-it again.</p>
+<p>Calling <code>Mount</code> on a Vision that is already mounted does nothing, with one
+exception: a Vision mounted through <a href="./keywords.html#inject">inject</a> that found
+no host retries its placement, so mounting again once the host is up parents
+it. Mounting a Vision that was cleaned up rebuilds it - see <a href="#cleanup">Cleanup</a>.</p>
+<p>Mount is also what registers the Vision with its scope. Before the first mount,
+and after every <code>Cleanup</code>, the scope holds no reference to it at all.</p>
 <h2 id="mountasync"><a class="anchor" href="#mountasync">#</a>MountAsync</h2>
 <pre class="code"><code class="hljs">Interface:MountAsync(Budget: number?)</code></pre>
 <p>Builds the tree across frames instead of in one go, yielding whenever the

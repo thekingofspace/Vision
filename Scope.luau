@@ -1,7 +1,7 @@
-local Runtime = require(script.Parent.Link)
-const Capture = require(script.Parent.Capture)
-const Interpolate = require(script.Parent.Interpolate)
-const Style = require(script.Parent.Style)
+local Runtime = require("./Link")
+const Capture = require("./Capture")
+const Interpolate = require("./Interpolate")
+const Style = require("./Style")
 
 const Scope = {}
 Scope.__index = Scope

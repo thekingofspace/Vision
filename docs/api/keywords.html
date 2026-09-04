@@ -35,6 +35,7 @@
 <a href="./style.html">Style</a>
 <a href="./vision.html">Vision</a>
 <a href="./animation.html">Animation</a>
+<a href="./tools.html">Tools</a>
 </div>
 </aside>
 <main class="content">
@@ -275,6 +276,81 @@ instance using it.</p>
 mount(<span class="hljs-string">&quot;Panel&quot;</span>)</code></pre>
 <p>Without a <code>mount</code>, a child parents to the declaration containing it, and a
 root parents to nothing - it is created but left unparented.</p>
+<h2 id="inject"><a class="anchor" href="#inject">#</a>inject</h2>
+<pre class="code"><code class="hljs">inject(...: Vision) -&gt; Graft</code></pre>
+<p>Used as a <code>mount</code> target. Instead of naming a place, it asks other Visions
+where to put this one.</p>
+<pre class="code"><code class="hljs">mount(inject(Panel))
+mount(inject(Panel, Fallback))</code></pre>
+<p>On mount, each host is tried in order. A host that is <strong>not currently mounted
+is skipped</strong>, and the next one is tried. The first host that accepts wins.</p>
+<p>If no host accepts - none are mounted, or every <a href="#receive">receive</a> declines -
+the Vision is still built, it is simply <strong>left unparented</strong>. Nothing errors.
+Mounting it again retries the placement, so this is the normal pattern:</p>
+<pre class="code"><code class="hljs">Guest:Mount()   <span class="hljs-comment">-- host is down, nothing is parented</span>
+Panel:Mount()
+Guest:Mount()   <span class="hljs-comment">-- retries, and lands</span></code></pre>
+<h2 id="receive"><a class="anchor" href="#receive">#</a>receive</h2>
+<pre class="code"><code class="hljs">receive(Callback: (<span class="hljs-built_in">self</span>: Instance, Target: Instance, Source: Vision) -&gt; Instance?) -&gt; Marker</code></pre>
+<p>Marks a node as a landing site for <a href="#inject">inject</a>. The callback gets the
+node&#39;s own instance, the instance asking to be parented, and the Vision it
+belongs to.</p>
+<p>Return an <code>Instance</code> to accept - that instance becomes the parent. Return
+anything falsy to decline and let the next <code>receive</code> try.</p>
+<pre class="code"><code class="hljs">Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+    Name = <span class="hljs-string">&quot;Panel&quot;</span>,
+
+    receive(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Target, Source)</span></span>
+        <span class="hljs-keyword">return</span> Source.Kind() == <span class="hljs-string">&quot;tool&quot;</span> <span class="hljs-keyword">and</span> <span class="hljs-built_in">self</span>
+    <span class="hljs-keyword">end</span>),
+
+    {
+        ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+        Name = <span class="hljs-string">&quot;Tray&quot;</span>,
+
+        receive(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
+            <span class="hljs-keyword">return</span> <span class="hljs-built_in">self</span>
+        <span class="hljs-keyword">end</span>),
+    },
+})</code></pre>
+<p>A host may hold as many <code>receive</code> markers as it likes; they are offered the
+instance in declaration order, outermost first. A host with no <code>receive</code> never
+accepts anything.</p>
+<p>Because the callback is handed the incoming Vision, one host can sort many
+different guests into different places inside itself.</p>
+<h3 id="chaining"><a class="anchor" href="#chaining">#</a>Chaining</h3>
+<p>A guest can host guests of its own, as deep as you like.</p>
+<pre class="code"><code class="hljs">Shell:Mount()
+Panel:Mount()   <span class="hljs-comment">-- lands in Shell</span>
+Widget:Mount()  <span class="hljs-comment">-- lands in Panel</span></code></pre>
+<h3 id="who-holds-who"><a class="anchor" href="#who-holds-who">#</a>Who holds who</h3>
+<p>The link runs <strong>one way</strong>. A guest holds its hosts, because the <code>inject</code> marker
+lives in the guest&#39;s own declaration and has to survive a <code>Cleanup</code> so the guest
+can be mounted again.</p>
+<p>A host holds <strong>nothing</strong>. It keeps no list of its guests, weak or otherwise. A
+guest instead watches its own instance, and cleans itself up if that instance is
+ever destroyed - which is what happens when the host tears its tree down.</p>
+<pre class="code"><code class="hljs">Shell:Cleanup()   <span class="hljs-comment">-- Panel and Widget clean themselves up too</span></code></pre>
+<p>That gives four properties worth relying on:</p>
+<ul>
+<li>Cleaning a host <strong>cascades</strong> to everything grafted into it, and down the
+chain from there.</li>
+<li>The cascade runs <strong>outermost first</strong>: the host&#39;s own <code>cleanup</code> callbacks run,
+then each guest&#39;s as its instance is destroyed.</li>
+<li>Remounting a host brings back <strong>only the host</strong>. It has no idea what used to
+live inside it, so nothing is dragged along.</li>
+<li>A cleaned guest can be dropped on its own, and holding a guest keeps its hosts
+reachable but never the reverse.</li>
+</ul>
+<p>So a whole chain of linked Visions, once cleaned and let go of, collects
+together - including one that links back on itself.</p>
+<p>A cascaded guest is only asleep, not gone. Mount it again and it relinks:</p>
+<pre class="code"><code class="hljs">Shell:Cleanup()
+Shell:Mount()   <span class="hljs-comment">-- empty</span>
+Panel:Mount()   <span class="hljs-comment">-- back inside Shell</span></code></pre>
+<p>Because the cascade rides on <code>Destroying</code>, destroying a grafted instance from
+outside Vision cleans its guest up too.</p>
 
 </main>
 </div>
