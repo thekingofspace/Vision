@@ -12,6 +12,8 @@ local cleanup = Vision.cleanup
 local drawcall = Vision.drawcall
 local style = Vision.style
 local mount = Vision.mount
+local inject = Vision.inject
+local receive = Vision.receive
 
 local PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
@@ -40,7 +42,7 @@ local Words = {
     "Ripple", "Summit", "Thicket", "Vellum", "Willow",
 }
 
-local Order = { "Title", "Values", "Motion", "Reactive", "Effects", "Easing", "Damping", "Gradient", "Particles", "Stack", "List" }
+local Order = { "Title", "Values", "Motion", "Reactive", "Effects", "Easing", "Damping", "Gradient", "Particles", "Stack", "Inject", "List" }
 
 local Digits = {
     [Enum.KeyCode.One] = 1,
@@ -58,7 +60,7 @@ return function()
     local Wearing = "Dark"
     local Toggled = false
 
-    local Title, Values, Motion, Reactive, Effects, Easing, Damping, Colour, Motes, Stack, List, Row
+    local Title, Values, Motion, Reactive, Effects, Easing, Damping, Colour, Motes, Stack, Bay, List, Row
     local Shelf, Handle
     local Rows, Made = {}, 0
 
@@ -1658,6 +1660,172 @@ return function()
 
     Motes = Scope:Capture(Page("Particles", "Particles", "K  next screen", Cloud))
 
+    ----------------------------------------------------------------- inject
+
+    local Trays = {
+        { Key = "tool", Cap = "tools", Slot = "Tools", X = 28 },
+        { Key = "note", Cap = "notes", Slot = "Notes", X = 208 },
+        { Key = "alert", Cap = "alerts", Slot = "Alerts", X = 388 },
+    }
+
+    local Chips = {}
+    local Filed = 0
+    local File
+
+    local Dock = {
+        -- offered every chip first, and never takes one, so the trays get their turn
+        receive(function()
+            return nil
+        end),
+
+        {
+            ClassName = "TextLabel",
+            Name = "Told",
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(28, 224),
+            Size = UDim2.fromOffset(504, 16),
+            Font = Enum.Font.Code,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextColor3 = style("Skin")["Dim"],
+
+            mount("Card"),
+
+            event("Word", "each chip asks this page where it belongs", function(self, Value)
+                self.Text = Value
+            end),
+        },
+
+        cleanup(function()
+            print("[vision] bay asleep, its chips went with it")
+        end),
+    }
+
+    for _, Tray in Trays do
+        table.insert(Dock, {
+            ClassName = "TextLabel",
+            Name = Tray.Slot .. "Cap",
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(Tray.X, 62),
+            Size = UDim2.fromOffset(144, 14),
+            Font = Enum.Font.Code,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Text = Tray.Cap,
+            TextColor3 = style("Skin")["Dim"],
+
+            mount("Card"),
+        })
+
+        table.insert(Dock, {
+            ClassName = "Frame",
+            Name = Tray.Slot,
+            Position = UDim2.fromOffset(Tray.X, 80),
+            Size = UDim2.fromOffset(144, 128),
+            BorderSizePixel = 0,
+            BackgroundColor3 = style("Skin")["Back"],
+
+            mount("Card"),
+
+            { ClassName = "UICorner", CornerRadius = UDim.new(0, 8) },
+            {
+                ClassName = "UIPadding",
+                PaddingTop = UDim.new(0, 6),
+                PaddingLeft = UDim.new(0, 6),
+                PaddingRight = UDim.new(0, 6),
+            },
+            { ClassName = "UIListLayout", Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder },
+
+            -- one tray, one kind, everything else is passed along
+            receive(function(self, Target, Source)
+                return Source.Kind() == Tray.Key and self
+            end),
+        })
+    end
+
+    table.insert(Dock, Button("Tool", "tool", UDim2.fromOffset(28, 266), 84, function()
+        File("tool")
+    end))
+
+    table.insert(Dock, Button("Note", "note", UDim2.fromOffset(116, 266), 84, function()
+        File("note")
+    end))
+
+    table.insert(Dock, Button("Alert", "alert", UDim2.fromOffset(204, 266), 84, function()
+        File("alert")
+    end))
+
+    table.insert(Dock, Button("Ghost", "unclaimed", UDim2.fromOffset(292, 266), 96, function()
+        File("ghost")
+    end))
+
+    table.insert(Dock, Button("Sweep", "clear", UDim2.fromOffset(396, 266), 88, function()
+        for _, Item in Chips do
+            Item:Cleanup()
+        end
+
+        table.clear(Chips)
+        Bay.Word("cleared, every chip is asleep and out of scope")
+    end))
+
+    Bay = Scope:Capture(Page("Inject", "Inject", "K  next screen", Dock))
+
+    -- the host has to exist before a guest can name it
+    local Chip = Scope:Capture({
+        ClassName = "Frame",
+        Name = "Chip",
+        Size = UDim2.new(1, 0, 0, 24),
+        BorderSizePixel = 0,
+        BackgroundColor3 = style("Skin")["Rail"],
+
+        mount(inject(Bay)),
+
+        event("Kind", "tool", function() end),
+
+        { ClassName = "UICorner", CornerRadius = UDim.new(0, 5) },
+        { ClassName = "UIPadding", PaddingLeft = UDim.new(0, 8) },
+
+        {
+            ClassName = "TextLabel",
+            Name = "Text",
+            BackgroundTransparency = 1,
+            Size = UDim2.fromScale(1, 1),
+            Font = Enum.Font.Code,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextColor3 = style("Skin")["Ink"],
+
+            event("Label", "chip", function(self, Value)
+                self.Text = Value
+            end),
+        },
+    })
+
+    function File(Kind: string)
+        Filed += 1
+
+        local Item = Chip:Clone()
+        Item.Kind(Kind)
+        Item.Label(`{Kind} {Filed}`)
+        Item:Mount()
+
+        table.insert(Chips, Item)
+
+        local Body = Item:Open()
+        local Landed = Body.Parent
+
+        if not Landed then
+            Bay.Word(`a {Kind} chip asked, nothing took it, so it stays unparented`)
+
+            return
+        end
+
+        Bay.Word(`a {Kind} chip asked, and "{Landed.Name}" took it`)
+
+        Body.Size = UDim2.new(1, 0, 0, 4)
+        Scope:PhysicsInstance(0.32, 0.5, Body, { Size = UDim2.new(1, 0, 0, 24) })
+    end
+
     ------------------------------------------------------------------- list
 
     local Rack = {
@@ -1826,6 +1994,7 @@ return function()
         Gradient = Colour,
         Particles = Motes,
         Stack = Stack,
+        Inject = Bay,
         List = List,
     }
 
@@ -1889,6 +2058,16 @@ return function()
             table.clear(Notes)
 
             Deck = nil
+        elseif Which == "Inject" then
+            -- the page cleans everything grafted into it, this only tidies
+            -- the chips nothing ever took, which were never parented to it
+            Bay:Cleanup()
+
+            for _, Item in Chips do
+                Item:Cleanup()
+            end
+
+            table.clear(Chips)
         elseif Which == "Particles" then
             Spraying = false
 
