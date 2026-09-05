@@ -8,14 +8,33 @@ const Protected = {
     Clone = true,
 }
 
+const function Sourced(Declaration: any): boolean
+    if type(Declaration.FromParent) == "string" then
+        return true
+    end
+
+    for _, Entry in ipairs(Declaration) do
+        if Symbols.Is(Entry) and (Entry.Kind == "Clone" or Entry.Kind == "Adopt") then
+            return true
+        end
+    end
+
+    return false
+end
+
 const function Walk(Declaration: any, Trail: string, Found: any)
     const ClassName = Declaration.ClassName
-    const Named = if type(ClassName) == "string" then ClassName else "?"
+    const Borrowed = Sourced(Declaration)
+    const Named = if type(ClassName) == "string" then ClassName elseif Borrowed then "taken" else "?"
     const Label = if type(Declaration.Name) == "string" then `{Named}({Declaration.Name})` else Named
     const Path = if Trail == "" then Label else `{Trail} > {Label}`
 
-    if type(ClassName) ~= "string" then
+    if type(ClassName) ~= "string" and not Borrowed then
         table.insert(Found.Notes, `{Path} has no ClassName, mounting it will error`)
+    end
+
+    if type(ClassName) == "string" and Borrowed then
+        table.insert(Found.Notes, `{Path} takes its instance from elsewhere, so its ClassName is ignored`)
     end
 
     if type(Declaration.Name) == "string" then

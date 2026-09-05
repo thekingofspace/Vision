@@ -1,11 +1,10 @@
 local fs = require("@lune/fs")
 local process = require("@lune/process")
 
-local Project = "model.project.json"
-
 local Outputs = {
-    { Path = "Vision.rbxm", Note = "binary model, upload this" },
-    { Path = "Vision.rbxmx", Note = "xml model, readable in diffs" },
+    { Path = "Vision.rbxm", Project = "model.project.json", Note = "binary model, upload this" },
+    { Path = "Vision.rbxmx", Project = "model.project.json", Note = "xml model, readable in diffs" },
+    { Path = "Vision.rbxl", Project = "default.project.json", Note = "test place, showcases included" },
 }
 
 local function Bytes(Count: number): string
@@ -40,8 +39,10 @@ local function FindRojo(): string
 end
 
 local function Main()
-    if not fs.isFile(Project) then
-        error(`missing {Project}, run this from the repository root`, 0)
+    for _, Output in Outputs do
+        if not fs.isFile(Output.Project) then
+            error(`missing {Output.Project}, run this from the repository root`, 0)
+        end
     end
 
     local Rojo = FindRojo()
@@ -58,7 +59,7 @@ local function Main()
             fs.removeFile(Output.Path)
         end
 
-        local Result = process.exec(Rojo, { "build", Project, "--output", Output.Path })
+        local Result = process.exec(Rojo, { "build", Output.Project, "--output", Output.Path })
 
         if not Result.ok then
             Failed = true
@@ -88,7 +89,7 @@ local function Main()
         process.exit(1)
     end
 
-    print("upload Vision.rbxm to a release, or drag it into Studio to test")
+    print("upload Vision.rbxm to a release, or open Vision.rbxl to try the showcases")
     print("")
 end
 

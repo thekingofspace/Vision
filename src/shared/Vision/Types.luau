@@ -33,6 +33,8 @@ export type ready = (Callback:(self:Instance, cleanup:(Callback:(self:Instance) 
 export type cleanup = (Callback:(self:Instance) -> ()) -> Marker
 export type drawcall = (Callback:(self:Instance, Viewport:Vector2) -> ()) -> Marker
 export type mount = (Target:Instance | string | Graft) -> Marker
+export type fromClone = (Template:Instance) -> Marker
+export type fromInstance = (Existing:Instance) -> Marker
 export type receive = (Callback:(self:Instance, Target:Instance, Source:Vision) -> Instance?) -> Marker
 export type inject = (...Vision) -> Graft
 export type lint = (Declaration:Declaration) -> {string}
@@ -68,6 +70,7 @@ export type FlipBook = {
 
 export type Animation = {
     Bind:(self:Animation, Name:string, Callback:(self:Instance, ...any) -> ()) -> Bond,
+    Play:(self:Animation) -> Animation,
     Jump:(self:Animation, Time:number) -> Animation,
     Await:(self:Animation) -> (),
     Stop:(self:Animation) -> (),
@@ -76,6 +79,8 @@ export type Animation = {
     SmoothLoop:boolean,
     RestageTime:number,
     Speed:number,
+    Time:number,
+    Length:number,
     Finished:boolean
 }
 
@@ -106,7 +111,7 @@ export type Scope = {
     PhysicsInstance:(self:Scope, Period:number, Damping:number, Instance:Instance | {Instance}, TargetProps:{[string]:any}) -> Linker,
     PhysicsFunction:(self:Scope, Period:number, Damping:number, TargetFun:(NewValue:any) -> (), InitialValue:any, TargetValue:any) -> Linker,
 
-    Animate:(self:Scope, Keyframes:{Keyframe}, Instance:Instance) -> Animation,
+    Animate:(self:Scope, Keyframes:{Keyframe}, Target:Instance | Vision) -> Animation,
     FlipBook:(self:Scope, Sheet:Sheet, Instance:Instance, Frames:{string}, Rate:number?) -> FlipBook,
     Update:(self:Scope, EventName:string, Value:any) -> (),
     Release:(self:Scope) -> ()

@@ -1,4 +1,5 @@
 const Symbols = require(script.Parent.Symbols)
+const Capture = require(script.Parent.Capture)
 
 const Methods = {}
 
@@ -9,13 +10,17 @@ const Animation = {
         if Key == "Finished" then
             const Link = rawget(self, "Link")
 
-            return if Link then Link.Finished else true
+            return Link == nil or Link.Finished
+        end
+
+        if Key == "Time" then
+            const Link = rawget(self, "Link")
+
+            return if Link then Link.Elapsed else rawget(self, "Saved").Time
         end
 
         if Tuning[Key] then
-            const Link = rawget(self, "Link")
-
-            return if Link then Link[Key] else rawget(self, "Saved")[Key]
+            return rawget(self, "Saved")[Key]
         end
 
         return Methods[Key]
@@ -46,7 +51,7 @@ const Animation = {
 
         const Link = rawget(self, "Link")
 
-        if Link then
+        if Link and not Link.Finished then
             Link[Key] = Value
         end
     end,
@@ -110,22 +115,52 @@ const function Read(Keyframes: { any })
     return Tracks, Marks, Length
 end
 
-function Animation.new(Scope, Keyframes: { any }, Object: Instance)
-    if typeof(Object) ~= "Instance" then
-        error("an animation needs an instance to play on", 0)
+const function Reach(Target: any, Tracks: { any })
+    if Capture.Is(Target) then
+        for _, Track in Tracks do
+            if type(Target[Track.Property]) ~= "function" then
+                error(`this vision has no value named "{Track.Property}"`, 0)
+            end
+        end
+
+        return function(Key: string): any
+            return Target[Key]()
+        end, function(Key: string, Value: any)
+            Target[Key](Value)
+        end
     end
 
+    if typeof(Target) ~= "Instance" then
+        error("an animation needs an instance or a vision to play on", 0)
+    end
+
+    return function(Key: string): any
+        return Target[Key]
+    end, function(Key: string, Value: any)
+        Target[Key] = Value
+    end
+end
+
+function Animation.new(Scope, Keyframes: { any }, Target: any)
     const Tracks, Marks, Length = Read(Keyframes)
+    const Peek, Put = Reach(Target, Tracks)
 
     const Self = setmetatable({}, Animation)
 
-    rawset(Self, "Saved", { Looped = false, SmoothLoop = false, Speed = 1, RestageTime = 0.25 })
+    rawset(Self, "Saved", { Looped = false, SmoothLoop = false, Speed = 1, RestageTime = 0.25, Time = 0 })
     rawset(Self, "Binds", {})
+    rawset(Self, "Scope", Scope)
+    rawset(Self, "Target", Target)
+    rawset(Self, "Tracks", Tracks)
+    rawset(Self, "Marks", Marks)
+    rawset(Self, "Length", Length)
+    rawset(Self, "Peek", Peek)
+    rawset(Self, "Put", Put)
     rawset(Self, "Link", nil)
 
-    const Binds = Self.Binds
+    const Binds = rawget(Self, "Binds")
 
-    const Fire = function(Name: string, Args: { any })
+    rawset(Self, "Fire", function(Name: string, Args: { any })
         const Listeners = Binds[Name]
 
         if not Listeners then
@@ -133,16 +168,54 @@ function Animation.new(Scope, Keyframes: { any }, Object: Instance)
         end
 
         for _, Callback in table.clone(Listeners) do
-            Callback(Object, table.unpack(Args))
+            Callback(Target, table.unpack(Args))
         end
-    end
-
-    rawset(Self, "Link", Scope.Runtime:Play(Object, Tracks, Marks, Length, Fire))
+    end)
 
     return Self
 end
 
-function Methods:Bind(Name: string, Callback: (Instance, ...any) -> ())
+function Methods:Play()
+    const Live = rawget(self, "Link")
+
+    if Live and not Live.Finished then
+        return self
+    end
+
+    const Scope = rawget(self, "Scope")
+
+    if not Scope then
+        return self
+    end
+
+    const Saved = rawget(self, "Saved")
+
+    if Live then
+        Saved.Time = Live.Elapsed
+    end
+
+    const Link = Scope.Runtime:Play(
+        rawget(self, "Target"),
+        rawget(self, "Peek"),
+        rawget(self, "Put"),
+        rawget(self, "Tracks"),
+        rawget(self, "Marks"),
+        rawget(self, "Length"),
+        rawget(self, "Fire"),
+        Saved.Time
+    )
+
+    Link.Speed = Saved.Speed
+    Link.Looped = Saved.Looped
+    Link.SmoothLoop = Saved.SmoothLoop
+    Link.RestageTime = Saved.RestageTime
+
+    rawset(self, "Link", Link)
+
+    return self
+end
+
+function Methods:Bind(Name: string, Callback: (any, ...any) -> ())
     if type(Name) ~= "string" then
         error("an animation event needs a name", 0)
     end
@@ -178,10 +251,18 @@ function Methods:Jump(Time: number)
         error("Jump needs a time in seconds", 0)
     end
 
+    const Spot = math.clamp(Time, 0, rawget(self, "Length") or 0)
+
+    rawget(self, "Saved").Time = Spot
+
     const Link = rawget(self, "Link")
 
     if Link then
-        Link:Seek(Time)
+        if Link.Finished then
+            rawset(self, "Link", nil)
+        else
+            Link:Seek(Spot)
+        end
     end
 
     return self
@@ -199,8 +280,16 @@ function Methods:Stop()
     const Link = rawget(self, "Link")
 
     if Link then
+        if not Link.Finished then
+            rawget(self, "Saved").Time = Link.Elapsed
+        end
+
         Link:Cancel()
     end
+
+    rawset(self, "Link", nil)
+
+    return self
 end
 
 function Methods:Destroy()
@@ -213,7 +302,13 @@ function Methods:Destroy()
     end
 
     rawset(self, "Binds", nil)
-    rawset(self, "Link", nil)
+    rawset(self, "Scope", nil)
+    rawset(self, "Target", nil)
+    rawset(self, "Tracks", nil)
+    rawset(self, "Marks", nil)
+    rawset(self, "Peek", nil)
+    rawset(self, "Put", nil)
+    rawset(self, "Fire", nil)
 end
 
 return Animation

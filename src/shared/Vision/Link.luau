@@ -45,7 +45,7 @@ const function Springs(Easing: any): boolean
         and (Easing.Damping ~= nil or Easing.Dampening ~= nil or Easing.Period ~= nil)
 end
 
-const function Solve(Track: any, Object: Instance, DeltaTime: number): boolean
+const function Solve(Track: any, Put: (string, any) -> (), DeltaTime: number): boolean
     const Carry, Push, Pull, Keep = Coefficients(Track.Omega, Track.Damping, DeltaTime)
     const Position = Track.Position
     const Velocity = Track.Velocity
@@ -78,13 +78,13 @@ const function Solve(Track: any, Object: Instance, DeltaTime: number): boolean
         end
     end
 
-    Object[Track.Property] = Track.Make(Position)
+    Put(Track.Property, Track.Make(Position))
 
     return Done
 end
 
-const function Enter(Track: any, Object: Instance, Head: any, Tail: any)
-    Track.From = if Track.Springy then Object[Track.Property] else Head.Value
+const function Enter(Track: any, Peek: (string) -> any, Head: any, Tail: any)
+    Track.From = if Track.Springy then Peek(Track.Property) else Head.Value
 
     const Easing = Tail.Easing
 
@@ -120,13 +120,12 @@ const function Enter(Track: any, Object: Instance, Head: any, Tail: any)
     end
 end
 
-const function Rewind(Self)
-    Self.Elapsed = if Self.Length > 0 then Self.Elapsed % Self.Length else 0
-    Self.Cursor = 1
-
-    for _, Track in Self.Tracks do
+const function Blank(Tracks: { any })
+    for _, Track in Tracks do
         Track.Index = 0
         Track.From = nil
+        Track.Home = nil
+        Track.Curve = nil
         Track.Blend = nil
         Track.Springy = false
         Track.Position = nil
@@ -135,8 +134,15 @@ const function Rewind(Self)
     end
 end
 
+const function Rewind(Self)
+    Self.Elapsed = if Self.Length > 0 then Self.Elapsed % Self.Length else 0
+    Self.Cursor = 1
+
+    Blank(Self.Tracks)
+end
+
 const function Restage(Self)
-    const Object = Self.Object
+    const Peek = Self.Peek
     const Span = math.max(Self.RestageTime, 1e-4)
 
     Self.Elapsed = 0
@@ -154,7 +160,7 @@ const function Restage(Self)
         Track.Home = Home
         Track.Curve = Style
 
-        Enter(Track, Object, { Time = 0, Value = Object[Track.Property] }, { Time = Span, Value = Home, Easing = Style })
+        Enter(Track, Peek, { Time = 0, Value = Peek(Track.Property) }, { Time = Span, Value = Home, Easing = Style })
     end
 end
 
@@ -166,20 +172,20 @@ const function Timeline(Self, DeltaTime: number): boolean
 
         const Span = Self.RestageTime
         const Raw = if Span > 0 then math.min(Self.Staged / Span, 1) else 1
-        const Home = Self.Object
+        const Put = Self.Put
 
         local Ready = Raw >= 1
 
         for _, Track in Self.Tracks do
             if Track.Springy then
-                if not Solve(Track, Home, DeltaTime) then
+                if not Solve(Track, Put, DeltaTime) then
                     Ready = false
                 end
             else
                 const Shape = Track.Curve
                 const Curve = if Shape and typeof(Shape) == "TweenInfo" then Interpolate.Curve(Shape, Raw) else Raw
 
-                Home[Track.Property] = Interpolate.Value(Track.From, Track.Home, Curve)
+                Put(Track.Property, Interpolate.Value(Track.From, Track.Home, Curve))
             end
         end
 
@@ -209,7 +215,8 @@ const function Timeline(Self, DeltaTime: number): boolean
     end
 
     const Now = Self.Elapsed
-    const Object = Self.Object
+    const Peek = Self.Peek
+    const Put = Self.Put
     const Marks = Self.Marks
     const Total = #Marks
 
@@ -252,13 +259,13 @@ const function Timeline(Self, DeltaTime: number): boolean
 
         if Index >= Count then
             if Track.Springy then
-                if not Solve(Track, Object, DeltaTime) then
+                if not Solve(Track, Put, DeltaTime) then
                     Resting = false
                 end
             elseif Track.From == nil then
                 const Last = Stops[Count].Value
 
-                Object[Track.Property] = Last
+                Put(Track.Property, Last)
                 Track.From = Last
             end
 
@@ -271,11 +278,11 @@ const function Timeline(Self, DeltaTime: number): boolean
         const Tail = Stops[Index + 1]
 
         if Track.From == nil then
-            Enter(Track, Object, Head, Tail)
+            Enter(Track, Peek, Head, Tail)
         end
 
         if Track.Springy then
-            Solve(Track, Object, DeltaTime)
+            Solve(Track, Put, DeltaTime)
 
             continue
         end
@@ -284,7 +291,7 @@ const function Timeline(Self, DeltaTime: number): boolean
         const Alpha = if Span > 0 then (Now - Head.Time) / Span else 1
         const Curve = if Tail.Easing then Interpolate.Curve(Tail.Easing, Alpha) else math.clamp(Alpha, 0, 1)
 
-        Object[Track.Property] = Interpolate.Value(Track.From, Tail.Value, Curve)
+        Put(Track.Property, Interpolate.Value(Track.From, Tail.Value, Curve))
     end
 
     return Resting and not Fresh
@@ -421,16 +428,7 @@ function Link:Seek(Time: number)
 
     self.Cursor = Cursor
 
-    for _, Track in self.Tracks do
-        Track.Index = 0
-        Track.From = nil
-        Track.Home = nil
-        Track.Curve = nil
-        Track.Springy = false
-        Track.Position = nil
-        Track.Velocity = nil
-        Track.Goal = nil
-    end
+    Blank(self.Tracks)
 
     Timeline(self, 0)
 end
@@ -473,6 +471,9 @@ function Link:Cancel()
     self.Marks = nil
     self.Fire = nil
     self.Show = nil
+    self.Peek = nil
+    self.Put = nil
+    self.Owner = nil
     self.Object = nil
     self.Claims = nil
     self.Threads = nil
@@ -718,10 +719,13 @@ function Runtime:Flip(Object: Instance, Count: number, Rate: number, Show: (numb
     return Target
 end
 
-function Runtime:Play(Object: Instance, Tracks: { any }, Marks: { any }, Length: number, Fire: (string, { any }) -> ())
+function Runtime:Play(Owner: any, Peek: (string) -> any, Put: (string, any) -> (), Tracks: { any }, Marks: { any }, Length: number, Fire: (string, { any }) -> (), Start: number?)
     const Target = Link.new(self, Timeline)
 
-    Target.Object = Object
+    Target.Owner = Owner
+    Target.Peek = Peek
+    Target.Put = Put
+    Target.Elapsed = math.clamp(Start or 0, 0, Length)
     Target.Tracks = Tracks
     Target.Marks = Marks
     Target.Length = Length
@@ -736,10 +740,15 @@ function Runtime:Play(Object: Instance, Tracks: { any }, Marks: { any }, Length:
     Target.Primed = false
 
     for _, Track in Tracks do
-        self:Claim(Object, Track.Property, Target)
+        self:Claim(Owner, Track.Property, Target)
     end
 
-    Guard(Target, { Object })
+    Guard(Target, { Owner })
+    Blank(Tracks)
+
+    if Target.Elapsed > 0 then
+        Target:Seek(Target.Elapsed)
+    end
 
     Target:Step(0)
 

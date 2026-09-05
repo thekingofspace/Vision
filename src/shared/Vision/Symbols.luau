@@ -87,6 +87,20 @@ function Symbols.style(Name: string)
     })
 end
 
+function Symbols.fromClone(Target: Instance)
+    return setmetatable({
+        Kind = "Clone",
+        Target = Target,
+    }, Marker)
+end
+
+function Symbols.fromInstance(Target: Instance)
+    return setmetatable({
+        Kind = "Adopt",
+        Target = Target,
+    }, Marker)
+end
+
 function Symbols.mount(Target: Instance | string)
     return setmetatable({
         Kind = "Mount",

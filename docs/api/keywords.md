@@ -440,3 +440,63 @@ Panel:Mount()   -- back inside Shell
 
 Because the cascade rides on `Destroying`, destroying a grafted instance from
 outside Vision cleans its guest up too.
+
+## fromClone
+
+```lua
+fromClone(Template: Instance) -> Marker
+```
+
+Used in place of a `ClassName`. The node copies the template instead of
+building something new, and **owns the copy** - `Cleanup` destroys it, and
+mounting again makes a fresh one. The template itself is never touched.
+
+```lua
+Scope:Capture({
+    fromClone(ReplicatedStorage.CardTemplate),
+    mount(PlayerGui),
+
+    Name = "Card",
+    Size = UDim2.fromOffset(200, 80),
+})
+```
+
+Properties, `attributes`, `tags`, signals and every keyword work exactly as
+they do on a declared node. Anything you set wins over what the template
+carried.
+
+To reach the template's children, see
+[FromParent](/api/declarations#fromparent).
+
+## fromInstance
+
+```lua
+fromInstance(Existing: Instance) -> Marker
+```
+
+Identical to [fromClone](#fromclone) in every way but one: it **adopts** the
+instance you hand it instead of copying it, and it **never destroys it**.
+
+```lua
+Scope:Capture({
+    fromInstance(PlayerGui.HUD.Health),
+
+    event("Points", 100, function(self, Value)
+        self.Text = `{Value} hp`
+    end),
+})
+```
+
+Properties, `attributes`, `tags`, signals, values and every keyword behave
+exactly as they do on a cloned or declared node. The only difference is what
+happens at the end: `Cleanup` runs your `cleanup` callbacks and disconnects
+everything Vision connected, then leaves the instance exactly where it was.
+`Scope:Release` does the same.
+
+Its parent is left alone too, unless you give the node a `mount`.
+
+Anything the instance already owned is left alone as well. Children you
+declare inside it **are** created and owned by Vision, so those are destroyed
+on cleanup while everything that was already there stays.
+
+To reach its children, see [FromParent](/api/declarations#fromparent).

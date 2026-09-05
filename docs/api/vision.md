@@ -131,6 +131,12 @@ Row:Mount()
 The two share nothing after that - separate instances, separate values.
 `Scope:Release` cleans up clones along with everything else.
 
+A Vision that takes its instance with
+[fromInstance](/api/keywords#frominstance) **cannot be cloned** - there is only
+one of that instance and two Visions cannot both own driving it. `Clone` says
+so and points you at [fromClone](/api/keywords#fromclone), which copies the
+template and gives every clone its own.
+
 ## CapFunc
 
 Every name passed to `event` becomes a field on the Vision:

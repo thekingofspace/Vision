@@ -353,6 +353,44 @@ Shell:Mount()   <span class="hljs-comment">-- empty</span>
 Panel:Mount()   <span class="hljs-comment">-- back inside Shell</span></code></pre>
 <p>Because the cascade rides on <code>Destroying</code>, destroying a grafted instance from
 outside Vision cleans its guest up too.</p>
+<h2 id="fromclone"><a class="anchor" href="#fromclone">#</a>fromClone</h2>
+<pre class="code"><code class="hljs">fromClone(Template: Instance) -&gt; Marker</code></pre>
+<p>Used in place of a <code>ClassName</code>. The node copies the template instead of
+building something new, and <strong>owns the copy</strong> - <code>Cleanup</code> destroys it, and
+mounting again makes a fresh one. The template itself is never touched.</p>
+<pre class="code"><code class="hljs">Scope:Capture({
+    fromClone(ReplicatedStorage.CardTemplate),
+    mount(PlayerGui),
+
+    Name = <span class="hljs-string">&quot;Card&quot;</span>,
+    Size = UDim2.fromOffset(<span class="hljs-number">200</span>, <span class="hljs-number">80</span>),
+})</code></pre>
+<p>Properties, <code>attributes</code>, <code>tags</code>, signals and every keyword work exactly as
+they do on a declared node. Anything you set wins over what the template
+carried.</p>
+<p>To reach the template&#39;s children, see
+<a href="./declarations.html#fromparent">FromParent</a>.</p>
+<h2 id="frominstance"><a class="anchor" href="#frominstance">#</a>fromInstance</h2>
+<pre class="code"><code class="hljs">fromInstance(Existing: Instance) -&gt; Marker</code></pre>
+<p>Identical to <a href="#fromclone">fromClone</a> in every way but one: it <strong>adopts</strong> the
+instance you hand it instead of copying it, and it <strong>never destroys it</strong>.</p>
+<pre class="code"><code class="hljs">Scope:Capture({
+    fromInstance(PlayerGui.HUD.Health),
+
+    event(<span class="hljs-string">&quot;Points&quot;</span>, <span class="hljs-number">100</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+        <span class="hljs-built_in">self</span>.Text = `{Value} hp`
+    <span class="hljs-keyword">end</span>),
+})</code></pre>
+<p>Properties, <code>attributes</code>, <code>tags</code>, signals, values and every keyword behave
+exactly as they do on a cloned or declared node. The only difference is what
+happens at the end: <code>Cleanup</code> runs your <code>cleanup</code> callbacks and disconnects
+everything Vision connected, then leaves the instance exactly where it was.
+<code>Scope:Release</code> does the same.</p>
+<p>Its parent is left alone too, unless you give the node a <code>mount</code>.</p>
+<p>Anything the instance already owned is left alone as well. Children you
+declare inside it <strong>are</strong> created and owned by Vision, so those are destroyed
+on cleanup while everything that was already there stays.</p>
+<p>To reach its children, see <a href="./declarations.html#fromparent">FromParent</a>.</p>
 
 </main>
 </div>

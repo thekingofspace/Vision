@@ -64,8 +64,44 @@ inert data - building one creates nothing.</p>
     { ClassName = <span class="hljs-string">&quot;UICorner&quot;</span>, CornerRadius = UDim.new(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>) },
 }</code></pre>
 <h2 id="classname"><a class="anchor" href="#classname">#</a>ClassName</h2>
-<p>Required. The class passed to <code>Instance.new</code>. A declaration without a string
-<code>ClassName</code> raises <code>Declaration requires a ClassName</code> at capture time.</p>
+<p>The class passed to <code>Instance.new</code>. Required <strong>unless</strong> the node takes its
+instance from somewhere else - with
+<a href="./keywords.html#fromclone">fromClone</a>, <a href="./keywords.html#frominstance">fromInstance</a>
+or <code>FromParent</code> below. A declaration with none of those raises
+<code>Declaration requires a ClassName</code> at capture time.</p>
+<h2 id="fromparent"><a class="anchor" href="#fromparent">#</a>FromParent</h2>
+<pre class="code"><code class="hljs">FromParent = <span class="hljs-string">&quot;ChildName&quot;</span></code></pre>
+<p>The third way a node can get its instance: instead of building one, find the
+child of that name on the node <strong>around</strong> it.</p>
+<pre class="code"><code class="hljs">Scope:Capture({
+    fromClone(Template),
+    mount(PlayerGui),
+
+    {
+        FromParent = <span class="hljs-string">&quot;Label&quot;</span>,
+
+        TextSize = <span class="hljs-number">21</span>,
+
+        event(<span class="hljs-string">&quot;Word&quot;</span>, <span class="hljs-string">&quot;ready&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+            <span class="hljs-built_in">self</span>.Text = Value
+        <span class="hljs-keyword">end</span>),
+    },
+
+    {
+        FromParent = <span class="hljs-string">&quot;Icon&quot;</span>,
+        ImageTransparency = <span class="hljs-number">0.2</span>,
+    },
+})</code></pre>
+<p>That is how a tree built in Studio, or a template full of children, gets wired
+up: take the root with <a href="./keywords.html#fromclone">fromClone</a> or
+<a href="./keywords.html#frominstance">fromInstance</a>, then reach into it by name. It
+nests as deep as you like - a <code>FromParent</code> node can hold its own <code>FromParent</code>
+children.</p>
+<p>A taken child is not owned, so it survives a <code>Cleanup</code>. A child you declare
+normally with a <code>ClassName</code> inside a taken node <strong>is</strong> owned, and is destroyed
+on cleanup even though its parent is not.</p>
+<p>Naming a child that is not there is an error, since the alternative is a node
+silently driving nothing.</p>
 <h2 id="properties"><a class="anchor" href="#properties">#</a>Properties</h2>
 <p>Every other string key is a property or an event connection, decided by what
 the member actually is on the created instance:</p>
@@ -134,7 +170,8 @@ anywhere.</p>
 the node it targets.</p>
 <h2 id="reserved-keys"><a class="anchor" href="#reserved-keys">#</a>Reserved keys</h2>
 <p>These keys are read by Vision and never assigned to the instance:</p>
-<p><code>ClassName</code>, <code>attributes</code>, <code>Attributes</code>, <code>tags</code>, <code>Tags</code>, <code>AttributeChanged</code></p>
+<p><code>ClassName</code>, <code>FromParent</code>, <code>attributes</code>, <code>Attributes</code>, <code>tags</code>, <code>Tags</code>,
+<code>AttributeChanged</code></p>
 
 </main>
 </div>

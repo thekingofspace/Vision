@@ -47,9 +47,25 @@ them, interpolating each property and firing events on the way past.</p>
 <pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Run = Scope:Animate({
     Vision.Keyframe(TweenInfo.new(<span class="hljs-number">0</span>, Enum.EasingStyle.Sine), <span class="hljs-number">0</span>, { BackgroundColor3 = White }),
     Vision.Keyframe(TweenInfo.new(<span class="hljs-number">0</span>, Enum.EasingStyle.Sine), <span class="hljs-number">1</span>, { BackgroundColor3 = Black }),
-}, Panel)</code></pre>
-<p>It starts playing immediately. The keyframe list is plain data, so the same
-list can be handed to <code>Animate</code> again for another instance.</p>
+}, Panel)
+
+Run:Play()</code></pre>
+<p><code>Animate</code> stages the animation and touches nothing - it waits for <code>Play</code>. The
+keyframe list is plain data, so the same list can be handed to <code>Animate</code> again
+for another instance.</p>
+<h2 id="animating-a-vision"><a class="anchor" href="#animating-a-vision">#</a>Animating a vision</h2>
+<p>Pass a <a href="./vision.html">Vision</a> instead of an instance and the keyframes name its
+<strong>values</strong> rather than instance properties.</p>
+<pre class="code"><code class="hljs">Scope:Animate({
+    Vision.Keyframe(Ease, <span class="hljs-number">0</span>, { Charge = <span class="hljs-number">0</span> }),
+    Vision.Keyframe(Ease, <span class="hljs-number">1</span>, { Charge = <span class="hljs-number">1</span>, Status = <span class="hljs-string">&quot;full&quot;</span> }),
+}, Interface):Play()</code></pre>
+<p>Each write goes through the value, so every handler bound to it runs, every
+instance driven by it follows, and a <code>derive</code> reading it recomputes. Value
+names are checked when you build the animation, so a name the vision does not
+have fails there rather than mid playback.</p>
+<p>Keyframe events hand you the vision as their first argument in this mode,
+where an instance animation hands you the instance.</p>
 <h2 id="keyframe"><a class="anchor" href="#keyframe">#</a>Keyframe</h2>
 <pre class="code"><code class="hljs">Vision.Keyframe(Easing, Time: number, Properties: { [<span class="hljs-built_in">string</span>]: any }, Events: { [<span class="hljs-built_in">string</span>]: { any } }?)</code></pre>
 <p><code>Time</code> is in seconds from the start. Keyframes do not have to be in order -
@@ -145,6 +161,16 @@ back - overshooting the start and settling, rather than sliding flatly into
 it. A sprung property is allowed to finish settling even if that outlasts
 <code>RestageTime</code>.</p>
 <p><code>SmoothLoop</code> does nothing unless <code>Looped</code> is on.</p>
+<h2 id="playing"><a class="anchor" href="#playing">#</a>Playing</h2>
+<pre class="code"><code class="hljs">Run:Play()</code></pre>
+<p>Starts from wherever the playhead is, so it resumes a stopped animation rather
+than restarting it. Calling it on one that is already running does nothing.
+The pose at that point is applied immediately.</p>
+<pre class="code"><code class="hljs">Run:Stop()      <span class="hljs-comment">-- freezes half way</span>
+Run:Play()      <span class="hljs-comment">-- carries on from half way</span>
+Run:Jump(<span class="hljs-number">0</span>)     <span class="hljs-comment">-- rewind</span>
+Run:Play()      <span class="hljs-comment">-- from the top</span></code></pre>
+<p><code>Run.Time</code> is where the playhead sits, in seconds, and survives a <code>Stop</code>.</p>
 <h2 id="jumping"><a class="anchor" href="#jumping">#</a>Jumping</h2>
 <pre class="code"><code class="hljs">Run:Jump(Time: number)</code></pre>
 <p>Moves the playhead to that point in seconds and applies the pose there
@@ -159,7 +185,8 @@ animation reaches them, and jumping backwards re-arms the ones you passed.</p>
 <p>Jumping cancels a restage in progress, and a sprung property restarts its
 spring from the pose at the new time, since a spring has no meaningful state
 part way through a seek.</p>
-<p>Jumping a stopped or destroyed animation does nothing.</p>
+<p>Jumping a stopped animation moves its playhead without touching anything, so
+the pose lands when you <code>Play</code>. Jumping a destroyed animation does nothing.</p>
 <h2 id="stopping"><a class="anchor" href="#stopping">#</a>Stopping</h2>
 <table>
 <thead>
@@ -169,6 +196,10 @@ part way through a seek.</p>
 </tr>
 </thead>
 <tbody><tr>
+<td><code>Run:Play()</code></td>
+<td>start, or resume from the playhead</td>
+</tr>
+<tr>
 <td><code>Run:Stop()</code></td>
 <td>freezes every property where it stands</td>
 </tr>
@@ -185,8 +216,12 @@ part way through a seek.</p>
 <td>yields until it finishes or is stopped</td>
 </tr>
 <tr>
+<td><code>Run.Time</code></td>
+<td>where the playhead sits, in seconds</td>
+</tr>
+<tr>
 <td><code>Run.Finished</code></td>
-<td>true once it has ended</td>
+<td>true when it is not playing</td>
 </tr>
 </tbody></table>
 <p>An animation is owned by the runtime while it plays, so you can drop the
@@ -195,7 +230,8 @@ its events.</p>
 <p>After <code>Destroy</code> nothing holds the animation and nothing holds the functions
 you bound to it.</p>
 <h2 id="sharing-properties"><a class="anchor" href="#sharing-properties">#</a>Sharing properties</h2>
-<p>An animation claims each property it drives, the same way a spring does.
+<p>An animation claims each property or value it drives, the same way a spring
+does.
 Starting a spring on a property an animation is driving cancels the
 animation, and starting an animation cancels the springs it overlaps. Last
 call wins.</p>

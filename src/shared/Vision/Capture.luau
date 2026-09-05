@@ -18,6 +18,7 @@ const Reserved = {
     tags = true,
     Tags = true,
     AttributeChanged = true,
+    FromParent = true,
 }
 
 const Settling = 64
@@ -124,14 +125,57 @@ const function Register(State, Name: string)
 end
 
 const function Parse(State, Declaration, Parent)
-    local ClassName = Declaration.ClassName
+    local Kind = "Class"
+    local Origin = Declaration.ClassName
+    local Sources = 0
 
-    if type(ClassName) ~= "string" then
+    const Borrowed = Declaration.FromParent
+
+    if Borrowed ~= nil then
+        if type(Borrowed) ~= "string" then
+            error("FromParent needs the name of a child to take", 0)
+        end
+
+        if not Parent then
+            error("FromParent needs a declaration around it to look inside", 0)
+        end
+
+        Kind = "Child"
+        Origin = Borrowed
+        Sources += 1
+    end
+
+    for _, Entry in ipairs(Declaration) do
+        if Symbols.Is(Entry) then
+            const What = Entry.Kind
+
+            if What == "Clone" or What == "Adopt" then
+                if typeof(Entry.Target) ~= "Instance" then
+                    error(
+                        `{if What == "Clone" then "fromClone" else "fromInstance"} needs an instance to take from`,
+                        0
+                    )
+                end
+
+                Kind = What
+                Origin = Entry.Target
+                Sources += 1
+            end
+        end
+    end
+
+    if Sources > 1 then
+        error("a declaration can only take its instance from one place", 0)
+    end
+
+    if Sources == 0 and type(Origin) ~= "string" then
         error("Declaration requires a ClassName", 0)
     end
 
     const Node = {
-        ClassName = ClassName,
+        Kind = Kind,
+        Origin = Origin,
+        Owned = Kind == "Class" or Kind == "Clone",
         Attributes = Declaration.attributes or Declaration.Attributes,
         AttributeChanged = Declaration.AttributeChanged,
         Tags = Declaration.tags or Declaration.Tags,
@@ -230,9 +274,34 @@ end
 
 const Wired = {}
 
+const function Take(Node): Instance
+    const Kind = Node.Kind
+
+    if Kind == "Class" then
+        return Instance.new(Node.Origin)
+    end
+
+    if Kind == "Clone" then
+        return Node.Origin:Clone()
+    end
+
+    if Kind == "Adopt" then
+        return Node.Origin
+    end
+
+    const Host = if Node.Parent then Node.Parent.Instance else nil
+    const Found = if Host then Host:FindFirstChild(Node.Origin) else nil
+
+    if not Found then
+        error(`FromParent found no child named "{Node.Origin}"`, 0)
+    end
+
+    return Found
+end
+
 const function Raise(State, Node)
-    const ClassName = Node.ClassName
-    const Object = Instance.new(ClassName)
+    const Object = Take(Node)
+    const ClassName = Object.ClassName
 
     Node.Instance = Object
 
@@ -617,7 +686,9 @@ const function Finish(State, Source)
 
     Paint(State.Root, Viewport.Current())
 
-    State.Root.Instance.Parent = Resolve(State, State.Root, Source)
+    if State.Root.Owned or State.Root.Target ~= nil then
+        State.Root.Instance.Parent = Resolve(State, State.Root, Source)
+    end
 
     Ready(State.Root)
     Attach(State.Root)
@@ -644,7 +715,7 @@ function Methods:Mount()
     Build(State)
 
     for _, Node in State.Nodes do
-        if Node ~= State.Root then
+        if Node ~= State.Root and (Node.Owned or Node.Target ~= nil) then
             Node.Instance.Parent = Resolve(State, Node, self)
         end
     end
@@ -692,7 +763,10 @@ function Methods:MountAsync(Budget: number?)
 
     for Index = 1, #Nodes do
         Raise(State, Nodes[Index])
-        table.insert(Built, Nodes[Index].Instance)
+
+        if Nodes[Index].Owned then
+            table.insert(Built, Nodes[Index].Instance)
+        end
 
         if Spent() then
             return
@@ -702,7 +776,7 @@ function Methods:MountAsync(Budget: number?)
     for Index = 1, #Nodes do
         const Node = Nodes[Index]
 
-        if Node ~= State.Root then
+        if Node ~= State.Root and (Node.Owned or Node.Target ~= nil) then
             Node.Instance.Parent = Resolve(State, Node, self)
         end
 
@@ -754,8 +828,10 @@ function Methods:Cleanup()
         end
     end
 
-    if State.Root.Instance then
-        State.Root.Instance:Destroy()
+    for _, Node in State.Nodes do
+        if Node.Owned and Node.Instance then
+            Node.Instance:Destroy()
+        end
     end
 
     for _, Node in State.Nodes do
@@ -767,6 +843,16 @@ end
 
 function Methods:Clone()
     const State = Internal[self]
+
+    for _, Node in State.Nodes do
+        if Node.Kind == "Adopt" then
+            error(
+                "this vision cannot be cloned, it takes an existing instance with fromInstance and there is only one of those, use fromClone instead",
+                0
+            )
+        end
+    end
+
     const Copy = State.Scope:Capture(State.Declaration)
     const Fresh = Internal[Copy]
 

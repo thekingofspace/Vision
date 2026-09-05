@@ -33,14 +33,23 @@ Tools are managed with [Rokit](https://github.com/rojo-rbx/rokit).
 rokit install
 ```
 
-## Building a release model
+## Building
 
 ```bash
 lune run scripts/build
 ```
 
-Writes `Vision.rbxm` for upload and `Vision.rbxmx` for diffs, containing only
-the library.
+Writes three files:
+
+| file | what it is |
+| --- | --- |
+| `Vision.rbxm` | the library on its own, upload this to a release |
+| `Vision.rbxmx` | the same thing as xml, readable in diffs |
+| `Vision.rbxl` | a place with the library and the showcases, open it and press play |
+
+The two model files contain only the library. The place is built from
+`default.project.json` and is the quickest way to try the showcases without
+running Rojo.
 
 ## Developing
 
@@ -48,9 +57,14 @@ the library.
 rojo serve
 ```
 
-Builds the full test place from `default.project.json`, including the showcase
-in `src/client`.
+Live syncs the same place, for working on the showcases.
 
-The showcase is four screens covering every feature in the library - values,
-derives, styles, both spring families, cloning, async mounting and sleep and
-revive. Press `K` to move between them and `T` to swap the theme.
+On play you get a menu, itself built with Vision, offering three showcases:
+
+- **Interface** - thirteen screens covering values, derives, styles, both spring
+  families, cloning, injection, particles and keyframe timelines. `K` moves
+  between them, `T` swaps the theme.
+- **Blast door** - one heavy slab driven by keyframe timelines, with three
+  buttons on the wall for its three animations.
+- **Entities** - `fromInstance` and `fromClone` side by side. Click one to clean
+  it up and watch which parts survive, `R` brings them back.

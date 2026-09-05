@@ -27,8 +27,55 @@ inert data - building one creates nothing.
 
 ## ClassName
 
-Required. The class passed to `Instance.new`. A declaration without a string
-`ClassName` raises `Declaration requires a ClassName` at capture time.
+The class passed to `Instance.new`. Required **unless** the node takes its
+instance from somewhere else - with
+[fromClone](/api/keywords#fromclone), [fromInstance](/api/keywords#frominstance)
+or `FromParent` below. A declaration with none of those raises
+`Declaration requires a ClassName` at capture time.
+
+## FromParent
+
+```lua
+FromParent = "ChildName"
+```
+
+The third way a node can get its instance: instead of building one, find the
+child of that name on the node **around** it.
+
+```lua
+Scope:Capture({
+    fromClone(Template),
+    mount(PlayerGui),
+
+    {
+        FromParent = "Label",
+
+        TextSize = 21,
+
+        event("Word", "ready", function(self, Value)
+            self.Text = Value
+        end),
+    },
+
+    {
+        FromParent = "Icon",
+        ImageTransparency = 0.2,
+    },
+})
+```
+
+That is how a tree built in Studio, or a template full of children, gets wired
+up: take the root with [fromClone](/api/keywords#fromclone) or
+[fromInstance](/api/keywords#frominstance), then reach into it by name. It
+nests as deep as you like - a `FromParent` node can hold its own `FromParent`
+children.
+
+A taken child is not owned, so it survives a `Cleanup`. A child you declare
+normally with a `ClassName` inside a taken node **is** owned, and is destroyed
+on cleanup even though its parent is not.
+
+Naming a child that is not there is an error, since the alternative is a node
+silently driving nothing.
 
 ## Properties
 
@@ -130,4 +177,5 @@ the node it targets.
 
 These keys are read by Vision and never assigned to the instance:
 
-`ClassName`, `attributes`, `Attributes`, `tags`, `Tags`, `AttributeChanged`
+`ClassName`, `FromParent`, `attributes`, `Attributes`, `tags`, `Tags`,
+`AttributeChanged`

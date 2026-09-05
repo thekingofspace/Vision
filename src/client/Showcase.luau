@@ -76,7 +76,6 @@ return function()
         Accent = Themes.Dark.Accent,
     })
 
-    -- every page is this shell, so the styling and the mobile reflow live in one place
     local function Page(Name: string, Heading: string, Hint: string, Body: { any })
         local Layout = {
             ClassName = "ScreenGui",
@@ -118,8 +117,6 @@ return function()
                     ClassName = "UIScale",
                     Scale = 1,
 
-                    -- viewport hook: the whole card grows to fill whatever it is given,
-                    -- so the layout below is written once at 560 x 340 and never again
                     drawcall(function(self, Viewport)
                         self.Scale = math.clamp(math.min(Viewport.X / 600, Viewport.Y / 420), 0.45, 2.2)
                     end),
@@ -161,7 +158,6 @@ return function()
         return Layout
     end
 
-    -- buttons mount into the card by name and carry their own signals
     local function Button(Name: string, Text: string, Spot: UDim2, Wide: number, Press: (Instance) -> ())
         return {
             ClassName = "TextButton",
@@ -193,8 +189,6 @@ return function()
             end,
         }
     end
-
-    ------------------------------------------------------------------ title
 
     Title = Scope:Capture(Page("Title", "Vision", "K  next screen", {
         {
@@ -238,14 +232,11 @@ return function()
                 self.Text = Value
             end),
 
-            -- strings tween, so the motto types itself out
             ready(function()
                 Scope:SpringEvent(TweenInfo.new(1.1), Title, { Motto = "Existence Begins With Perception." })
             end),
         },
     }))
-
-    ----------------------------------------------------------------- values
 
     Values = Scope:Capture(Page("Values", "Values", "T  theme      K  next      state survives both", {
         {
@@ -280,7 +271,6 @@ return function()
 
             mount("Card"),
 
-            -- merge reads a value declared somewhere else in the tree
             merge("Doubled", function(self, Value)
                 self.Text = `derive Doubled = {string.format("%.2f", Value)}`
             end),
@@ -340,7 +330,6 @@ return function()
             end),
         },
 
-        -- reading doubles Charge, writing halves straight back into it
         derive("Doubled", function(Mode, Read, Write, Value)
             if Mode == "set" then
                 return Write("Charge", Value / 2)
@@ -403,9 +392,6 @@ return function()
         end),
     }))
 
-    ----------------------------------------------------------------- motion
-
-    -- the cube is captured on its own, so it can be cleaned up without the page
     local Block = Scope:Capture({
         ClassName = "Frame",
         Name = "Dot",
@@ -422,7 +408,6 @@ return function()
         end),
     })
 
-    -- mounting a cleaned vision builds it again from the same declaration
     local function Cube(): Instance
         local Body = Block:Open()
         Body.Parent = Motion:Open():FindFirstChild("Card")
@@ -430,7 +415,6 @@ return function()
         return Body
     end
 
-    -- each entry is one animation call, reachable from its button or its number key
     local Acts = {
         {
             Name = "Tween",
@@ -523,7 +507,6 @@ return function()
 
         Motion.Says(Act.Note)
 
-        -- Cube rebuilds it first if the cleanup button took it away
         Act.Play(Cube())
     end
 
@@ -557,7 +540,6 @@ return function()
         end))
     end
 
-    -- destroys the cube for real and leaves the page standing
     table.insert(Stage, Button("Sleep", "cleanup cube", UDim2.fromOffset(298, 248), 144, function()
         Motion.Says("cube cleaned up, press 1 to 5 to build it again")
         Block:Cleanup()
@@ -565,9 +547,6 @@ return function()
 
     Motion = Scope:Capture(Page("Motion", "Motion", "1-5  run a motion      K  next screen", Stage))
 
-    --------------------------------------------------------------- reactive
-
-    -- one readout, a small caption above it, bound to whichever value it is given
     local function Stat(Name: string, Title: string, X: number, Bind: any)
         return {
             {
@@ -690,7 +669,6 @@ return function()
             end),
         },
 
-        -- half is seed halved, total reads both, so one write settles all three
         derive("Half", function(Mode, Read, Write, Value)
             if Mode == "set" then
                 return Write("Seed", Value * 2)
@@ -743,7 +721,6 @@ return function()
     end))
 
     table.insert(Wires, Button("Push", "write half", UDim2.fromOffset(228, 240), 112, function()
-        -- writing a derive pushes back into its source, and the graph settles again
         Reactive.Note("wrote half, it pushed back into seed and total followed")
         Reactive.Half(0.5)
     end))
@@ -768,9 +745,6 @@ return function()
 
     Reactive = Scope:Capture(Page("Reactive", "Reactive", "K  next screen", Wires))
 
-    ---------------------------------------------------------------- effects
-
-    -- a second sheet, so the switch can be repainted without touching the page
     local Switch = Scope:LoadStyle({
         name = "Switch",
 
@@ -885,7 +859,6 @@ return function()
 
         Effects.Beat("six springs, each one slower and looser, so the tail cracks past the head")
 
-        -- longer period and less damping the further down the tail you go
         for Slot = 1, 6 do
             Scope:PhysicsInstance(0.2 + Slot * 0.055, 0.8 - Slot * 0.075, self.Parent:FindFirstChild(`Dot{Slot}`), {
                 Position = UDim2.fromOffset(Goal, 72),
@@ -905,7 +878,6 @@ return function()
             local High = if Risen then 8 + math.sin(Slot / 15 * math.pi) * 62 else 8
 
             task.delay(Slot * 0.035, function()
-                -- the page can go away mid cascade, so check before starting another
                 if Alive and Bar.Parent then
                     Scope:PhysicsInstance(0.32, 0.4, Bar, { Size = UDim2.fromOffset(26, High) })
                 end
@@ -939,8 +911,6 @@ return function()
     end))
 
     Effects = Scope:Capture(Page("Effects", "Effects", "K  next screen", Trick))
-
-    --------------------------------------------------------------- gradient
 
     local Palettes = {
         Sunset = {
@@ -1079,8 +1049,6 @@ return function()
     end))
 
     Colour = Scope:Capture(Page("Gradient", "Gradient", "K  next screen", Wash))
-
-    ------------------------------------------------------------------ stack
 
     local Lines = {
         "saved to the vault",
@@ -1230,8 +1198,6 @@ return function()
 
     Stack = Scope:Capture(Page("Stack", "Stack", "K  next screen", Pile))
 
-    ----------------------------------------------------------------- easing
-
     local Curves = {
         "Linear", "Sine", "Quad", "Cubic", "Quint",
         "Exponential", "Circular", "Back", "Elastic", "Bounce",
@@ -1332,8 +1298,6 @@ return function()
     end))
 
     Easing = Scope:Capture(Page("Easing", "Easing", "every curve comes straight from TweenService:GetValue", Gallery))
-
-    ---------------------------------------------------------------- damping
 
     local Damps = { 0.15, 0.3, 0.5, 0.75, 1, 1.6 }
     local Periods = { 0.6, 0.3, 1.1 }
@@ -1447,8 +1411,6 @@ return function()
 
     Damping = Scope:Capture(Page("Damping", "Damping", "K  next screen", Ladder))
 
-    -------------------------------------------------------------- particles
-
     local Pool = {}
     local Flying = {}
     local Stage
@@ -1490,7 +1452,6 @@ return function()
 
         Entry.Link:Cancel()
 
-        -- asleep, not gone: the declaration stays and the next spawn wakes it
         Entry.Item:Cleanup()
         table.insert(Pool, Entry.Item)
 
@@ -1517,7 +1478,6 @@ return function()
 
         local Entry = { Item = Item, Done = false }
 
-        -- one link per mote, a linear clock the callback turns into a trajectory
         Entry.Link = Scope:SpringFunction(TweenInfo.new(Life, Enum.EasingStyle.Linear), function(Alpha)
             local Age = Alpha * Life
             local Shrink = Wide * (1 - Alpha * 0.6)
@@ -1661,8 +1621,6 @@ return function()
 
     Motes = Scope:Capture(Page("Particles", "Particles", "K  next screen", Cloud))
 
-    ----------------------------------------------------------------- inject
-
     local Trays = {
         { Key = "tool", Cap = "tools", Slot = "Tools", X = 28 },
         { Key = "note", Cap = "notes", Slot = "Notes", X = 208 },
@@ -1674,7 +1632,6 @@ return function()
     local File
 
     local Dock = {
-        -- offered every chip first, and never takes one, so the trays get their turn
         receive(function()
             return nil
         end),
@@ -1737,7 +1694,6 @@ return function()
             },
             { ClassName = "UIListLayout", Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder },
 
-            -- one tray, one kind, everything else is passed along
             receive(function(self, Target, Source)
                 return Source.Kind() == Tray.Key and self
             end),
@@ -1771,7 +1727,6 @@ return function()
 
     Bay = Scope:Capture(Page("Inject", "Inject", "K  next screen", Dock))
 
-    -- the host has to exist before a guest can name it
     local Chip = Scope:Capture({
         ClassName = "Frame",
         Name = "Chip",
@@ -1827,12 +1782,9 @@ return function()
         Scope:PhysicsInstance(0.32, 0.5, Body, { Size = UDim2.new(1, 0, 0, 24) })
     end
 
-    --------------------------------------------------------------- timeline
-
     local Glide = TweenInfo.new(0, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
     local Snap = TweenInfo.new(0, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
-    -- size and colour are only named at the ends, so they span the middle key
     local Path = {
         Keyframe(Glide, 0, {
             Position = UDim2.fromOffset(100, 112),
@@ -2013,11 +1965,11 @@ return function()
             Run.RestageTime = 0.6
             Run.Speed = Rates[RateAt]
 
+            Run:Play()
+
             table.insert(Rolls, Run)
         end
     end
-
-    ------------------------------------------------------------------- list
 
     local Rack = {
         {
@@ -2104,7 +2056,6 @@ return function()
         Scope:PhysicsInstance(0.3, 0.9, Item:Open(), { Size = UDim2.new(1, 0, 0, 0) })
 
         task.delay(0.4, function()
-            -- cleaned and no longer held, so it leaves the scope for good
             Item:Cleanup()
         end)
     end
@@ -2125,7 +2076,6 @@ return function()
         end },
 
         { "Rename", "Scope:Update", 356, 122, function()
-            -- one write lands on every mounted vision that owns a Label
             Scope:Update("Label", `renamed at {os.date("%H:%M:%S")}`)
         end },
     }
@@ -2139,7 +2089,6 @@ return function()
 
     List = Scope:Capture(Page("List", "List", "K  next screen      this page builds with MountAsync", Rack))
 
-    -- one declaration, cloned per row, each clone with its own value
     Row = Scope:Capture({
         ClassName = "Frame",
         Name = "Row",
@@ -2148,7 +2097,6 @@ return function()
         ClipsDescendants = true,
         BackgroundColor3 = style("Skin")["Rail"],
 
-        -- kept as a value, so the order survives a sleep and comes back with it
         event("Order", 0, function(self, Value)
             self.LayoutOrder = Value
         end),
@@ -2171,8 +2119,6 @@ return function()
             end),
         },
     })
-
-    ----------------------------------------------------------------- wiring
 
     local Pages = {
         Title = Title,
@@ -2232,7 +2178,6 @@ return function()
             return
         end
 
-        -- the rows were cleaned when the page slept, mounting relinks them
         for _, Item in Rows do
             Item:Open().Parent = Shelf
         end
@@ -2240,7 +2185,6 @@ return function()
 
     local function Hide(Which: string)
         if Which == "Motion" then
-            -- the cube goes first, its parent is about to be destroyed
             Block:Cleanup()
         elseif Which == "Stack" then
             for _, Item in table.clone(Notes) do
@@ -2251,8 +2195,6 @@ return function()
 
             Deck = nil
         elseif Which == "Inject" then
-            -- the page cleans everything grafted into it, this only tidies
-            -- the chips nothing ever took, which were never parented to it
             Bay:Cleanup()
 
             for _, Item in Chips do
@@ -2301,7 +2243,6 @@ return function()
         elseif Input.KeyCode == Enum.KeyCode.T then
             Wearing = if Wearing == "Dark" then "Light" else "Dark"
 
-            -- one call repaints every mounted page at once
             Scope:SpringStyle(
                 TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
                 Skin,
@@ -2316,7 +2257,6 @@ return function()
 
             Scope:PhysicsStyle(0.4, 0.45, "Skin", { Accent = Themes[Wearing].Accent })
 
-            -- the switch keeps its own sheet, so it follows the theme in its own state
             Scope:SpringStyle(TweenInfo.new(0.45), Switch, {
                 Track = if Toggled then Themes[Wearing].Accent else Themes[Wearing].Rail,
                 Knob = if Toggled then Themes[Wearing].Card else Themes[Wearing].Dim,

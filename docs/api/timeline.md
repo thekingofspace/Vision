@@ -8,10 +8,33 @@ local Run = Scope:Animate({
     Vision.Keyframe(TweenInfo.new(0, Enum.EasingStyle.Sine), 0, { BackgroundColor3 = White }),
     Vision.Keyframe(TweenInfo.new(0, Enum.EasingStyle.Sine), 1, { BackgroundColor3 = Black }),
 }, Panel)
+
+Run:Play()
 ```
 
-It starts playing immediately. The keyframe list is plain data, so the same
-list can be handed to `Animate` again for another instance.
+`Animate` stages the animation and touches nothing - it waits for `Play`. The
+keyframe list is plain data, so the same list can be handed to `Animate` again
+for another instance.
+
+## Animating a vision
+
+Pass a [Vision](/api/vision) instead of an instance and the keyframes name its
+**values** rather than instance properties.
+
+```lua
+Scope:Animate({
+    Vision.Keyframe(Ease, 0, { Charge = 0 }),
+    Vision.Keyframe(Ease, 1, { Charge = 1, Status = "full" }),
+}, Interface):Play()
+```
+
+Each write goes through the value, so every handler bound to it runs, every
+instance driven by it follows, and a `derive` reading it recomputes. Value
+names are checked when you build the animation, so a name the vision does not
+have fails there rather than mid playback.
+
+Keyframe events hand you the vision as their first argument in this mode,
+where an instance animation hands you the instance.
 
 ## Keyframe
 
@@ -151,6 +174,25 @@ it. A sprung property is allowed to finish settling even if that outlasts
 
 `SmoothLoop` does nothing unless `Looped` is on.
 
+## Playing
+
+```lua
+Run:Play()
+```
+
+Starts from wherever the playhead is, so it resumes a stopped animation rather
+than restarting it. Calling it on one that is already running does nothing.
+The pose at that point is applied immediately.
+
+```lua
+Run:Stop()      -- freezes half way
+Run:Play()      -- carries on from half way
+Run:Jump(0)     -- rewind
+Run:Play()      -- from the top
+```
+
+`Run.Time` is where the playhead sits, in seconds, and survives a `Stop`.
+
 ## Jumping
 
 ```lua
@@ -175,17 +217,20 @@ Jumping cancels a restage in progress, and a sprung property restarts its
 spring from the pose at the new time, since a spring has no meaningful state
 part way through a seek.
 
-Jumping a stopped or destroyed animation does nothing.
+Jumping a stopped animation moves its playhead without touching anything, so
+the pose lands when you `Play`. Jumping a destroyed animation does nothing.
 
 ## Stopping
 
 | member | behaviour |
 | --- | --- |
+| `Run:Play()` | start, or resume from the playhead |
 | `Run:Stop()` | freezes every property where it stands |
 | `Run:Destroy()` | stops it and drops every listener |
 | `Run:Jump(Time)` | seek to a point in seconds |
 | `Run:Await()` | yields until it finishes or is stopped |
-| `Run.Finished` | true once it has ended |
+| `Run.Time` | where the playhead sits, in seconds |
+| `Run.Finished` | true when it is not playing |
 
 An animation is owned by the runtime while it plays, so you can drop the
 handle and let it run. Keep it if you want to stop it, retime it, or bind to
@@ -196,7 +241,8 @@ you bound to it.
 
 ## Sharing properties
 
-An animation claims each property it drives, the same way a spring does.
+An animation claims each property or value it drives, the same way a spring
+does.
 Starting a spring on a property an animation is driving cancels the
 animation, and starting an animation cancels the springs it overlaps. Last
 call wins.

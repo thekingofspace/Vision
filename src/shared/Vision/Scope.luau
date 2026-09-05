@@ -86,8 +86,8 @@ function Scope:LoadStyle(Declaration: any)
     return Sheet
 end
 
-function Scope:Animate(Keyframes: { any }, Object: Instance)
-    return Animation.new(self, Keyframes, Object)
+function Scope:Animate(Keyframes: { any }, Target: any)
+    return Animation.new(self, Keyframes, Target)
 end
 
 function Scope:FlipBook(Sheet: any, Object: Instance, Frames: { string }, Rate: number?)

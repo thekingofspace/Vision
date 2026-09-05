@@ -127,6 +127,11 @@ Row.Title(<span class="hljs-string">&quot;Second&quot;</span>)
 Row:Mount()</code></pre>
 <p>The two share nothing after that - separate instances, separate values.
 <code>Scope:Release</code> cleans up clones along with everything else.</p>
+<p>A Vision that takes its instance with
+<a href="./keywords.html#frominstance">fromInstance</a> <strong>cannot be cloned</strong> - there is only
+one of that instance and two Visions cannot both own driving it. <code>Clone</code> says
+so and points you at <a href="./keywords.html#fromclone">fromClone</a>, which copies the
+template and gives every clone its own.</p>
 <h2 id="capfunc"><a class="anchor" href="#capfunc">#</a>CapFunc</h2>
 <p>Every name passed to <code>event</code> becomes a field on the Vision:</p>
 <pre class="code"><code class="hljs">export <span class="hljs-built_in">type</span> CapFunc&lt;v&gt; = (i: v?) -&gt; v</code></pre>
