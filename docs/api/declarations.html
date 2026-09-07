@@ -21,6 +21,7 @@
 <a href="../index.html">Home</a>
 <a href="../tut/crash-course/1-introduction.html">Tutorials</a>
 <a class="active" href="./declarations.html">API</a>
+<a href="../design.html">Design</a>
 <a href="../mig/index.html">Migrating</a>
 <a href="../comparison.html">Comparison</a>
 <a href="https://github.com/thekingofspace/Vision">GitHub</a>
@@ -112,6 +113,9 @@ the member actually is on the created instance:</p>
 </ul>
 <pre class="code"><code class="hljs">Text = <span class="hljs-string">&quot;Hello&quot;</span>,                          <span class="hljs-comment">-- assigned</span>
 Activated = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span> <span class="hljs-keyword">end</span>,          <span class="hljs-comment">-- connected</span></code></pre>
+<p>A property can also follow a value instead of taking a constant, with
+<a href="./keywords.html#fromevent">fromEvent</a>:</p>
+<pre class="code"><code class="hljs">Text = fromEvent(<span class="hljs-string">&quot;Word&quot;</span>, <span class="hljs-string">&quot;hello&quot;</span>),       <span class="hljs-comment">-- follows the value &quot;Word&quot;</span></code></pre>
 <p>This is why <code>Text</code> and <code>Activated</code> can sit in the same table without
 ceremony. It also means a typo&#39;d property name errors on mount rather than
 silently doing nothing.</p>

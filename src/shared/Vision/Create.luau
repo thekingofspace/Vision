@@ -34,6 +34,10 @@ const function Create(Declaration: any): Instance
             error(`create cannot resolve the style token on "{Key}", styles need a scope`, 0)
         end
 
+        if Symbols.Bound(Value) then
+            error(`create cannot follow the value on "{Key}", fromEvent needs a vision`, 0)
+        end
+
         const Member = Fields[Key]
 
         if typeof(Member) == "RBXScriptSignal" then

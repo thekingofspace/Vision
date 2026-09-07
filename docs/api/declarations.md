@@ -90,6 +90,13 @@ Text = "Hello",                          -- assigned
 Activated = function(self) end,          -- connected
 ```
 
+A property can also follow a value instead of taking a constant, with
+[fromEvent](/api/keywords#fromevent):
+
+```lua
+Text = fromEvent("Word", "hello"),       -- follows the value "Word"
+```
+
 This is why `Text` and `Activated` can sit in the same table without
 ceremony. It also means a typo'd property name errors on mount rather than
 silently doing nothing.

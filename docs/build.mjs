@@ -13,6 +13,7 @@ const Nav = [
     { text: "Home", link: "/index" },
     { text: "Tutorials", link: "/tut/crash-course/1-introduction" },
     { text: "API", link: "/api/declarations" },
+    { text: "Design", link: "/design" },
     { text: "Migrating", link: "/mig/index" },
     { text: "Comparison", link: "/comparison" },
 ]

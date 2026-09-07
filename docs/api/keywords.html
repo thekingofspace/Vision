@@ -21,6 +21,7 @@
 <a href="../index.html">Home</a>
 <a href="../tut/crash-course/1-introduction.html">Tutorials</a>
 <a href="./declarations.html">API</a>
+<a href="../design.html">Design</a>
 <a href="../mig/index.html">Migrating</a>
 <a href="../comparison.html">Comparison</a>
 <a href="https://github.com/thekingofspace/Vision">GitHub</a>
@@ -66,6 +67,33 @@ declaration behaves as a <code>merge</code>, adding another binding. The first
 declaration&#39;s <code>InitialValue</code> wins.</p>
 <p>The callback runs <strong>once at mount</strong> with the value at that moment, then on
 every change that actually changes it.</p>
+<h2 id="fromevent"><a class="anchor" href="#fromevent">#</a>fromEvent</h2>
+<pre class="code"><code class="hljs">fromEvent(Name: <span class="hljs-built_in">string</span>, InitialValue: any?) -&gt; Token</code></pre>
+<p>Sits where a property value goes, not in the array part. The property follows
+that value from then on.</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>,
+    Text = fromEvent(<span class="hljs-string">&quot;Word&quot;</span>, <span class="hljs-string">&quot;hello&quot;</span>),
+}</code></pre>
+<p>That is the same wiring as <code>merge(&quot;Word&quot;, function(self, _, Value) self.Text = Value end)</code>,
+written where the property is. Reach for <code>merge</code> when the callback has to do
+more than one assignment.</p>
+<p>The starting value is optional. Leave it out when something else in the
+declaration already declares the value:</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+
+    event(<span class="hljs-string">&quot;Tone&quot;</span>, <span class="hljs-number">0.25</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span> <span class="hljs-keyword">end</span>),
+
+    { ClassName = <span class="hljs-string">&quot;Frame&quot;</span>, BackgroundTransparency = fromEvent(<span class="hljs-string">&quot;Tone&quot;</span>) },
+}</code></pre>
+<p><strong>The first declaration wins.</strong> If the value is already declared, by an
+<code>event</code>, a <code>derive</code> or an earlier <code>fromEvent</code>, a starting value passed here
+is ignored. <code>lint</code> points that out.</p>
+<p>If nothing declares the value at all, the property is left alone rather than
+written to nil, and it starts following as soon as something writes.</p>
+<p>Any number of properties can follow one value, on as many nodes as you like.
+One write moves all of them.</p>
 <h2 id="merge"><a class="anchor" href="#merge">#</a>merge</h2>
 <pre class="code"><code class="hljs">merge(Name: <span class="hljs-built_in">string</span>, Callback: (<span class="hljs-built_in">self</span>: Instance, vision: Vision, Value: any) -&gt; ()) -&gt; Marker</code></pre>
 <p>Binds another callback to a value declared elsewhere in the same tree. This

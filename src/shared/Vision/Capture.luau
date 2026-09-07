@@ -201,6 +201,28 @@ const function Register(State: State, Name: string): Event
     return Event
 end
 
+const Setters: { [string]: Handler } = {}
+
+const function Setter(Key: string): Handler
+    local Made = Setters[Key]
+
+    if not Made then
+        Made = function(Object: Instance, _, Value: any)
+            if Value == nil then
+                return
+            end
+
+            const Members = (Object :: any) :: Types.Dynamic
+
+            Members[Key] = Value
+        end
+
+        Setters[Key] = Made
+    end
+
+    return Made
+end
+
 const function Parse(State: State, Declaration: any, Parent: Node?): Node
     local Kind = "Class"
     local Origin = Declaration.ClassName
@@ -292,6 +314,15 @@ const function Parse(State: State, Declaration: any, Parent: Node?): Node
 
             table.insert(Painted, Key)
             table.insert(Painted, Value)
+        elseif Symbols.Bound(Value) then
+            const Event = Register(State, Value.Name)
+
+            if not Event.Declared and Value.Initial ~= nil then
+                Event.Declared = true
+                Event.Value = Value.Initial
+            end
+
+            table.insert(Event.Bindings, { Node = Node, Callback = Setter(Key) })
         else
             Fields[Slot + 1] = Key
             Fields[Slot + 2] = Value
@@ -343,6 +374,8 @@ const function Parse(State: State, Declaration: any, Parent: Node?): Node
             elseif What == "Mount" then
                 Node.Target = Entry.Target
             end
+        elseif Symbols.Bound(Entry) then
+            error(`fromEvent belongs on a property, not in the array part, as Property = fromEvent("{Entry.Name}")`, 0)
         elseif type(Entry) == "table" then
             table.insert(Node.Children, Parse(State, Entry, Node))
         end

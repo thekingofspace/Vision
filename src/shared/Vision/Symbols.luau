@@ -6,6 +6,7 @@ const Marker = {}
 Marker.__index = Marker
 
 const Token = {}
+const Bind = {}
 const Graft = {}
 const Frame = {}
 
@@ -79,6 +80,21 @@ end
 
 function Symbols.Styled(Value: any): boolean
     return type(Value) == "table" and getmetatable(Value) == Token
+end
+
+function Symbols.Bound(Value: any): boolean
+    return type(Value) == "table" and getmetatable(Value) == Bind
+end
+
+function Symbols.fromEvent(Event: string, InitialValue: any?)
+    if type(Event) ~= "string" then
+        error("fromEvent needs the name of a value to follow", 0)
+    end
+
+    return setmetatable({
+        Name = Event,
+        Initial = InitialValue,
+    }, Bind)
 end
 
 function Symbols.style(Name: string)

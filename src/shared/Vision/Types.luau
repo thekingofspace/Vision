@@ -47,6 +47,7 @@ export type inject = (...Vision) -> Graft
 export type lint = (Declaration:Declaration) -> {string}
 export type create = (Declaration:Declaration) -> Instance
 export type style = (Name:string) -> {[string]:any}
+export type fromEvent = (Event:string, InitialValue:any?) -> any
 
 export type Keyframe = {
     Easing:TweenInfo | {Period:number?, Damping:number?, Dampening:number?},

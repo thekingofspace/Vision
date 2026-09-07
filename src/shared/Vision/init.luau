@@ -22,6 +22,7 @@ const Vision = {
     drawcall = Symbols.drawcall,
     style = Symbols.style,
     mount = Symbols.mount,
+    fromEvent = Symbols.fromEvent,
     fromClone = Symbols.fromClone,
     fromInstance = Symbols.fromInstance,
     inject = Symbols.inject,

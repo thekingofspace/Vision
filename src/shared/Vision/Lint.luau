@@ -64,7 +64,33 @@ const function Walk(Declaration: Declaration, Trail: string, Found: Report)
         end
     end
 
+    for Key, Value in Declaration do
+        if type(Key) == "string" and Symbols.Bound(Value) then
+            const Name = Value.Name
+
+            Found.Used[Name] = true
+
+            if Value.Initial == nil then
+                Found.Read[Name] = Path
+            elseif Found.Declared[Name] then
+                table.insert(
+                    Found.Notes,
+                    `{Path} gives "{Name}" a starting value on {Key}, but it is already declared, so it is ignored`
+                )
+            else
+                Found.Declared[Name] = true
+            end
+        end
+    end
+
     for _, Entry in ipairs(Declaration) do
+        if Symbols.Bound(Entry) then
+            table.insert(
+                Found.Notes,
+                `{Path} has a fromEvent in its array part, it only works as a property value`
+            )
+        end
+
         if Symbols.Is(Entry) then
             const Kind = Entry.Kind
             const Name = Entry.Name

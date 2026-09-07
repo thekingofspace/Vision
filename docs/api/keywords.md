@@ -38,6 +38,49 @@ declaration's `InitialValue` wins.
 The callback runs **once at mount** with the value at that moment, then on
 every change that actually changes it.
 
+## fromEvent
+
+```lua
+fromEvent(Name: string, InitialValue: any?) -> Token
+```
+
+Sits where a property value goes, not in the array part. The property follows
+that value from then on.
+
+```lua
+{
+    ClassName = "TextLabel",
+    Text = fromEvent("Word", "hello"),
+}
+```
+
+That is the same wiring as `merge("Word", function(self, _, Value) self.Text = Value end)`,
+written where the property is. Reach for `merge` when the callback has to do
+more than one assignment.
+
+The starting value is optional. Leave it out when something else in the
+declaration already declares the value:
+
+```lua
+{
+    ClassName = "Frame",
+
+    event("Tone", 0.25, function() end),
+
+    { ClassName = "Frame", BackgroundTransparency = fromEvent("Tone") },
+}
+```
+
+**The first declaration wins.** If the value is already declared, by an
+`event`, a `derive` or an earlier `fromEvent`, a starting value passed here
+is ignored. `lint` points that out.
+
+If nothing declares the value at all, the property is left alone rather than
+written to nil, and it starts following as soon as something writes.
+
+Any number of properties can follow one value, on as many nodes as you like.
+One write moves all of them.
+
 ## merge
 
 ```lua
