@@ -13,6 +13,7 @@ const Nav = [
     { text: "Home", link: "/index" },
     { text: "Tutorials", link: "/tut/crash-course/1-introduction" },
     { text: "API", link: "/api/declarations" },
+    { text: "Migrating", link: "/mig/index" },
     { text: "Comparison", link: "/comparison" },
 ]
 
@@ -28,6 +29,17 @@ const Sidebars = [
             { text: "Lifecycle", link: "/tut/crash-course/5-lifecycle" },
             { text: "Sleeping and Cloning", link: "/tut/crash-course/6-sleeping" },
             { text: "Animation", link: "/tut/crash-course/7-animation" },
+        ],
+    },
+    {
+        match: "mig/",
+        title: "Migrating",
+        items: [
+            { text: "Overview", link: "/mig/index" },
+            { text: "From Roact", link: "/mig/from-roact" },
+            { text: "From React", link: "/mig/from-react" },
+            { text: "From Fusion", link: "/mig/from-fusion" },
+            { text: "From Vide", link: "/mig/from-vide" },
         ],
     },
     {

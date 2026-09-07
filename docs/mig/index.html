@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Migrating | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="../api/declarations.html">API</a>
+<a class="active" href="./index.html">Migrating</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">Migrating</p>
+<div class="items">
+<a class="active" href="./index.html">Overview</a>
+<a href="./from-roact.html">From Roact</a>
+<a href="./from-react.html">From React</a>
+<a href="./from-fusion.html">From Fusion</a>
+<a href="./from-vide.html">From Vide</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="migrating"><a class="anchor" href="#migrating">#</a>Migrating</h1>
+<p>Moving a tree over from another library. Pick the one you came from:</p>
+<ul>
+<li><a href="./from-roact.html">From Roact</a></li>
+<li><a href="./from-react.html">From React</a></li>
+<li><a href="./from-fusion.html">From Fusion</a></li>
+<li><a href="./from-vide.html">From Vide</a></li>
+</ul>
+<p>The per-library pages are lookup tables. This page is the part that is the
+same whichever one you are leaving.</p>
+<h2 id="three-shifts"><a class="anchor" href="#three-shifts">#</a>Three shifts</h2>
+<p><strong>Nothing exists until you mount.</strong> <code>Capture</code> reads your table and returns a
+handle without creating a single instance. Writes made before <code>Mount</code> only
+store, so the tree appears already correct instead of appearing wrong and
+being corrected. Every other library on this list builds as it evaluates.</p>
+<p><strong>Nothing re-renders.</strong> There is no virtual tree, no diff, and no reconciler.
+A value write calls the callbacks bound to that value, and those callbacks
+assign properties. A component function runs once, when you build the
+declaration, not again on every change.</p>
+<p><strong>A scope owns the instances.</strong> <code>Scope:Release()</code> destroys what the scope
+created. This is closer to Fusion&#39;s scopes than to Roact or Vide, both of
+which leave the instances to you.</p>
+<h2 id="the-shared-translation"><a class="anchor" href="#the-shared-translation">#</a>The shared translation</h2>
+<table>
+<thead>
+<tr>
+<th>you had</th>
+<th>Vision</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>a component</td>
+<td>a function returning a declaration table</td>
+</tr>
+<tr>
+<td>state</td>
+<td><code>event(&quot;Name&quot;, Initial, Callback)</code></td>
+</tr>
+<tr>
+<td>derived state</td>
+<td><code>derive(&quot;Name&quot;, Compute)</code></td>
+</tr>
+<tr>
+<td>reading state</td>
+<td><code>Interface.Name()</code></td>
+</tr>
+<tr>
+<td>writing state</td>
+<td><code>Interface.Name(Value)</code></td>
+</tr>
+<tr>
+<td>an event handler prop</td>
+<td>a plain key, <code>Activated = function(self, vision) end</code></td>
+</tr>
+<tr>
+<td>a property listener</td>
+<td><code>PropertyChanged = { Text = function(self, vision, Value) end }</code></td>
+</tr>
+<tr>
+<td>an attribute listener</td>
+<td><code>AttributeChanged = { Role = function(self, vision, Value) end }</code></td>
+</tr>
+<tr>
+<td>render or mount</td>
+<td><code>Scope:Capture(Declaration)</code> then <code>Interface:Mount()</code></td>
+</tr>
+<tr>
+<td>unmount</td>
+<td><code>Interface:Cleanup()</code>, or <code>Scope:Release()</code> for the lot</td>
+</tr>
+<tr>
+<td>a ref</td>
+<td><code>Interface:Open()</code>, or <code>ready(function(self) end)</code></td>
+</tr>
+<tr>
+<td>an on-mount effect</td>
+<td><code>ready</code></td>
+</tr>
+<tr>
+<td>that effect&#39;s teardown</td>
+<td>the third argument <code>ready</code> hands you</td>
+</tr>
+<tr>
+<td>a per-node teardown</td>
+<td><code>cleanup(function(self, vision) end)</code></td>
+</tr>
+<tr>
+<td>a portal</td>
+<td><code>mount(Target)</code> on the node, pointing anywhere</td>
+</tr>
+</tbody></table>
+<p>Every callback is called as <code>(instance, vision, ...)</code>. The instance comes
+first, the vision that built it second, and whatever the callback carries
+after that. See <a href="../api/declarations.html">declarations</a>.</p>
+<h2 id="what-vision-does-not-have"><a class="anchor" href="#what-vision-does-not-have">#</a>What Vision does not have</h2>
+<p>Worth knowing before you start, because there is no drop-in for these.</p>
+<ul>
+<li><strong>No reconciliation.</strong> Nothing compares an old tree to a new one. If a list
+changes you build, mount and clean up the rows yourself.</li>
+<li><strong>No list helpers.</strong> No <code>ForValues</code>, no <code>indexes</code>, no keyed children. The
+pattern is <code>Row:Clone()</code>, write its values, <code>:Open()</code> it and parent it, and
+keep the handle so you can <code>:Cleanup()</code> it later.</li>
+<li><strong>No context.</strong> <a href="../api/keywords.html#inject">inject and receive</a> let one vision
+ask another where to put itself, which covers slots and portals, but it is
+not a value channel down a tree.</li>
+<li><strong>No conditional rendering primitive.</strong> No <code>show</code>, no <code>switch</code>. Bind a
+value to <code>Visible</code>, or mount and clean whole visions.</li>
+</ul>
+<h2 id="what-vision-has-that-you-may-not-have-had"><a class="anchor" href="#what-vision-has-that-you-may-not-have-had">#</a>What Vision has that you may not have had</h2>
+<ul>
+<li><strong>Sleep and revive.</strong> <code>Cleanup</code> destroys the instances and keeps the
+values. <code>Mount</code> again rebuilds from the same declaration with the same
+state. See <a href="../tut/crash-course/6-sleeping.html">sleeping</a>.</li>
+<li><strong>Two-way derives.</strong> <code>derive</code> gets a <code>Mode</code> of <code>&quot;get&quot;</code> or <code>&quot;set&quot;</code>, so a
+computed value can be written to and push back to its sources.</li>
+<li><strong>Taking instances you did not make.</strong> <code>fromClone</code>, <code>fromInstance</code> and
+<code>FromParent</code> wire a declaration onto an existing instance or a Studio-built
+tree. See <a href="../api/keywords.html">keywords</a>.</li>
+<li><strong>Keyframe timelines.</strong> <code>Scope:Animate</code> runs a keyframe list against an
+instance or against a vision&#39;s values. See <a href="../api/timeline.html">timeline</a>.</li>
+</ul>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

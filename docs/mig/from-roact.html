@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>From Roact | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="../api/declarations.html">API</a>
+<a href="./index.html">Migrating</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">Migrating</p>
+<div class="items">
+<a href="./index.html">Overview</a>
+<a class="active" href="./from-roact.html">From Roact</a>
+<a href="./from-react.html">From React</a>
+<a href="./from-fusion.html">From Fusion</a>
+<a href="./from-vide.html">From Vide</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="from-roact"><a class="anchor" href="#from-roact">#</a>From Roact</h1>
+<p>Roact renders a virtual tree and reconciles it. Vision builds a real tree
+once and writes properties into it. That is the whole difference; everything
+below follows from it.</p>
+<h2 id="the-table"><a class="anchor" href="#the-table">#</a>The table</h2>
+<table>
+<thead>
+<tr>
+<th>Roact</th>
+<th>Vision</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Roact.createElement(&quot;Frame&quot;, props, children)</code></td>
+<td><code>{ ClassName = &quot;Frame&quot;, ...props, ...children }</code></td>
+</tr>
+<tr>
+<td>a function component</td>
+<td>a function returning a declaration table</td>
+</tr>
+<tr>
+<td>a class component</td>
+<td>a function returning a declaration table, plus <code>event</code> for its state</td>
+</tr>
+<tr>
+<td><code>self.state</code> / <code>self:setState</code></td>
+<td><code>event(&quot;Name&quot;, Initial, Callback)</code> and <code>Interface.Name(Value)</code></td>
+</tr>
+<tr>
+<td><code>Roact.Event.Activated = fn</code></td>
+<td><code>Activated = fn</code></td>
+</tr>
+<tr>
+<td><code>Roact.Change.Text = fn</code></td>
+<td><code>PropertyChanged = { Text = fn }</code></td>
+</tr>
+<tr>
+<td><code>Roact.Ref</code></td>
+<td><code>Interface:Open()</code> or <code>ready(function(self) end)</code></td>
+</tr>
+<tr>
+<td><code>didMount</code></td>
+<td><code>ready(function(self, vision) end)</code></td>
+</tr>
+<tr>
+<td><code>willUnmount</code></td>
+<td><code>cleanup(function(self, vision) end)</code></td>
+</tr>
+<tr>
+<td><code>Roact.mount(element, parent, name)</code></td>
+<td><code>Scope:Capture(Declaration)</code> then <code>Interface:Mount()</code></td>
+</tr>
+<tr>
+<td><code>Roact.unmount(handle)</code></td>
+<td><code>Interface:Cleanup()</code></td>
+</tr>
+<tr>
+<td><code>Roact.createFragment</code></td>
+<td>the array part of a declaration</td>
+</tr>
+<tr>
+<td><code>Roact.createBinding</code></td>
+<td><code>event</code> plus <code>merge</code></td>
+</tr>
+<tr>
+<td><code>Roact.None</code></td>
+<td>not needed, nothing merges props</td>
+</tr>
+</tbody></table>
+<h2 id="a-counter"><a class="anchor" href="#a-counter">#</a>A counter</h2>
+<p>Roact:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Counter = Roact.Component:extend(<span class="hljs-string">&quot;Counter&quot;</span>)
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Counter:init</span><span class="hljs-params">()</span></span>
+    <span class="hljs-built_in">self</span>:setState({ Count = <span class="hljs-number">0</span> })
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Counter:render</span><span class="hljs-params">()</span></span>
+    <span class="hljs-keyword">return</span> Roact.createElement(<span class="hljs-string">&quot;TextButton&quot;</span>, {
+        Text = `Clicks: {<span class="hljs-built_in">self</span>.state.Count}`,
+        [Roact.Event.Activated] = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+            <span class="hljs-built_in">self</span>:setState({ Count = <span class="hljs-built_in">self</span>.state.Count + <span class="hljs-number">1</span> })
+        <span class="hljs-keyword">end</span>,
+    })
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-keyword">local</span> Handle = Roact.mount(Roact.createElement(Counter), PlayerGui)</code></pre>
+<p>Vision:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Counter = Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;TextButton&quot;</span>,
+
+    mount(PlayerGui),
+
+    event(<span class="hljs-string">&quot;Count&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, Value)</span></span>
+        <span class="hljs-built_in">self</span>.Text = `Clicks: {Value}`
+    <span class="hljs-keyword">end</span>),
+
+    Activated = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(_, Panel)</span></span>
+        Panel.Count(Panel.Count() + <span class="hljs-number">1</span>)
+    <span class="hljs-keyword">end</span>,
+})
+
+Counter:Mount()</code></pre>
+<p>There is no <code>render</code>. The callback bound to <code>Count</code> runs when <code>Count</code> changes
+and assigns one property. Nothing else in the tree is touched.</p>
+<h2 id="things-that-will-trip-you"><a class="anchor" href="#things-that-will-trip-you">#</a>Things that will trip you</h2>
+<p><strong>Props do not flow down.</strong> A Roact component takes props and passes them to
+children. A Vision function takes plain Lua arguments and bakes them into the
+table it returns, once. If a child needs to react to something later, give
+the value a name and <code>merge</code> onto it from the child.</p>
+<p><strong>State does not live in a component.</strong> It lives on the vision. Any node in
+the same declaration can <code>merge</code> onto the same name and get its own callback,
+so one write can drive twenty instances without a re-render.</p>
+<p><strong><code>setState</code> was batched, value writes are not.</strong> <code>Interface.Count(1)</code> runs
+its callbacks immediately. Writing the same value twice in a row is skipped,
+but two different writes fire twice.</p>
+<p><strong>Reconciliation is gone.</strong> Roact let you return a different tree and worked
+out the difference. In Vision the tree is fixed at <code>Capture</code>. For a list that
+changes, keep a handle per row and mount or clean them yourself.</p>
+<p><strong>Portals are just <code>mount</code>.</strong> Any node can carry <code>mount(SomeInstance)</code> and
+land somewhere other than its parent, including a node named elsewhere in the
+same declaration.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

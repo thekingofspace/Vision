@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>From Fusion | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="../api/declarations.html">API</a>
+<a href="./index.html">Migrating</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">Migrating</p>
+<div class="items">
+<a href="./index.html">Overview</a>
+<a href="./from-roact.html">From Roact</a>
+<a href="./from-react.html">From React</a>
+<a class="active" href="./from-fusion.html">From Fusion</a>
+<a href="./from-vide.html">From Vide</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="from-fusion"><a class="anchor" href="#from-fusion">#</a>From Fusion</h1>
+<p>Fusion is the one whose ownership model you already know. A Fusion scope owns
+what it made and <code>doCleanup</code> destroys it; a Vision scope owns what it made and
+<code>Scope:Release</code> destroys it. That part carries over intact.</p>
+<p>What changes is the graph. Fusion propagates through objects that hold values
+and recompute. Vision has named values and callbacks, and builds nothing until
+you mount.</p>
+<p>The table below is Fusion 0.3. The 0.2 names are in the last column where
+they differ.</p>
+<h2 id="the-table"><a class="anchor" href="#the-table">#</a>The table</h2>
+<table>
+<thead>
+<tr>
+<th>Fusion 0.3</th>
+<th>Vision</th>
+<th>0.2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>scoped(Fusion)</code></td>
+<td><code>Vision.Scope()</code></td>
+<td><code>Fusion</code> directly</td>
+</tr>
+<tr>
+<td><code>scope:New &quot;Frame&quot; { ... }</code></td>
+<td><code>{ ClassName = &quot;Frame&quot;, ... }</code></td>
+<td><code>New &quot;Frame&quot;</code></td>
+</tr>
+<tr>
+<td><code>[Children] = { ... }</code></td>
+<td>the array part of the declaration</td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>scope:Value(0)</code></td>
+<td><code>event(&quot;Name&quot;, 0, Callback)</code></td>
+<td><code>Value(0)</code></td>
+</tr>
+<tr>
+<td><code>peek(Value)</code></td>
+<td><code>Interface.Name()</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>Value:set(x)</code></td>
+<td><code>Interface.Name(x)</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>scope:Computed(function(use) ... end)</code></td>
+<td><code>derive(&quot;Name&quot;, Compute)</code></td>
+<td><code>Computed(fn)</code></td>
+</tr>
+<tr>
+<td><code>scope:Observer(v):onChange(fn)</code></td>
+<td><code>merge(&quot;Name&quot;, fn)</code></td>
+<td><code>Observer(v)</code></td>
+</tr>
+<tr>
+<td><code>[OnEvent &quot;Activated&quot;] = fn</code></td>
+<td><code>Activated = fn</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>[OnChange &quot;Text&quot;] = fn</code></td>
+<td><code>PropertyChanged = { Text = fn }</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>[Out &quot;Text&quot;] = SomeValue</code></td>
+<td><code>PropertyChanged</code> writing into a value</td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>[Ref] = SomeValue</code></td>
+<td><code>Interface:Open()</code> or <code>ready</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>scope:Tween(v, Info)</code></td>
+<td><code>Scope:SpringEvent(Info, Interface, { Name = Goal })</code></td>
+<td><code>Tween(v, Info)</code></td>
+</tr>
+<tr>
+<td><code>scope:Spring(v, Speed, Damping)</code></td>
+<td><code>Scope:PhysicsEvent(Period, Damping, Interface, { Name = Goal })</code></td>
+<td><code>Spring(...)</code></td>
+</tr>
+<tr>
+<td><code>table.insert(scope, fn)</code> for teardown</td>
+<td><code>cleanup(function(self, vision) end)</code></td>
+<td><code>[Cleanup]</code></td>
+</tr>
+<tr>
+<td><code>doCleanup(scope)</code></td>
+<td><code>Scope:Release()</code></td>
+<td><code>Fusion.cleanup</code></td>
+</tr>
+<tr>
+<td><code>scope:ForValues</code>, <code>ForKeys</code>, <code>ForPairs</code></td>
+<td>no equivalent, build the rows yourself</td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>scope:Hydrate(Instance) { ... }</code></td>
+<td><code>fromInstance(Instance)</code> in the declaration</td>
+<td><code>Hydrate</code></td>
+</tr>
+</tbody></table>
+<h2 id="a-counter"><a class="anchor" href="#a-counter">#</a>A counter</h2>
+<p>Fusion:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> scope = scoped(Fusion)
+
+<span class="hljs-keyword">local</span> Count = scope:Value(<span class="hljs-number">0</span>)
+
+scope:New <span class="hljs-string">&quot;TextButton&quot;</span> {
+    Parent = PlayerGui,
+
+    Text = scope:Computed(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(use)</span></span>
+        <span class="hljs-keyword">return</span> `Clicks: {use(Count)}`
+    <span class="hljs-keyword">end</span>),
+
+    [OnEvent <span class="hljs-string">&quot;Activated&quot;</span>] = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+        Count:set(peek(Count) + <span class="hljs-number">1</span>)
+    <span class="hljs-keyword">end</span>,
+}</code></pre>
+<p>Vision:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Scope = Vision.Scope()
+
+<span class="hljs-keyword">local</span> Counter = Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;TextButton&quot;</span>,
+
+    mount(PlayerGui),
+
+    event(<span class="hljs-string">&quot;Count&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, Value)</span></span>
+        <span class="hljs-built_in">self</span>.Text = `Clicks: {Value}`
+    <span class="hljs-keyword">end</span>),
+
+    Activated = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(_, Panel)</span></span>
+        Panel.Count(Panel.Count() + <span class="hljs-number">1</span>)
+    <span class="hljs-keyword">end</span>,
+})
+
+Counter:Mount()</code></pre>
+<p>Fusion computes a string and assigns it to <code>Text</code>. Vision hands the number to
+a callback and lets it decide what to write.</p>
+<h2 id="hydrate-maps-onto-frominstance"><a class="anchor" href="#hydrate-maps-onto-frominstance">#</a>Hydrate maps onto fromInstance</h2>
+<p><code>Hydrate</code> was the reason to reach for Fusion on a Studio-built tree, and
+Vision has three answers rather than one:</p>
+<pre class="code"><code class="hljs">Scope:Capture({
+    fromInstance(Existing),      <span class="hljs-comment">-- adopt it, never destroy it</span>
+
+    { FromParent = <span class="hljs-string">&quot;Label&quot;</span>, Text = <span class="hljs-string">&quot;wired up&quot;</span> },
+})</code></pre>
+<ul>
+<li><code>fromInstance(X)</code> adopts <code>X</code>. <code>Cleanup</code> disconnects everything Vision
+connected and leaves the instance exactly where it was.</li>
+<li><code>fromClone(X)</code> copies <code>X</code> instead, and owns the copy, so <code>Cleanup</code> destroys
+it and mounting again stamps a fresh one.</li>
+<li><code>FromParent = &quot;Name&quot;</code> finds a child by name on the node around it, which is
+how you reach into a template without redeclaring its children.</li>
+</ul>
+<p>See <a href="../api/keywords.html">keywords</a>.</p>
+<h2 id="things-that-will-trip-you"><a class="anchor" href="#things-that-will-trip-you">#</a>Things that will trip you</h2>
+<p><strong>Nothing exists until <code>Mount</code>.</strong> A Fusion <code>New</code> call creates the instance
+there and then. <code>Capture</code> does not. Writes you make before mounting are
+stored and applied once, so the tree appears already correct.</p>
+<p><strong>Springs take a period, not a speed.</strong> Fusion&#39;s <code>Spring</code> is tuned by speed;
+<code>Scope:PhysicsEvent(Period, Damping, ...)</code> takes the period in seconds and a
+damping ratio, where under 1 rings, 1 is critical and over 1 crawls in. There
+is no clean conversion, so tune by feel.</p>
+<p><strong><code>Tween</code> is a spring method here.</strong> <code>Scope:SpringEvent</code> takes a <code>TweenInfo</code>
+and gives you real tween semantics, including repeat and reverse. The
+<code>Physics*</code> family is the one that carries velocity. See <a href="../api/scope.html">scope</a>.</p>
+<p><strong>Computeds do not track what you read.</strong> There is no <code>use</code>. <code>derive</code> is
+given an explicit <code>Read</code> and a <code>Mode</code>, and it can be written to as well,
+pushing values back to its sources.</p>
+<p><strong>Cleanup can be temporary.</strong> <code>Interface:Cleanup()</code> destroys the instances but
+keeps the values, and <code>Mount</code> rebuilds from the same declaration with the
+same state. There is no Fusion equivalent. See
+<a href="../tut/crash-course/6-sleeping.html">sleeping</a>.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

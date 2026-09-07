@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>From React | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="../api/declarations.html">API</a>
+<a href="./index.html">Migrating</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">Migrating</p>
+<div class="items">
+<a href="./index.html">Overview</a>
+<a href="./from-roact.html">From Roact</a>
+<a class="active" href="./from-react.html">From React</a>
+<a href="./from-fusion.html">From Fusion</a>
+<a href="./from-vide.html">From Vide</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="from-react"><a class="anchor" href="#from-react">#</a>From React</h1>
+<p>For React Lua, <code>@jsdotlua/react</code>, or React through roblox-ts. The mapping is
+close to <a href="./from-roact.html">Roact</a> with hooks in place of class methods, so
+read that page too if you used both.</p>
+<p>The shift is the same one: React re-runs your component and diffs the result.
+Vision runs your function once, then writes properties from callbacks.</p>
+<h2 id="the-table"><a class="anchor" href="#the-table">#</a>The table</h2>
+<table>
+<thead>
+<tr>
+<th>React</th>
+<th>Vision</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>createElement(&quot;Frame&quot;, props, ...children)</code></td>
+<td><code>{ ClassName = &quot;Frame&quot;, ...props, ...children }</code></td>
+</tr>
+<tr>
+<td>a function component</td>
+<td>a function returning a declaration table</td>
+</tr>
+<tr>
+<td><code>useState</code></td>
+<td><code>event(&quot;Name&quot;, Initial, Callback)</code></td>
+</tr>
+<tr>
+<td>the setter from <code>useState</code></td>
+<td><code>Interface.Name(Value)</code></td>
+</tr>
+<tr>
+<td><code>useMemo</code> over state</td>
+<td><code>derive(&quot;Name&quot;, Compute)</code></td>
+</tr>
+<tr>
+<td><code>useEffect(fn, {})</code></td>
+<td><code>ready(function(self, vision, later) end)</code></td>
+</tr>
+<tr>
+<td>the function <code>useEffect</code> returns</td>
+<td><code>later(function(self, vision) end)</code> inside <code>ready</code></td>
+</tr>
+<tr>
+<td><code>useEffect(fn, { value })</code></td>
+<td><code>merge(&quot;Value&quot;, fn)</code></td>
+</tr>
+<tr>
+<td><code>useRef</code> on a host node</td>
+<td><code>Interface:Open()</code></td>
+</tr>
+<tr>
+<td><code>useCallback</code></td>
+<td>nothing, functions are not recreated</td>
+</tr>
+<tr>
+<td><code>useContext</code></td>
+<td>no equivalent, see below</td>
+</tr>
+<tr>
+<td><code>createRoot(target)</code> and <code>root:render(el)</code></td>
+<td><code>Scope:Capture(Declaration)</code> then <code>Interface:Mount()</code></td>
+</tr>
+<tr>
+<td><code>root:unmount()</code></td>
+<td><code>Interface:Cleanup()</code></td>
+</tr>
+<tr>
+<td><code>createPortal(el, target)</code></td>
+<td><code>mount(Target)</code> on the node</td>
+</tr>
+<tr>
+<td><code>Fragment</code></td>
+<td>the array part of a declaration</td>
+</tr>
+<tr>
+<td><code>key</code></td>
+<td>no equivalent, you hold the handle</td>
+</tr>
+</tbody></table>
+<h2 id="a-counter"><a class="anchor" href="#a-counter">#</a>A counter</h2>
+<p>React:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Counter</span><span class="hljs-params">()</span></span>
+    <span class="hljs-keyword">local</span> Count, SetCount = React.useState(<span class="hljs-number">0</span>)
+
+    <span class="hljs-keyword">return</span> React.createElement(<span class="hljs-string">&quot;TextButton&quot;</span>, {
+        Text = `Clicks: {Count}`,
+        [React.Event.Activated] = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+            SetCount(Count + <span class="hljs-number">1</span>)
+        <span class="hljs-keyword">end</span>,
+    })
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-keyword">local</span> Root = ReactRoblox.createRoot(PlayerGui)
+Root:render(React.createElement(Counter))</code></pre>
+<p>Vision:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Counter = Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;TextButton&quot;</span>,
+
+    mount(PlayerGui),
+
+    event(<span class="hljs-string">&quot;Count&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, Value)</span></span>
+        <span class="hljs-built_in">self</span>.Text = `Clicks: {Value}`
+    <span class="hljs-keyword">end</span>),
+
+    Activated = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(_, Panel)</span></span>
+        Panel.Count(Panel.Count() + <span class="hljs-number">1</span>)
+    <span class="hljs-keyword">end</span>,
+})
+
+Counter:Mount()</code></pre>
+<h2 id="effects"><a class="anchor" href="#effects">#</a>Effects</h2>
+<p><code>ready</code> runs once the tree is built and the root is parented, so measurements
+like <code>AbsoluteSize</code> are real by then. It hands you a registrar as its third
+argument for the teardown half:</p>
+<pre class="code"><code class="hljs">ready(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, later)</span></span>
+    <span class="hljs-keyword">local</span> Connection = Workspace.ChildAdded:Connect(Handle)
+
+    later(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+        Connection:Disconnect()
+    <span class="hljs-keyword">end</span>)
+<span class="hljs-keyword">end</span>)</code></pre>
+<p>That is <code>useEffect</code> with an empty dependency array. For the version with
+dependencies, bind to the value instead - <code>merge(&quot;Name&quot;, fn)</code> runs <code>fn</code> every
+time <code>Name</code> changes, and only then.</p>
+<h2 id="things-that-will-trip-you"><a class="anchor" href="#things-that-will-trip-you">#</a>Things that will trip you</h2>
+<p><strong>Your component body is not a render function.</strong> It runs once, when you
+build the table. Anything that has to happen again belongs in a callback
+bound to a value.</p>
+<p><strong>There are no stale closures.</strong> The classic bug where a callback captures an
+old <code>Count</code> cannot happen here. Callbacks are handed the current value as an
+argument and the vision as the second, so <code>Panel.Count()</code> always reads what
+is there now.</p>
+<p><strong>Hooks rules do not apply.</strong> No ordering constraints, no dependency arrays,
+no exhaustive-deps lint. <code>event</code> and <code>merge</code> are markers in a table.</p>
+<p><strong>No context.</strong> The usual answers are to pass the vision into the functions
+that build your child declarations, or to use
+<a href="../api/keywords.html">inject and receive</a> when a child needs to find a parent it
+was not declared inside.</p>
+<p><strong>Lists are manual.</strong> There is no <code>key</code> and nothing diffs. Build a row
+vision, <code>:Clone()</code> it per item, write its values, parent <code>:Open()</code>, and keep
+the handles so you can <code>:Cleanup()</code> the ones that leave.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>From Vide | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="../api/declarations.html">API</a>
+<a href="./index.html">Migrating</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">Migrating</p>
+<div class="items">
+<a href="./index.html">Overview</a>
+<a href="./from-roact.html">From Roact</a>
+<a href="./from-react.html">From React</a>
+<a href="./from-fusion.html">From Fusion</a>
+<a class="active" href="./from-vide.html">From Vide</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="from-vide"><a class="anchor" href="#from-vide">#</a>From Vide</h1>
+<p>The closest neighbour on this list. Both are small, both give you a callable
+that reads with no arguments and writes with one, and neither builds a
+virtual tree.</p>
+<p>The difference is when things happen. Vide is reactive: the tree exists from
+<code>mount</code>, and a write re-runs the effects that read that source. Vision
+stages: <code>Capture</code> builds nothing, writes before <code>Mount</code> only store, and the
+callback runs once with the last value.</p>
+<p><a href="../comparison.html">The comparison page</a> measures both side by side.</p>
+<h2 id="the-table"><a class="anchor" href="#the-table">#</a>The table</h2>
+<table>
+<thead>
+<tr>
+<th>Vide</th>
+<th>Vision</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>create &quot;Frame&quot; { ... }</code></td>
+<td><code>{ ClassName = &quot;Frame&quot;, ... }</code></td>
+</tr>
+<tr>
+<td>the array part of a <code>create</code> call</td>
+<td>the array part of the declaration</td>
+</tr>
+<tr>
+<td><code>source(0)</code></td>
+<td><code>event(&quot;Name&quot;, 0, Callback)</code></td>
+</tr>
+<tr>
+<td><code>Src()</code></td>
+<td><code>Interface.Name()</code></td>
+</tr>
+<tr>
+<td><code>Src(Value)</code></td>
+<td><code>Interface.Name(Value)</code></td>
+</tr>
+<tr>
+<td><code>derive(function() return Src() * 2 end)</code></td>
+<td><code>derive(&quot;Name&quot;, Compute)</code></td>
+</tr>
+<tr>
+<td><code>effect(fn)</code></td>
+<td>the callback you give <code>event</code> or <code>merge</code></td>
+</tr>
+<tr>
+<td>a second effect on one source</td>
+<td><code>merge(&quot;Name&quot;, Callback)</code></td>
+</tr>
+<tr>
+<td><code>mount(Component, Target)</code></td>
+<td><code>Scope:Capture(Decl)</code> with <code>mount(Target)</code>, then <code>:Mount()</code></td>
+</tr>
+<tr>
+<td>the destroy function <code>mount</code> returns</td>
+<td><code>Interface:Cleanup()</code> or <code>Scope:Release()</code></td>
+</tr>
+<tr>
+<td><code>cleanup(fn)</code></td>
+<td><code>cleanup(function(self, vision) end)</code></td>
+</tr>
+<tr>
+<td><code>spring(Src, Period, Damping)</code></td>
+<td><code>Scope:PhysicsEvent(Period, Damping, Interface, { Name = Goal })</code></td>
+</tr>
+<tr>
+<td><code>changed(&quot;Text&quot;, fn)</code></td>
+<td><code>PropertyChanged = { Text = fn }</code></td>
+</tr>
+<tr>
+<td><code>action(fn)</code></td>
+<td><code>ready(function(self) end)</code></td>
+</tr>
+<tr>
+<td><code>untrack</code></td>
+<td>not needed, dependencies are named rather than ambient</td>
+</tr>
+<tr>
+<td><code>batch</code></td>
+<td>not needed, writes are not deferred</td>
+</tr>
+<tr>
+<td><code>root(fn)</code></td>
+<td><code>Vision.Scope()</code></td>
+</tr>
+<tr>
+<td><code>indexes</code>, <code>values</code></td>
+<td>no equivalent, build the rows yourself</td>
+</tr>
+<tr>
+<td><code>show</code>, <code>switch</code></td>
+<td>no equivalent, bind <code>Visible</code> or mount whole visions</td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td>no equivalent</td>
+</tr>
+</tbody></table>
+<h2 id="a-counter"><a class="anchor" href="#a-counter">#</a>A counter</h2>
+<p>Vide:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Counter</span><span class="hljs-params">()</span></span>
+    <span class="hljs-keyword">local</span> Count = source(<span class="hljs-number">0</span>)
+
+    <span class="hljs-keyword">return</span> <span class="hljs-built_in">create</span> <span class="hljs-string">&quot;TextButton&quot;</span> {
+        Text = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+            <span class="hljs-keyword">return</span> `Clicks: {Count()}`
+        <span class="hljs-keyword">end</span>,
+
+        Activated = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>
+            Count(Count() + <span class="hljs-number">1</span>)
+        <span class="hljs-keyword">end</span>,
+    }
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-keyword">local</span> Destroy = mount(Counter, PlayerGui)</code></pre>
+<p>Vision:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Counter = Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;TextButton&quot;</span>,
+
+    mount(PlayerGui),
+
+    event(<span class="hljs-string">&quot;Count&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, Value)</span></span>
+        <span class="hljs-built_in">self</span>.Text = `Clicks: {Value}`
+    <span class="hljs-keyword">end</span>),
+
+    Activated = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(_, Panel)</span></span>
+        Panel.Count(Panel.Count() + <span class="hljs-number">1</span>)
+    <span class="hljs-keyword">end</span>,
+})
+
+Counter:Mount()</code></pre>
+<p>Vide binds a property to a function and re-runs it. Vision binds a callback
+to a name and lets it assign whatever it likes, including several properties
+across several instances.</p>
+<h2 id="derives-are-the-biggest-change"><a class="anchor" href="#derives-are-the-biggest-change">#</a>Derives are the biggest change</h2>
+<p>Vide tracks dependencies by watching which sources you read. Vision watches
+nothing. You say what you read, and you can also say what happens when
+someone writes to the derived value:</p>
+<pre class="code"><code class="hljs">derive(<span class="hljs-string">&quot;Doubled&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Mode, Read, Write, Value)</span></span>
+    <span class="hljs-keyword">if</span> Mode == <span class="hljs-string">&quot;set&quot;</span> <span class="hljs-keyword">then</span>
+        <span class="hljs-keyword">return</span> Write(<span class="hljs-string">&quot;Charge&quot;</span>, Value / <span class="hljs-number">2</span>)
+    <span class="hljs-keyword">end</span>
+
+    <span class="hljs-keyword">return</span> Read(<span class="hljs-string">&quot;Charge&quot;</span>) * <span class="hljs-number">2</span>
+<span class="hljs-keyword">end</span>)</code></pre>
+<p><code>Interface.Doubled()</code> computes from <code>Charge</code>. <code>Interface.Doubled(1.6)</code> runs
+the <code>&quot;set&quot;</code> branch and pushes <code>0.8</code> back into <code>Charge</code>. Vide&#39;s derives are
+read only.</p>
+<h2 id="things-that-will-trip-you"><a class="anchor" href="#things-that-will-trip-you">#</a>Things that will trip you</h2>
+<p><strong>Teardown destroys.</strong> Vide&#39;s destructor tears down the reactive graph and
+leaves the instances alone. <code>Scope:Release()</code> destroys the instances it
+created. If you were relying on instances outliving the destructor, use
+<code>fromInstance</code>, which adopts an instance and never destroys it.</p>
+<p><strong>Properties are not functions.</strong> Vide accepts a function for any property
+and re-runs it. Vision takes a plain value for a property, and reactivity
+comes from a named value plus a callback.</p>
+<p><strong>A spring lives on the scope, not on the source.</strong> Vide wraps a source in
+<code>spring</code>. Vision animates toward a goal from the scope, and the target can be
+a value, an instance, a style field or a plain function. See
+<a href="../api/scope.html">scope</a>.</p>
+<p><strong>Nothing is ambient.</strong> There is no tracking context, so no <code>untrack</code>, and
+reading a value inside a callback never subscribes you to it.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>
