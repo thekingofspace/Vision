@@ -78,6 +78,8 @@ Link.__index = Link
 local Runtime = {}
 Runtime.__index = Runtime
 
+const Fading = { __mode = "v" }
+
 const Epsilon = 0.0005
 const Critical = 1e-4
 
@@ -529,7 +531,11 @@ function Link.Cancel(self: Link)
     table.clear(self.Watchers)
 
     for _, Claim in self.Claims do
-        Owner:Unclaim(Claim[1], Claim[2], self)
+        const Held = Claim[1][1]
+
+        if Held ~= nil then
+            Owner:Unclaim(Held, Claim[2], self)
+        end
     end
 
     Owner:Remove(self)
@@ -596,7 +602,7 @@ function Runtime.Claim(self: Runtime, Owner: any, Name: string, Target: Link)
     end
 
     Slots[Name] = Target
-    table.insert(Target.Claims, { Owner, Name })
+    table.insert(Target.Claims, { setmetatable({ Owner }, Fading) :: any, Name })
 end
 
 function Runtime.Unclaim(self: Runtime, Owner: any, Name: string, Target: Link)
@@ -683,14 +689,24 @@ function Runtime.Step(self: Runtime, DeltaTime: number)
 
     table.move(Links, 1, Count, 1, Buffer)
 
+    local Fault = nil
+
     for Index = 1, Count do
         const Target = Buffer[Index]
 
         Buffer[Index] = nil
 
         if not Target.Finished then
-            Target:Step(DeltaTime)
+            const Ok, Err = pcall(Target.Step :: any, Target, DeltaTime)
+
+            if not Ok and Fault == nil then
+                Fault = Err
+            end
         end
+    end
+
+    if Fault ~= nil then
+        error(Fault, 0)
     end
 end
 
@@ -700,6 +716,8 @@ function Runtime.Release(self: Runtime)
     end
 
     table.clear(self.Links)
+    table.clear(self.Buffer)
+    table.clear(self.Claims)
     self:Stop()
 end
 
@@ -735,7 +753,13 @@ function Runtime.Create(self: Runtime, Info: TweenInfo, Apply: (number, number) 
 
     Guard(Target, Owners)
 
-    Target:Step(0)
+    const Primed, Fault = pcall(Target.Step :: any, Target, 0)
+
+    if not Primed then
+        Target:Cancel()
+
+        error(Fault, 0)
+    end
 
     if not Target.Finished then
         self:Add(Target)
@@ -780,7 +804,13 @@ function Runtime.Flip(self: Runtime, Object: Instance, Count: number, Rate: numb
     self:Claim(Object, "ImageRectOffset", Target)
     Guard(Target, { Object })
 
-    Target:Step(0)
+    const Primed, Fault = pcall(Target.Step :: any, Target, 0)
+
+    if not Primed then
+        Target:Cancel()
+
+        error(Fault, 0)
+    end
 
     if not Target.Finished then
         self:Add(Target)
@@ -809,8 +839,12 @@ function Runtime.Play(self: Runtime, Owner: any, Peek: (string) -> any, Put: (st
     Target.Staged = 0
     Target.Primed = false
 
-    for _, Track in Tracks do
-        self:Claim(Owner, Track.Property, Target)
+    if #Tracks == 0 then
+        self:Claim(Owner, "", Target)
+    else
+        for _, Track in Tracks do
+            self:Claim(Owner, Track.Property, Target)
+        end
     end
 
     Guard(Target, { Owner })
@@ -820,7 +854,13 @@ function Runtime.Play(self: Runtime, Owner: any, Peek: (string) -> any, Put: (st
         Target:Seek(Target.Elapsed)
     end
 
-    Target:Step(0)
+    const Primed, Fault = pcall(Target.Step :: any, Target, 0)
+
+    if not Primed then
+        Target:Cancel()
+
+        error(Fault, 0)
+    end
 
     if not Target.Finished then
         self:Add(Target)
@@ -855,7 +895,13 @@ function Runtime.Solve(self: Runtime, Period: number, Damping: number, Channels:
 
     Guard(Target, Owners)
 
-    Target:Step(0)
+    const Primed, Fault = pcall(Target.Step :: any, Target, 0)
+
+    if not Primed then
+        Target:Cancel()
+
+        error(Fault, 0)
+    end
 
     if not Target.Finished then
         self:Add(Target)

@@ -20,6 +20,8 @@ type Owners = { [any]: boolean }
 const Scope = {}
 Scope.__index = Scope
 
+const Live: { [any]: boolean } = {}
+
 const function AsList(Value: any): { any }
     if typeof(Value) == "Instance" or Capture.Is(Value) then
         return { Value }
@@ -120,6 +122,8 @@ function Scope:Adopt(Vision: any)
     if not table.find(self.Visions, Vision) then
         table.insert(self.Visions, Vision)
     end
+
+    Live[self] = true
 end
 
 function Scope:Forget(Vision: any)
@@ -129,6 +133,10 @@ function Scope:Forget(Vision: any)
 
     if Index then
         table.remove(self.Visions, Index)
+    end
+
+    if #self.Visions == 0 then
+        Live[self] = nil
     end
 end
 
@@ -354,8 +362,14 @@ function Scope:PhysicsFunction(
 end
 
 function Scope:Release()
+    local Fault = nil
+
     for _, Vision in table.clone(self.Visions) :: { any } do
-        Vision:Cleanup()
+        const Ok, Err = pcall(Vision.Cleanup, Vision)
+
+        if not Ok and Fault == nil then
+            Fault = Err
+        end
     end
 
     for _, Sheet in self.Styles do
@@ -364,8 +378,14 @@ function Scope:Release()
 
     table.clear(self.Visions)
     table.clear(self.Owned)
+
+    Live[self] = nil
     table.clear(self.Styles)
     self.Runtime:Release()
+
+    if Fault ~= nil then
+        error(Fault, 0)
+    end
 end
 
 return Scope

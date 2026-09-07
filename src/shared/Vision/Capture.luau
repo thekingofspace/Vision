@@ -80,7 +80,7 @@ export type State = {
     Recompute: (Event) -> (),
 }
 
-const Internal: { [any]: State } = setmetatable({}, { __mode = "k" }) :: any
+const Held = {}
 
 const Methods = {}
 
@@ -528,7 +528,7 @@ const function Build(State: State)
 end
 
 const function Offer(Host: any, Pending: Instance, Source: any): Instance?
-    const Other = Internal[Host]
+    const Other = if type(Host) == "table" then rawget(Host, Held) :: State? else nil
 
     if not Other or not Other.Mounted then
         return nil
@@ -825,18 +825,32 @@ const function Teardown(State: State, Node: Node)
 
     const Owner = State.Handle[1]
 
+    local Fault = nil
+
     for Index = #Node.Transient, 1, -1 do
-        Node.Transient[Index](Node.Instance, Owner)
+        const Ok, Err = pcall(Node.Transient[Index] :: any, Node.Instance, Owner)
+
+        if not Ok and Fault == nil then
+            Fault = Err
+        end
     end
 
     table.clear(Node.Transient)
 
     for Index = #Node.Cleanup, 1, -1 do
-        Node.Cleanup[Index](Node.Instance, Owner)
+        const Ok, Err = pcall(Node.Cleanup[Index] :: any, Node.Instance, Owner)
+
+        if not Ok and Fault == nil then
+            Fault = Err
+        end
+    end
+
+    if Fault ~= nil then
+        error(Fault, 0)
     end
 end
 
-const function Finish(State: State, Source: any)
+const function Finish(State: State, Source: any, Mark: number)
     Activate(State)
     Settle(State)
 
@@ -852,6 +866,10 @@ const function Finish(State: State, Source: any)
         end
     end
 
+    if State.Generation ~= Mark then
+        return
+    end
+
     Paint(State, State.Root, Viewport.Current())
 
     if State.Root.Owned or State.Root.Target ~= nil then
@@ -859,12 +877,17 @@ const function Finish(State: State, Source: any)
     end
 
     Ready(State, State.Root)
+
+    if State.Generation ~= Mark then
+        return
+    end
+
     Attach(State, State.Root)
     Observe(State, State.Root)
 end
 
 function Methods:Mount()
-    const State = Internal[self]
+    const State = rawget(self, Held) :: State
 
     if State.Mounted then
         const Root = State.Root.Instance
@@ -888,11 +911,11 @@ function Methods:Mount()
         end
     end
 
-    Finish(State, self)
+    Finish(State, self, State.Generation)
 end
 
 function Methods:MountAsync(Budget: number?)
-    const State = Internal[self]
+    const State = rawget(self, Held) :: State
 
     if State.Mounted then
         return
@@ -953,19 +976,26 @@ function Methods:MountAsync(Budget: number?)
         end
     end
 
-    Finish(State, self)
+    Finish(State, self, Mark)
 end
 
 function Methods:Open(): Instance
     self:Mount()
 
-    return Internal[self].Root.Instance
+    return (rawget(self, Held) :: State).Root.Instance
 end
 
 function Methods:Cleanup()
-    const State = Internal[self]
+    const State = rawget(self, Held) :: State
 
     State.Scope:Forget(self)
+
+    const Runtime = State.Scope.Runtime
+    const Linked = next(Runtime.Claims) ~= nil
+
+    if Linked then
+        Runtime:CancelOwner(self)
+    end
 
     if not State.Mounted then
         return
@@ -974,14 +1004,7 @@ function Methods:Cleanup()
     State.Mounted = false
     State.Generation += 1
 
-    Teardown(State, State.Root)
-
-    const Runtime = State.Scope.Runtime
-    const Linked = next(Runtime.Claims) ~= nil
-
-    if Linked then
-        Runtime:CancelOwner(self)
-    end
+    const Torn, Fault = pcall(Teardown :: any, State, State.Root)
 
     for _, Node in State.Nodes do
         for _, Connection in Node.Connections do
@@ -1011,10 +1034,14 @@ function Methods:Cleanup()
     end
 
     Deactivate(State)
+
+    if not Torn then
+        error(Fault, 0)
+    end
 end
 
 function Methods:Clone()
-    const State = Internal[self]
+    const State = rawget(self, Held) :: State
 
     for _, Node in State.Nodes do
         if Node.Kind == "Adopt" then
@@ -1026,7 +1053,7 @@ function Methods:Clone()
     end
 
     const Copy = State.Scope:Capture(State.Declaration)
-    const Fresh = Internal[Copy]
+    const Fresh = rawget(Copy, Held) :: State
 
     for Name, Event in State.Events do
         const Other = Fresh.Events[Name]
@@ -1040,7 +1067,7 @@ function Methods:Clone()
 end
 
 function Capture.Is(Value: any): boolean
-    return type(Value) == "table" and Internal[Value] ~= nil
+    return type(Value) == "table" and rawget(Value, Held) ~= nil
 end
 
 function Capture.new(Scope: any, Declaration: any)
@@ -1064,7 +1091,7 @@ function Capture.new(Scope: any, Declaration: any)
         Recompute(State, Event)
     end
 
-    Internal[Vision] = State
+    rawset(Vision :: any, Held, State)
     State.Handle[1] = Vision
     State.Root = Parse(State, Declaration, nil)
 

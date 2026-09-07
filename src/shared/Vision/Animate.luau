@@ -349,6 +349,10 @@ function Methods:Destroy()
     const Binds = rawget(self, "Binds") :: Binds?
 
     if Binds then
+        for _, Listeners in Binds do
+            table.clear(Listeners)
+        end
+
         table.clear(Binds)
     end
 
