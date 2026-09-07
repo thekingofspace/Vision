@@ -40,57 +40,55 @@ the thing people hit first:</p>
 values on it, are the thing that actually persists. Everything below follows
 from that.</p>
 <h2 id="two-lifetimes"><a class="anchor" href="#two-lifetimes">#</a>Two lifetimes</h2>
-<svg viewBox="-6 -18 912 382" width="100%" style="max-width: 900px; display: block; margin: 1.5rem auto;" role="img" aria-labelledby="lifetimes-title lifetimes-desc" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="-6 -18 912 400" width="100%" style="max-width: 900px; display: block; margin: 1.5rem auto;" role="img" aria-labelledby="lifetimes-title lifetimes-desc" xmlns="http://www.w3.org/2000/svg">
 <title id="lifetimes-title">The declaration, the vision and the instances</title>
-<desc id="lifetimes-desc">A declaration is captured into a vision, which mounts into instances. Cleanup destroys the instances; Mount builds new ones. The vision and its values survive both.</desc>
+<desc id="lifetimes-desc">A declaration is captured into a vision, which mounts into instances. Cleanup destroys the instances Vision made; Mount builds new ones. The vision and its values survive both.</desc>
 <defs>
-<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-<path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent, #4a54d6)" />
-</marker>
-<marker id="arrowmuted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-<path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted, #61656f)" />
-</marker>
+<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent, #4a54d6)" /></marker>
+<marker id="arrowmuted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted, #61656f)" /></marker>
 </defs>
-<rect x="-5" y="-17" width="910" height="380" rx="14" fill="var(--panel, #f7f8fa)" stroke="var(--line, #e3e5ea)" stroke-width="1.5" />
+<rect x="-5" y="-17" width="910" height="398" rx="14" fill="var(--panel, #f7f8fa)" stroke="var(--line, #e3e5ea)" stroke-width="1.5" />
 <g font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
-<text x="145" y="24" text-anchor="middle" font-size="15" font-weight="600" fill="var(--text, #24262d)">The declaration</text>
-<text x="145" y="43" text-anchor="middle" font-size="12" fill="var(--muted, #61656f)">yours, immutable</text>
-<text x="450" y="24" text-anchor="middle" font-size="15" font-weight="600" fill="var(--text, #24262d)">The vision</text>
-<text x="450" y="43" text-anchor="middle" font-size="12" fill="var(--muted, #61656f)">state, persistent</text>
-<text x="755" y="24" text-anchor="middle" font-size="15" font-weight="600" fill="var(--text, #24262d)">The instances</text>
-<text x="755" y="43" text-anchor="middle" font-size="12" fill="var(--muted, #61656f)">disposable</text>
-<rect x="20" y="58" width="250" height="146" rx="10" fill="var(--code-bg, #f4f5f8)" stroke="var(--line, #e3e5ea)" stroke-width="1.5" />
-<rect x="335" y="58" width="230" height="146" rx="10" fill="var(--code-bg, #f4f5f8)" stroke="var(--accent, #4a54d6)" stroke-width="2" />
-<rect x="630" y="58" width="250" height="146" rx="10" fill="none" stroke="var(--muted, #61656f)" stroke-width="1.5" stroke-dasharray="5 4" />
+<text x="157" y="24" text-anchor="middle" font-size="15" font-weight="600" fill="var(--text, #24262d)">The declaration</text>
+<text x="157" y="43" text-anchor="middle" font-size="12" fill="var(--muted, #61656f)">yours, read at Capture</text>
+<text x="451" y="24" text-anchor="middle" font-size="15" font-weight="600" fill="var(--text, #24262d)">The vision</text>
+<text x="451" y="43" text-anchor="middle" font-size="12" fill="var(--muted, #61656f)">state, persistent</text>
+<text x="747" y="24" text-anchor="middle" font-size="15" font-weight="600" fill="var(--text, #24262d)">The instances</text>
+<text x="747" y="43" text-anchor="middle" font-size="12" fill="var(--muted, #61656f)">disposable</text>
+<rect x="16" y="58" width="282" height="160" rx="10" fill="var(--code-bg, #f4f5f8)" stroke="var(--line, #e3e5ea)" stroke-width="1.5" />
+<rect x="340" y="58" width="222" height="160" rx="10" fill="var(--code-bg, #f4f5f8)" stroke="var(--accent, #4a54d6)" stroke-width="2" />
+<rect x="606" y="58" width="282" height="160" rx="10" fill="none" stroke="var(--muted, #61656f)" stroke-width="1.5" stroke-dasharray="5 4" />
 <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="var(--text, #24262d)">
-<text x="40" y="88">{ ClassName = "Frame",</text>
-<text x="40" y="112">&#160;&#160;Text = "Hello",</text>
-<text x="40" y="136">&#160;&#160;event("Word", ...) }</text>
-<text x="355" y="88">Interface</text>
-<text x="355" y="112">&#160;&#160;.Word = "written"</text>
-<text x="355" y="136">&#160;&#160;.Count = 3</text>
-<text x="650" y="88">Frame</text>
-<text x="650" y="112">&#160;&#160;TextLabel</text>
-<text x="650" y="136">&#160;&#160;UICorner</text>
+<text x="32" y="88">{ ClassName = "Frame",</text>
+<text x="32" y="110">&#160;&#160;event("Word", ...),</text>
+<text x="32" y="132">&#160;&#160;{ ClassName = "TextLabel",</text>
+<text x="32" y="154">&#160;&#160;&#160;&#160;Text = fromEvent("Word") } }</text>
+<text x="356" y="88">Interface</text>
+<text x="356" y="110">&#160;&#160;Word()&#160;&#160;-&gt;&#160;&#160;"written"</text>
+<text x="622" y="88">Frame</text>
+<text x="622" y="110">&#160;&#160;TextLabel</text>
 </g>
-<text x="145" y="182" text-anchor="middle" font-size="11.5" fill="var(--muted, #61656f)">the source of truth</text>
-<text x="450" y="182" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--accent, #4a54d6)">strong &#183; survives</text>
-<text x="755" y="182" text-anchor="middle" font-size="11.5" fill="var(--muted, #61656f)">weak &#183; thrown away and remade</text>
-<line x1="276" y1="131" x2="329" y2="131" stroke="var(--accent, #4a54d6)" stroke-width="2" marker-end="url(#arrow)" />
-<text x="302" y="120" text-anchor="middle" font-size="11.5" fill="var(--accent, #4a54d6)">Capture</text>
-<line x1="571" y1="131" x2="624" y2="131" stroke="var(--accent, #4a54d6)" stroke-width="2" marker-end="url(#arrow)" />
-<text x="597" y="120" text-anchor="middle" font-size="11.5" fill="var(--accent, #4a54d6)">Mount</text>
-<path d="M 862 210 C 886 292, 700 330, 652 274 L 652 212" fill="none" stroke="var(--muted, #61656f)" stroke-width="1.75" stroke-dasharray="5 4" marker-end="url(#arrowmuted)" />
-<text x="757" y="322" text-anchor="middle" font-size="12.5" fill="var(--muted, #61656f)">Cleanup destroys them, Mount builds them again</text>
-<text x="450" y="238" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--accent, #4a54d6)">untouched by both</text>
-<text x="450" y="258" text-anchor="middle" font-size="11.5" fill="var(--muted, #61656f)">the values are still there</text>
+<text x="157" y="196" text-anchor="middle" font-size="11.5" fill="var(--muted, #61656f)">what the tree is made of</text>
+<text x="451" y="196" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--accent, #4a54d6)">strong &#183; survives</text>
+<text x="747" y="188" text-anchor="middle" font-size="11.5" fill="var(--muted, #61656f)">weak &#183; thrown away and remade,</text>
+<text x="747" y="204" text-anchor="middle" font-size="11.5" fill="var(--muted, #61656f)">if Vision made them</text>
+<line x1="304" y1="138" x2="334" y2="138" stroke="var(--accent, #4a54d6)" stroke-width="2" marker-end="url(#arrow)" />
+<text x="319" y="127" text-anchor="middle" font-size="11.5" fill="var(--accent, #4a54d6)">Capture</text>
+<line x1="568" y1="138" x2="600" y2="138" stroke="var(--accent, #4a54d6)" stroke-width="2" marker-end="url(#arrow)" />
+<text x="584" y="127" text-anchor="middle" font-size="11.5" fill="var(--accent, #4a54d6)">Mount</text>
+<path d="M 870 224 C 894 306, 700 344, 630 288 L 630 226" fill="none" stroke="var(--muted, #61656f)" stroke-width="1.75" stroke-dasharray="5 4" marker-end="url(#arrowmuted)" />
+<text x="750" y="338" text-anchor="middle" font-size="12.5" fill="var(--muted, #61656f)">Cleanup destroys them, Mount builds them again</text>
+<text x="451" y="252" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--accent, #4a54d6)">untouched by both</text>
+<text x="451" y="272" text-anchor="middle" font-size="11.5" fill="var(--muted, #61656f)">the values are still there</text>
 </g>
 </svg>
 
 <p><code>Cleanup</code> destroys the instances and keeps the vision. <code>Mount</code> builds a new
-set from the same declaration and the same values. The instances after a
-remount are <strong>not the same objects</strong> - they are a fresh rendering that happens
-to look the same.</p>
+set from the same declaration and the same values.</p>
+<p>The instances Vision <strong>made</strong> are not the same objects after a remount - they
+are a fresh rendering that happens to look the same. An instance Vision only
+adopted is the same object every time. See
+<a href="#ownership-decides-destruction">ownership</a>.</p>
 <h2 id="the-creation-loop"><a class="anchor" href="#the-creation-loop">#</a>The creation loop</h2>
 <svg viewBox="-6 -18 912 566" width="100%" style="max-width: 900px; display: block; margin: 1.5rem auto;" role="img" aria-labelledby="loop-title loop-desc" xmlns="http://www.w3.org/2000/svg">
 <title id="loop-title">The creation loop</title>
@@ -141,13 +139,17 @@ side makes a complete set of instances; every trip up the right side throws
 them away again. The vision and its values sit outside the loop entirely,
 which is why a <code>Cleanup</code> followed by a <code>Mount</code> is a rebuild rather than a
 restart.</p>
-<p>The order on the left is worth reading once. Instances all exist before any
-handler runs, every value fires exactly once rather than once per write, and
-signals are connected last, after <code>ready</code> - which is why staging a property
-never triggers your own <code>PropertyChanged</code> callback.</p>
+<p>The order on the left is worth reading once. Every instance exists before any
+handler runs, and signals are connected last, after <code>ready</code> - which is why
+staging a property never triggers your own <code>PropertyChanged</code> callback.</p>
+<p>It also explains a number people expect to be wrong. Five writes before
+<code>Mount</code> cost <strong>no</strong> property assignments at all, because nothing is connected
+yet. The mount then applies the last value once per binding, exactly as it
+would have with no writes.</p>
 <h2 id="what-survives-a-cleanup"><a class="anchor" href="#what-survives-a-cleanup">#</a>What survives a Cleanup</h2>
-<p>Measured, not asserted. A <code>Frame</code> declared with <code>BackgroundTransparency = 0.25</code>
-and an attribute <code>Role = &quot;Panel&quot;</code>, then poked at by hand while mounted:</p>
+<p>Measured, not asserted. A <code>Frame</code> Vision made, declared with
+<code>BackgroundTransparency = 0.25</code> and an attribute <code>Role = &quot;Panel&quot;</code>, poked at by
+hand while mounted:</p>
 <table>
 <thead>
 <tr>
@@ -169,7 +171,7 @@ and an attribute <code>Role = &quot;Panel&quot;</code>, then poked at by hand wh
 <tr>
 <td>a property you set that the declaration never mentions</td>
 <td><code>false</code></td>
-<td><code>true</code>, the class default</td>
+<td>whatever a fresh source gives you</td>
 </tr>
 <tr>
 <td>a declared attribute you overwrote by hand</td>
@@ -182,9 +184,24 @@ and an attribute <code>Role = &quot;Panel&quot;</code>, then poked at by hand wh
 <td>gone</td>
 </tr>
 <tr>
-<td>a child you parented in by hand</td>
+<td>a declared tag</td>
+<td>there</td>
+<td>there, re-applied</td>
+</tr>
+<tr>
+<td>a tag you added by hand</td>
 <td>there</td>
 <td>gone</td>
+</tr>
+<tr>
+<td>a child you parented in by hand</td>
+<td>there</td>
+<td>destroyed with its parent</td>
+</tr>
+<tr>
+<td>everything Vision connected</td>
+<td>wired to this instance</td>
+<td>re-wired to the new one</td>
 </tr>
 <tr>
 <td>a <strong>value</strong> on the vision</td>
@@ -197,25 +214,44 @@ and an attribute <code>Role = &quot;Panel&quot;</code>, then poked at by hand wh
 <td>follows it</td>
 </tr>
 </tbody></table>
-<p>The pattern: anything the declaration says comes back exactly as the
-declaration says it. Anything you wrote onto the instance is gone. Anything
-held as a value on the vision is still there.</p>
+<p>Two rows deserve their footnotes.</p>
+<p>&quot;Whatever a fresh source gives you&quot; is the class default for <code>ClassName</code>, but
+the template&#39;s value for <code>fromClone</code>. Vision does not reset the property; the
+instance is simply new.</p>
+<p>And a declared property that a <strong>value</strong> also drives comes back at the value&#39;s
+setting, not the literal beside it. <code>Raise</code> writes the declared fields, then
+<code>Finish</code> re-fires every value on top. So:</p>
+<pre class="code"><code class="hljs">{ ClassName = <span class="hljs-string">&quot;Frame&quot;</span>, BackgroundTransparency = <span class="hljs-number">0.25</span>,
+  event(<span class="hljs-string">&quot;Fade&quot;</span>, <span class="hljs-number">0.25</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, Value)</span></span>
+      <span class="hljs-built_in">self</span>.BackgroundTransparency = Value
+  <span class="hljs-keyword">end</span>) }</code></pre>
+<p>after <code>Fade(0.75)</code>, a <code>Cleanup</code> and a <code>Mount</code>, reads <code>0.75</code>. The declaration
+is re-applied, and then the values are re-applied over it.</p>
 <h2 id="why-properties-do-not-save"><a class="anchor" href="#why-properties-do-not-save">#</a>Why properties do not save</h2>
 <p>Because saving them would mean the instance, not the declaration, was the
-source of truth. Vision refuses that on purpose, for three reasons.</p>
-<p><strong>A declaration has to stay honest.</strong> If a remount restored the last runtime
-value instead of the declared one, reading the declaration would no longer
-tell you what the tree looks like. You would have to know its whole history.
-The declaration is the only place you have to look.</p>
-<p><strong>Reading state back off an instance is lossy.</strong> Roblox properties are typed
-and clamped. Write <code>1.5</code> to a <code>Transparency</code> and read back <code>1</code>. Write a
-<code>Color3</code> and get a quantised one. State that round-trips through a property is
-state you have quietly corrupted. Values on a vision are plain Lua and hold
-exactly what you put in them.</p>
-<p><strong>Cleanup would have to guess.</strong> To save properties, Vision would have to
-decide which of the hundreds on an instance count as state. Every answer is
-wrong for somebody. Naming the state yourself is one line and it is never
-ambiguous.</p>
+source of truth. Vision refuses that on purpose.</p>
+<p><strong>There should be two places to look, not three.</strong> The declaration says what
+the tree is made of; the values say what state it is in. Between them they are
+a complete account. If a remount also restored arbitrary properties nobody
+named, you would need the whole history of the instance as well.</p>
+<p><strong>Reading state back off an instance is lossy.</strong> Roblox properties are typed,
+and several coerce what you give them: integer properties truncate a float,
+<code>number</code> properties are float32 rather than Lua&#39;s float64, and some clamp to a
+range. State that round-trips through a property is state you may have quietly
+changed. A value is plain Lua and holds what you put in it.</p>
+<p><strong>Saving would fight the declaration.</strong> Vision knows exactly which keys the
+declaration names, so it could save those. But on the next mount it would have
+to choose between the saved value and the declared one, and there is no answer
+that is right for both a tweak you want to keep and a default you want back.
+Naming the state yourself removes the question.</p>
+<div class="callout warning">
+
+<p><strong>A value cannot hold nil</strong></p>
+<p>Writing <code>nil</code> is how you <strong>read</strong> a value - <code>Interface.Word()</code> and
+<code>Interface.Word(nil)</code> are the same call. So there is no way to clear a value
+once it is set. Use <code>false</code> or a sentinel of your own for absence.</p>
+</div>
+
 <h2 id="so-put-state-in-a-value"><a class="anchor" href="#so-put-state-in-a-value">#</a>So put state in a value</h2>
 <p>If a property should survive, it is state, and state lives on the vision:</p>
 <pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Card = Scope:Capture({
@@ -230,12 +266,20 @@ Card.Word(<span class="hljs-string">&quot;written&quot;</span>)     <span class=
 
 Card:Cleanup()           <span class="hljs-comment">-- instances destroyed</span>
 Card:Mount()             <span class="hljs-comment">-- Text is &quot;written&quot; again</span></code></pre>
-<p>Compare with writing the property directly, which does not survive:</p>
-<pre class="code"><code class="hljs">Card:Open().Text = <span class="hljs-string">&quot;written&quot;</span>    <span class="hljs-comment">-- a property on a disposable object</span>
+<p>Writing the property directly does not survive:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Plain = Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>,
+    Text = <span class="hljs-string">&quot;hello&quot;</span>,
 
-Card:Cleanup()
-Card:Mount()                    <span class="hljs-comment">-- Text is &quot;hello&quot; again</span></code></pre>
-<p>Both lines look like they do the same thing. Only one of them is state.</p>
+    mount(PlayerGui),
+})
+
+Plain:Mount()
+Plain:Open().Text = <span class="hljs-string">&quot;written&quot;</span>    <span class="hljs-comment">-- a property on a disposable object</span>
+
+Plain:Cleanup()
+Plain:Mount()                    <span class="hljs-comment">-- Text is &quot;hello&quot; again</span></code></pre>
+<p>Both look like they do the same thing. Only one of them is state.</p>
 <div class="callout tip">
 
 <p><strong>The rule of thumb</strong></p>
@@ -244,9 +288,10 @@ that the declaration already describes, leave it a property.</p>
 </div>
 
 <h2 id="ownership-decides-destruction"><a class="anchor" href="#ownership-decides-destruction">#</a>Ownership decides destruction</h2>
-<p><code>Cleanup</code> destroys what Vision <strong>made</strong>, and nothing else. That is what
-&quot;weak&quot; means in practice: Vision assumes it may throw away anything it built,
-because it can always build it again.</p>
+<p><code>Cleanup</code> destroys the instances Vision <strong>owns</strong>, and because <code>Destroy</code> is
+recursive, everything inside them. Ownership is a property of a subtree root,
+not of each instance: anything sitting under an owned instance goes with it,
+whether Vision made it or not.</p>
 <table>
 <thead>
 <tr>
@@ -258,7 +303,7 @@ because it can always build it again.</p>
 <tbody><tr>
 <td><code>ClassName = &quot;Frame&quot;</code></td>
 <td>yes</td>
-<td>destroys it</td>
+<td>destroys it, and everything under it</td>
 </tr>
 <tr>
 <td><code>fromClone(Template)</code></td>
@@ -268,18 +313,18 @@ because it can always build it again.</p>
 <tr>
 <td><code>fromInstance(Existing)</code></td>
 <td>no</td>
-<td>disconnects and leaves it alone</td>
+<td>disconnects, and leaves the instance standing</td>
 </tr>
 <tr>
 <td><code>FromParent = &quot;Child&quot;</code></td>
 <td>no</td>
-<td>disconnects and leaves it alone, but still destroys anything owned that you declared inside it</td>
+<td>never destroys it directly, but it dies with its host if the host is owned</td>
 </tr>
 </tbody></table>
-<p>Ownership is decided <strong>per node</strong>, not inherited. An unowned node does not
-protect its children. A <code>ClassName</code> or <code>fromClone</code> child declared inside a
-<code>FromParent</code> or <code>fromInstance</code> node is still something Vision made, so
-<code>Cleanup</code> still destroys it, at any depth:</p>
+<p>Ownership is decided <strong>per node</strong>, and is not inherited downward either. A
+<code>ClassName</code> or <code>fromClone</code> child declared inside a <code>FromParent</code> or
+<code>fromInstance</code> node is still something Vision made, so <code>Cleanup</code> destroys it,
+at any depth:</p>
 <pre class="code"><code class="hljs">Scope:Capture({
     fromInstance(Shell),             <span class="hljs-comment">-- kept</span>
 
@@ -290,10 +335,12 @@ protect its children. A <code>ClassName</code> or <code>fromClone</code> child d
         { fromClone(Template) },     <span class="hljs-comment">-- destroyed, Vision made the copy</span>
     },
 })</code></pre>
-<p>That is the line the rule draws: not &quot;did Vision touch this&quot; but &quot;did Vision
-make this&quot;.</p>
+<p>The line the rule draws is not &quot;did Vision touch this&quot; but &quot;did Vision make
+this&quot; - with the caveat that a <code>Destroy</code> arriving from above takes everything
+underneath it regardless.</p>
+<h3 id="adoption-is-not-restoration"><a class="anchor" href="#adoption-is-not-restoration">#</a>Adoption is not restoration</h3>
 <p>An adopted instance is the exception that proves the principle. Vision did not
-make it, so Vision will not destroy it, so its properties <strong>do</strong> survive a
+make it, so this vision will not destroy it, and its properties survive a
 <code>Cleanup</code>:</p>
 <pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Kept = Scope:Capture({
     fromInstance(Guest),
@@ -308,23 +355,39 @@ Kept:Mount()            <span class="hljs-comment">-- 0.5 again, the declaration
 <p>Note the last line. Adoption saves the instance from destruction; it does not
 make the declaration stop being the source of truth. Mounting reapplies every
 declared property over whatever was there.</p>
+<p>Two things <code>Cleanup</code> does <strong>not</strong> do for an adopted instance:</p>
+<ul>
+<li>It does not undo what Vision wrote. Declared properties, <code>attributes</code> and
+<code>tags</code> stay exactly as the last mount left them.</li>
+<li>It does not put it back. If the declaration carried a <code>mount</code>, the instance
+was moved once and is left where it was moved to.</li>
+</ul>
+<p>It is also still an ordinary instance. If it lives inside something another
+vision owns, that vision&#39;s <code>Cleanup</code> destroys it, and the vision that adopted
+it will not notice.</p>
 <h2 id="the-same-principle-elsewhere"><a class="anchor" href="#the-same-principle-elsewhere">#</a>The same principle, elsewhere</h2>
-<p>Once you have the idea, several other behaviours stop being surprising.</p>
-<p><strong>Nothing is created until <code>Mount</code>.</strong> If instances are disposable there is no
-reason to make them early. <code>Capture</code> builds nothing, and writes made before
-mounting only store. See <a href="./tut/crash-course/3-mounting.html">staging</a>.</p>
-<p><strong>Values fire once with the last value.</strong> Five writes before <code>Mount</code> cost one
-property assignment, because the four intermediate instances never existed.</p>
-<p><strong>A vision can be cloned, an instance cannot meaningfully be.</strong> <code>Clone</code> copies
-the declaration and the values, which is the real content. See
+<p><strong>Nothing is created until <code>Mount</code>.</strong> <code>Capture</code> creates no instances, though it
+does parse and validate the declaration, so mistakes surface there.</p>
+<p><strong>A vision can be cloned; the copy is a second rendering, not a second
+object.</strong> <code>Clone</code> re-reads the same declaration table and copies the values
+across. It shares that table with the original rather than snapshotting it, so
+mutating the table between two clones changes what the second one builds. A
+vision that adopts with <code>fromInstance</code> refuses to clone at all - there is only
+one of that instance, which is what <code>fromClone</code> is for. See
 <a href="./tut/crash-course/6-sleeping.html">sleeping and cloning</a>.</p>
-<p><strong>References run child to parent, never parent to child.</strong> A parent holds
-nothing that would keep a cleaned child alive. Cleaning a parent cleans its
-children, but remounting a parent does not remount them.</p>
+<p><strong>A guest holds its host, never the reverse.</strong> Under
+<a href="./api/keywords.html">inject and receive</a>, a host keeps no list of what was grafted
+into it, so cleaning a host cascades to its guests, but remounting a host
+brings back only the host. Declared children are different: they are part of
+one declaration, and a remount rebuilds the whole subtree.</p>
 <p><strong>Connections belong to the mount, not the vision.</strong> Everything Vision
 connected is disconnected by <code>Cleanup</code> and wired again on the next <code>Mount</code>,
 against the new instances. Your <code>ready</code> callbacks run again too, which is why
 <code>ready</code> hands you a teardown registrar rather than expecting you to track one.</p>
+<p><strong>A cleaned vision leaves its scope.</strong> <code>Cleanup</code> calls <code>Scope:Forget</code> and
+<code>Mount</code> calls <code>Scope:Adopt</code>, so while a vision is asleep a <code>Scope:Update</code> will
+not reach it. Writing to the value directly still works, and the write lands
+on the next mount.</p>
 
 </main>
 </div>

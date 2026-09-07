@@ -4,7 +4,8 @@
 
 The instances are destroyed and the memory goes back, but the Vision keeps
 its declaration and every value it held. Mount it again and the tree comes
-back exactly as it was.
+back as the declaration and the values describe it.
+What that leaves out is measured in [Design](/design).
 
 ```lua
 Interface.Count(7)
@@ -64,7 +65,7 @@ Interface:Mount()      -- scope adopts it again
 local Copy = Interface:Clone()
 ```
 
-The copy shares nothing with the original - its own instances, its own
+The copy shares the declaration table with the original, but nothing else - its own instances, its own
 values - but it is built from the same declaration, so it mounts to the same
 place.
 

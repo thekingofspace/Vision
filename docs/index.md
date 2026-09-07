@@ -12,7 +12,8 @@ data into it, and create it when you are ready.
   the callback runs once, with the last value. After mounting, an unchanged
   write does nothing at all.
 - **Sleep it, wake it, keep the state.** `Cleanup` destroys the instances but
-  keeps the values. Mount again and the tree comes back exactly as it was.
+  keeps the values. Mount again and the tree comes back as the declaration
+  and the values describe it.
 - **Animation that is really TweenService.** Springs take a `TweenInfo` and
   read their curve from `TweenService:GetValue`.
 

@@ -45,7 +45,8 @@
 <p><code>Cleanup</code> does not kill a Vision. It puts it to sleep.</p>
 <p>The instances are destroyed and the memory goes back, but the Vision keeps
 its declaration and every value it held. Mount it again and the tree comes
-back exactly as it was.</p>
+back as the declaration and the values describe it.
+What that leaves out is measured in <a href="../../design.html">Design</a>.</p>
 <pre class="code"><code class="hljs">Interface.Count(<span class="hljs-number">7</span>)
 Interface:Mount()      <span class="hljs-comment">-- built, label reads 7</span>
 
@@ -86,7 +87,7 @@ Interface:Mount()      <span class="hljs-comment">-- scope adopts it again</span
 <h2 id="clone"><a class="anchor" href="#clone">#</a>Clone</h2>
 <p><code>Clone</code> copies a Vision without building anything.</p>
 <pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Copy = Interface:Clone()</code></pre>
-<p>The copy shares nothing with the original - its own instances, its own
+<p>The copy shares the declaration table with the original, but nothing else - its own instances, its own
 values - but it is built from the same declaration, so it mounts to the same
 place.</p>
 <pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Card = Scope:Capture({
