@@ -123,9 +123,12 @@ No scope, no Vision, no staging, no values - just the instances.</p>
 
     { ClassName = <span class="hljs-string">&quot;UICorner&quot;</span>, CornerRadius = UDim.new(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>) },
 })</code></pre>
-<p>It honours properties, <code>attributes</code>, <code>tags</code>, <code>AttributeChanged</code>, signal
-properties (the instance is still the first argument), children, and a
-<code>mount</code> marker holding an <code>Instance</code>.</p>
+<p>It honours properties, <code>attributes</code>, <code>tags</code>, <code>AttributeChanged</code>,
+<code>PropertyChanged</code>, signal properties, children, and a <code>mount</code> marker holding
+an <code>Instance</code>.</p>
+<p>Callbacks keep the same shape as <code>Capture</code> - <code>(Instance, Vision, ...)</code> - with
+<code>nil</code> in the vision slot, since there is no vision here. One declaration works
+with either.</p>
 <p>Everything else is ignored - <code>event</code>, <code>merge</code>, <code>derive</code>, <code>ready</code>, <code>cleanup</code>,
 <code>drawcall</code> and <code>receive</code> need a Vision to mean anything. A <code>style</code> token
 errors, because styles live on a scope.</p>

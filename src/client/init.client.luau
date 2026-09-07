@@ -169,7 +169,7 @@ Bar = Scope:Capture({
 
         { ClassName = "UICorner", CornerRadius = UDim.new(0, 8) },
 
-        merge("Word", function(self, Value)
+        merge("Word", function(self, _, Value)
             self.Text = Value
         end),
 

@@ -96,7 +96,7 @@ return function()
             Color = Mark,
             Material = Enum.Material.Neon,
 
-            merge("Sway", function(self, Value)
+            merge("Sway", function(self, _, Value)
                 self.CFrame = Drift(Home, Value, 3.6)
             end),
         }
@@ -131,7 +131,7 @@ return function()
 
         Reflectance = 0.15,
 
-        event("Sway", 0, function(self, Value)
+        event("Sway", 0, function(self, _, Value)
             self.CFrame = Drift(Home, Value, 0) * CFrame.Angles(0, Value * math.pi * 2, 0)
         end),
 
@@ -158,7 +158,7 @@ return function()
 
             Name = `Drone{Spot.Name}`,
 
-            event("Sway", 0, function(self, Value)
+            event("Sway", 0, function(self, _, Value)
                 self.CFrame = Drift(Seat, Value, 0) * CFrame.Angles(0, Value * math.pi * 2, 0)
             end),
 
@@ -166,7 +166,7 @@ return function()
                 FromParent = "Cap",
                 Material = Enum.Material.Neon,
 
-                merge("Sway", function(self, Value)
+                merge("Sway", function(self, _, Value)
                     self.CFrame = Drift(Seat, Value, 1.9)
                 end),
             },
@@ -216,7 +216,7 @@ return function()
                 TextStrokeTransparency = 0.4,
                 TextColor3 = Color3.fromRGB(255, 255, 255),
 
-                merge("Word", function(self, Value)
+                merge("Word", function(self, _, Value)
                     self.Text = Value
                 end),
             },

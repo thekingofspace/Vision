@@ -52,7 +52,7 @@ Scope:Capture({
 
         TextSize = 21,
 
-        event("Word", "ready", function(self, Value)
+        event("Word", "ready", function(self, _, Value)
             self.Text = Value
         end),
     },
@@ -94,10 +94,23 @@ This is why `Text` and `Activated` can sit in the same table without
 ceremony. It also means a typo'd property name errors on mount rather than
 silently doing nothing.
 
-::: tip Signal callbacks receive the instance first
-A connected callback is called as `Callback(Instance, ...)` - the instance,
-then whatever the signal passes. This holds for every callback in Vision, so
-you never have to close over the instance to edit it.
+::: tip Every callback gets the instance, then the vision
+A connected callback is called as `Callback(Instance, Vision, ...)` - the
+instance it is attached to, the vision that built it, then whatever the signal
+passes. This holds for every callback in Vision, so you never have to close
+over either one.
+
+```lua
+Activated = function(self, Panel)
+    Panel.Count(Panel.Count() + 1)
+end,
+```
+
+The vision is not in scope while you are writing its own declaration, which is
+exactly when you want to reach its values. This is how you reach them.
+
+`Vision.create` uses the same order and passes `nil` in the vision slot, so one
+declaration works with either.
 :::
 
 ## attributes
@@ -122,12 +135,13 @@ tags = { Managed = true },
 ## AttributeChanged
 
 A map of attribute names to callbacks, connected with
-`GetAttributeChangedSignal`. The callback receives the instance first.
+`GetAttributeChangedSignal`. The callback receives the instance, the vision,
+then the attribute's new value - no `GetAttribute` call needed.
 
 ```lua
 AttributeChanged = {
-    Role = function(self)
-        print(self.Name, "is now", self:GetAttribute("Role"))
+    Role = function(self, Panel, Role)
+        print(self.Name, "is now", Role)
     end,
 },
 ```
@@ -135,6 +149,24 @@ AttributeChanged = {
 Connections are made **after** the declared `attributes` are applied, so
 setting up initial state does not fire these. They are disconnected by
 `Cleanup` along with every other connection.
+
+## PropertyChanged
+
+A map of property names to callbacks, connected with
+`GetPropertyChangedSignal`. The callback receives the instance, the vision,
+then the property's new value.
+
+```lua
+PropertyChanged = {
+    AbsoluteSize = function(self, Panel, Size)
+        Panel.Wide(Size.X > 600)
+    end,
+},
+```
+
+Like `AttributeChanged`, connections are made **after** the declared
+properties are written, so staging a value does not fire these, and `Cleanup`
+disconnects them. A remount wires them again against the new instance.
 
 ## Children
 
@@ -178,4 +210,4 @@ the node it targets.
 These keys are read by Vision and never assigned to the instance:
 
 `ClassName`, `FromParent`, `attributes`, `Attributes`, `tags`, `Tags`,
-`AttributeChanged`
+`AttributeChanged`, `PropertyChanged`

@@ -1,3 +1,12 @@
+--!strict
+
+type Use = {
+    Object: Instance,
+    Property: string,
+}
+
+type Uses = { [Use]: boolean }
+
 const Style = {}
 Style.__index = Style
 
@@ -8,8 +17,8 @@ end
 function Style.new(Name: string)
     return setmetatable({
         Name = Name,
-        Fields = {},
-        Users = {},
+        Fields = {} :: { [string]: any },
+        Users = {} :: { [string]: Uses },
     }, Style)
 end
 
@@ -28,18 +37,18 @@ function Style:Set(Field: string, Value: any)
 
     self.Fields[Field] = Value
 
-    const Bound = self.Users[Field]
+    const Bound: Uses = self.Users[Field]
 
     if not Bound then
         return
     end
 
     for Use in Bound do
-        Use.Object[Use.Property] = Value
+        (Use.Object :: any)[Use.Property] = Value
     end
 end
 
-function Style:Load(Declaration)
+function Style:Load(Declaration: { [string]: any })
     for Field, Value in Declaration do
         if Field ~= "name" and Field ~= "Name" then
             self:Set(Field, Value)
@@ -48,14 +57,14 @@ function Style:Load(Declaration)
 end
 
 function Style:Attach(Object: Instance, Property: string, Field: string)
-    local Bound = self.Users[Field]
+    local Bound: Uses = self.Users[Field]
 
     if not Bound then
-        Bound = setmetatable({}, { __mode = "k" })
+        Bound = setmetatable({}, { __mode = "k" }) :: any
         self.Users[Field] = Bound
     end
 
-    const Use = { Object = Object, Property = Property }
+    const Use: Use = { Object = Object, Property = Property }
 
     Bound[Use] = true
 

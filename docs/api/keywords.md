@@ -11,17 +11,22 @@ local cleanup = Vision.cleanup
 local mount = Vision.mount
 ```
 
+Every keyword callback is called as `Callback(Instance, Vision, ...)` - the
+instance, the vision that built it, then whatever the keyword adds. The vision
+is not in scope while you are writing its own declaration, so this is how a
+callback reaches its own values.
+
 ## event
 
 ```lua
-event(Name: string, InitialValue: any, Callback: (self: Instance, Value: any) -> ()) -> Marker
+event(Name: string, InitialValue: any, Callback: (self: Instance, vision: Vision, Value: any) -> ()) -> Marker
 ```
 
 Declares a named value on the Vision and binds this node's callback to it.
 The value becomes callable as `Interface[Name]`, a [CapFunc](/api/vision).
 
 ```lua
-event("Count", 0, function(self, Value)
+event("Count", 0, function(self, _, Value)
     self.Text = `Clicks: {Value}`
 end)
 ```
@@ -36,7 +41,7 @@ every change that actually changes it.
 ## merge
 
 ```lua
-merge(Name: string, Callback: (self: Instance, Value: any) -> ()) -> Marker
+merge(Name: string, Callback: (self: Instance, vision: Vision, Value: any) -> ()) -> Marker
 ```
 
 Binds another callback to a value declared elsewhere in the same tree. This
@@ -46,14 +51,14 @@ is how one value drives several instances - each callback receives its own
 ```lua
 {
     ClassName = "TextLabel",
-    event("Fill", 0.2, function(self, Value)
+    event("Fill", 0.2, function(self, _, Value)
         self.Text = string.format("%.0f%%", Value * 100)
     end),
 },
 
 {
     ClassName = "Frame",
-    merge("Fill", function(self, Value)
+    merge("Fill", function(self, _, Value)
         self.Size = UDim2.fromScale(Value, 1)
     end),
 },
@@ -167,7 +172,7 @@ itself raises, as does a cycle between two derives.
 ## ready
 
 ```lua
-ready(Callback: (self: Instance, cleanup: (Callback: (self: Instance) -> ()) -> ()) -> ()) -> Marker
+ready(Callback: (self: Instance, vision: Vision, cleanup: (Callback: (self: Instance, vision: Vision) -> ()) -> ()) -> ()) -> Marker
 ```
 
 Runs after the tree is built and the root is parented. Callbacks run
@@ -187,7 +192,7 @@ for **this node**, for **this mount**. Use it to keep a connection and its
 disconnect in one place.
 
 ```lua
-ready(function(self, cleanup)
+ready(function(self, _, cleanup)
     const Connection = Workspace.ChildAdded:Connect(Handler)
 
     cleanup(function()
@@ -197,7 +202,7 @@ end),
 ```
 
 The callback you pass runs on teardown, before anything is disconnected or
-destroyed, and receives the instance.
+destroyed, and receives the instance and the vision.
 
 Because it is an argument rather than an ambient lookup, it is bound to the
 node you are already inside. There is nothing to get wrong, and it works the
@@ -209,7 +214,7 @@ function to something deferred registers nothing useful, because by the time
 it runs the mount is over:
 
 ```lua
-ready(function(self, cleanup)
+ready(function(self, _, cleanup)
     task.delay(1, function()
         cleanup(function() end)   -- too late, the tree is already live
     end)
@@ -220,7 +225,7 @@ end),
 ## cleanup
 
 ```lua
-cleanup(Callback: (self: Instance) -> ()) -> Marker
+cleanup(Callback: (self: Instance, vision: Vision) -> ()) -> Marker
 ```
 
 A declaration keyword. Runs when the tree is torn down, before anything is
@@ -250,7 +255,7 @@ registered again the next time `ready` runs.
 ## drawcall
 
 ```lua
-drawcall(Callback: (self: Instance, Viewport: Vector2) -> ()) -> Marker
+drawcall(Callback: (self: Instance, vision: Vision, Viewport: Vector2) -> ()) -> Marker
 ```
 
 Runs when the viewport size changes, and once at mount so the first frame is
@@ -262,7 +267,7 @@ resizing, or a device that simply is not the size you designed for.
     ClassName = "Frame",
     Name = "Panel",
 
-    drawcall(function(self, Viewport)
+    drawcall(function(self, _, Viewport)
         if Viewport.X < 700 then
             self.Size = UDim2.fromScale(1, 1)
             self.Position = UDim2.fromScale(0, 0)
@@ -355,12 +360,12 @@ Guest:Mount()   -- retries, and lands
 ## receive
 
 ```lua
-receive(Callback: (self: Instance, Target: Instance, Source: Vision) -> Instance?) -> Marker
+receive(Callback: (self: Instance, vision: Vision, Target: Instance, Source: Vision) -> Instance?) -> Marker
 ```
 
 Marks a node as a landing site for [inject](#inject). The callback gets the
-node's own instance, the instance asking to be parented, and the Vision it
-belongs to.
+node's own instance, the vision that node belongs to, the instance asking to
+be parented, and the Vision that one belongs to.
 
 Return an `Instance` to accept - that instance becomes the parent. Return
 anything falsy to decline and let the next `receive` try.
@@ -370,7 +375,7 @@ Scope:Capture({
     ClassName = "Frame",
     Name = "Panel",
 
-    receive(function(self, Target, Source)
+    receive(function(self, _, Target, Source)
         return Source.Kind() == "tool" and self
     end),
 
@@ -481,7 +486,7 @@ instance you hand it instead of copying it, and it **never destroys it**.
 Scope:Capture({
     fromInstance(PlayerGui.HUD.Health),
 
-    event("Points", 100, function(self, Value)
+    event("Points", 100, function(self, _, Value)
         self.Text = `{Value} hp`
     end),
 })

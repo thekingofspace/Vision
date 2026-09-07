@@ -7,7 +7,7 @@ local Interface = Scope:Capture({
     ClassName = "TextLabel",
     mount(PlayerGui),
 
-    event("Count", 0, function(self, Value)
+    event("Count", 0, function(self, _, Value)
         self.Text = `Clicks: {Value}`
     end),
 })
@@ -69,7 +69,7 @@ declared elsewhere:
         ClassName = "TextLabel",
         Name = "Percent",
 
-        event("Fill", 0.2, function(self, Value)
+        event("Fill", 0.2, function(self, _, Value)
             self.Text = string.format("%.0f%%", Value * 100)
         end),
     },
@@ -78,7 +78,7 @@ declared elsewhere:
         ClassName = "Frame",
         Name = "Bar",
 
-        merge("Fill", function(self, Value)
+        merge("Fill", function(self, _, Value)
             self.Size = UDim2.fromScale(Value, 1)
         end),
     },

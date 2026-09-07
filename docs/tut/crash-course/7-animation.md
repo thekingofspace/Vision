@@ -17,7 +17,7 @@ local Interface = Scope:Capture({
     ClassName = "Frame",
     mount(PlayerGui),
 
-    event("Fill", 0.2, function(self, Value)
+    event("Fill", 0.2, function(self, _, Value)
         self.Size = UDim2.fromScale(Value, 1)
     end),
 })

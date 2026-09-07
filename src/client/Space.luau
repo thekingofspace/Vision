@@ -98,7 +98,7 @@ return function()
 
         mount(Workspace),
 
-        event("Lift", 0, function(self, Value)
+        event("Lift", 0, function(self, _, Value)
             self.CFrame = Shut * CFrame.new(0, math.max(Value, 0), 0)
         end),
 
@@ -129,7 +129,7 @@ return function()
                     TextStrokeTransparency = 0.4,
                     TextColor3 = Color3.fromRGB(255, 255, 255),
 
-                    merge("Say", function(self, Value)
+                    merge("Say", function(self, _, Value)
                         self.Text = Value
                     end),
                 },
@@ -213,7 +213,7 @@ return function()
                 Transparency = 0.2,
                 Reflectance = 0.25,
 
-                event("Push", 0, function(self, Value)
+                event("Push", 0, function(self, _, Value)
                     self.CFrame = CFrame.new(Home.X, Home.Y, Home.Z - Value)
                         * CFrame.Angles(0, math.rad(90), 0)
                 end),

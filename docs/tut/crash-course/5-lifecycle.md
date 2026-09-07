@@ -40,12 +40,12 @@ end),
 
 ## The useful form
 
-`ready` hands you a second argument: a function that registers cleanup for
-that node, for that mount. This is the form you will reach for most, because
+After the instance and the vision, `ready` hands you a third argument: a
+function that registers cleanup for that node, for that mount. This is the form you will reach for most, because
 it puts a connection and its disconnect in the same place:
 
 ```lua
-ready(function(self, cleanup)
+ready(function(self, _, cleanup)
     local Connection = Workspace.ChildAdded:Connect(Handler)
 
     cleanup(function()

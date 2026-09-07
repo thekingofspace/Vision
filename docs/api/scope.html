@@ -59,7 +59,7 @@ is what hands ownership to the scope.</p>
 <pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Interface = Scope:Capture({
     ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
     mount(PlayerGui),
-    event(<span class="hljs-string">&quot;Count&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+    event(<span class="hljs-string">&quot;Count&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, Value)</span></span>
         <span class="hljs-built_in">self</span>.Name = `Count{Value}`
     <span class="hljs-keyword">end</span>),
 })</code></pre>

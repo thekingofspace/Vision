@@ -1,4 +1,9 @@
+--!strict
+
 const Symbols = require(script.Parent.Symbols)
+const Types = require(script.Parent.Types)
+
+type Dynamic = Types.Dynamic
 
 const Reserved = {
     ClassName = true,
@@ -7,6 +12,7 @@ const Reserved = {
     tags = true,
     Tags = true,
     AttributeChanged = true,
+    PropertyChanged = true,
 }
 
 const function Create(Declaration: any): Instance
@@ -17,6 +23,7 @@ const function Create(Declaration: any): Instance
     end
 
     const Object = Instance.new(ClassName)
+    const Fields = (Object :: any) :: Dynamic
 
     for Key, Value in Declaration do
         if type(Key) ~= "string" or Reserved[Key] then
@@ -27,14 +34,14 @@ const function Create(Declaration: any): Instance
             error(`create cannot resolve the style token on "{Key}", styles need a scope`, 0)
         end
 
-        const Member = Object[Key]
+        const Member = Fields[Key]
 
         if typeof(Member) == "RBXScriptSignal" then
             Member:Connect(function(...)
-                Value(Object, ...)
+                Value(Object, nil, ...)
             end)
         else
-            Object[Key] = Value
+            Fields[Key] = Value
         end
     end
 
@@ -61,7 +68,15 @@ const function Create(Declaration: any): Instance
     if Declaration.AttributeChanged then
         for Key, Callback in Declaration.AttributeChanged do
             Object:GetAttributeChangedSignal(Key):Connect(function()
-                Callback(Object)
+                Callback(Object, nil, Object:GetAttribute(Key))
+            end)
+        end
+    end
+
+    if Declaration.PropertyChanged then
+        for Key, Callback in Declaration.PropertyChanged do
+            Object:GetPropertyChangedSignal(Key):Connect(function()
+                Callback(Object, nil, Fields[Key])
             end)
         end
     end

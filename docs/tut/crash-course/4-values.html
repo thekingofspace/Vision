@@ -45,7 +45,7 @@
     ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>,
     mount(PlayerGui),
 
-    event(<span class="hljs-string">&quot;Count&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+    event(<span class="hljs-string">&quot;Count&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, Value)</span></span>
         <span class="hljs-built_in">self</span>.Text = `Clicks: {Value}`
     <span class="hljs-keyword">end</span>),
 })
@@ -89,7 +89,7 @@ declared elsewhere:</p>
         ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>,
         Name = <span class="hljs-string">&quot;Percent&quot;</span>,
 
-        event(<span class="hljs-string">&quot;Fill&quot;</span>, <span class="hljs-number">0.2</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+        event(<span class="hljs-string">&quot;Fill&quot;</span>, <span class="hljs-number">0.2</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, Value)</span></span>
             <span class="hljs-built_in">self</span>.Text = <span class="hljs-built_in">string</span>.<span class="hljs-built_in">format</span>(<span class="hljs-string">&quot;%.0f%%&quot;</span>, Value * <span class="hljs-number">100</span>)
         <span class="hljs-keyword">end</span>),
     },
@@ -98,7 +98,7 @@ declared elsewhere:</p>
         ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
         Name = <span class="hljs-string">&quot;Bar&quot;</span>,
 
-        merge(<span class="hljs-string">&quot;Fill&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+        merge(<span class="hljs-string">&quot;Fill&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, Value)</span></span>
             <span class="hljs-built_in">self</span>.Size = UDim2.fromScale(Value, <span class="hljs-number">1</span>)
         <span class="hljs-keyword">end</span>),
     },

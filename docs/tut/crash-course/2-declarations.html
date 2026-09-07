@@ -76,8 +76,14 @@ than assigned:</p>
 <p><code>Text</code> is assigned, <code>Activated</code> is connected, and you did not have to say
 which is which - Vision checks what the member actually is.</p>
 <p>Notice the callback receives <code>self</code>. <strong>Every</strong> callback in Vision gets the
-instance as its first argument, so you can edit it without closing over a
-variable.</p>
+instance first and the vision that built it second, so you can edit the
+instance and reach the vision&#39;s values without closing over either.</p>
+<pre class="code"><code class="hljs">Activated = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Panel)</span></span>
+    Panel.Count(Panel.Count() + <span class="hljs-number">1</span>)
+<span class="hljs-keyword">end</span>,</code></pre>
+<p>That second argument matters more than it looks: while you are writing a
+declaration, the vision it produces does not exist yet, so there is nothing to
+close over. This is how you get at it.</p>
 <h2 id="attributes-and-tags"><a class="anchor" href="#attributes-and-tags">#</a>Attributes and tags</h2>
 <pre class="code"><code class="hljs">{
     ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
@@ -86,13 +92,14 @@ variable.</p>
     tags = { <span class="hljs-string">&quot;Managed&quot;</span> },
 
     AttributeChanged = {
-        Role = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
-            <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;role is now&quot;</span>, <span class="hljs-built_in">self</span>:GetAttribute(<span class="hljs-string">&quot;Role&quot;</span>))
+        Role = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, Role)</span></span>
+            <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;role is now&quot;</span>, Role)
         <span class="hljs-keyword">end</span>,
     },
 }</code></pre>
 <p><code>AttributeChanged</code> connects after the declared attributes are applied, so
-setting up initial state does not fire your handler.</p>
+setting up initial state does not fire your handler. The new value arrives as
+the third argument, so you rarely need <code>GetAttribute</code> inside the handler.</p>
 <h2 id="mounting-somewhere-else"><a class="anchor" href="#mounting-somewhere-else">#</a>Mounting somewhere else</h2>
 <p><code>mount</code> says where a node goes. Given an <code>Instance</code>, it parents there:</p>
 <pre class="code"><code class="hljs">mount(PlayerGui)</code></pre>

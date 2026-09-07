@@ -117,7 +117,7 @@ return function()
                     ClassName = "UIScale",
                     Scale = 1,
 
-                    drawcall(function(self, Viewport)
+                    drawcall(function(self, _, Viewport)
                         self.Scale = math.clamp(math.min(Viewport.X / 600, Viewport.Y / 420), 0.45, 2.2)
                     end),
                 },
@@ -158,7 +158,7 @@ return function()
         return Layout
     end
 
-    local function Button(Name: string, Text: string, Spot: UDim2, Wide: number, Press: (Instance) -> ())
+    local function Button(Name: string, Text: string, Spot: UDim2, Wide: number, Press: (Instance, any) -> ())
         return {
             ClassName = "TextButton",
             Name = Name,
@@ -176,8 +176,8 @@ return function()
 
             { ClassName = "UICorner", CornerRadius = UDim.new(0, 8) },
 
-            Activated = function(self)
-                Press(self)
+            Activated = function(self, Panel)
+                Press(self, Panel)
             end,
 
             MouseEnter = function(self)
@@ -205,7 +205,7 @@ return function()
 
             mount("Card"),
 
-            ready(function(self, later)
+            ready(function(self, _, later)
                 self.Position = UDim2.fromScale(0.5, 0.34)
                 Scope:PhysicsInstance(0.75, 0.5, self, { Position = UDim2.fromScale(0.5, 0.44) })
 
@@ -228,7 +228,7 @@ return function()
 
             mount("Card"),
 
-            event("Motto", "", function(self, Value)
+            event("Motto", "", function(self, _, Value)
                 self.Text = Value
             end),
 
@@ -252,7 +252,7 @@ return function()
 
             mount("Card"),
 
-            event("Charge", 0.35, function(self, Value)
+            event("Charge", 0.35, function(self, _, Value)
                 self.Text = string.format("%.0f%%", Value * 100)
             end),
         },
@@ -271,7 +271,7 @@ return function()
 
             mount("Card"),
 
-            merge("Doubled", function(self, Value)
+            merge("Doubled", function(self, _, Value)
                 self.Text = `derive Doubled = {string.format("%.2f", Value)}`
             end),
         },
@@ -297,7 +297,7 @@ return function()
 
                 { ClassName = "UICorner", CornerRadius = UDim.new(1, 0) },
 
-                merge("Charge", function(self, Value)
+                merge("Charge", function(self, _, Value)
                     self.Size = UDim2.fromScale(math.clamp(Value, 0, 1), 1)
                 end),
             },
@@ -320,8 +320,14 @@ return function()
             tags = { "VisionShowcase" },
 
             AttributeChanged = {
-                Mood = function(self)
-                    self.Text = `attribute Mood = "{self:GetAttribute("Mood")}"      tag = VisionShowcase`
+                Mood = function(self, _, Mood)
+                    self.Text = `attribute Mood = "{Mood}"      tag = VisionShowcase`
+                end,
+            },
+
+            PropertyChanged = {
+                TextColor3 = function(_, _, Tint)
+                    print("[vision] Mood label recoloured to", Tint)
                 end,
             },
 
@@ -358,8 +364,8 @@ return function()
             Scope:PhysicsEvent(0.55, 0.35, Values, { Charge = if Values.Charge() > 0.5 then 0.1 else 0.9 })
         end),
 
-        Button("Write", "write derive", UDim2.fromOffset(332, 194), 118, function()
-            Values.Doubled(1.6)
+        Button("Write", "write derive", UDim2.fromOffset(332, 194), 118, function(_, Panel)
+            Panel.Doubled(1.6)
         end),
 
         Button("Flip", "flip attribute", UDim2.fromOffset(28, 238), 118, function(self)
@@ -524,7 +530,7 @@ return function()
 
             mount("Card"),
 
-            event("Says", "pick one", function(self, Value)
+            event("Says", "pick one", function(self, _, Value)
                 self.Text = Value
             end),
         },
@@ -639,7 +645,7 @@ return function()
 
                 { ClassName = "UICorner", CornerRadius = UDim.new(1, 0) },
 
-                merge("Total", function(self, Value)
+                merge("Total", function(self, _, Value)
                     self.Size = UDim2.fromScale(math.clamp(Value / 1.5, 0, 1), 1)
                 end),
             },
@@ -664,7 +670,7 @@ return function()
 
             mount("Card"),
 
-            event("Note", "one write moves the whole graph", function(self, Value)
+            event("Note", "one write moves the whole graph", function(self, _, Value)
                 self.Text = Value
             end),
         },
@@ -691,15 +697,15 @@ return function()
     }
 
     local Slots = {
-        Stat("Seed", "seed  -  event", 28, event("Seed", 0.4, function(self, Value)
+        Stat("Seed", "seed  -  event", 28, event("Seed", 0.4, function(self, _, Value)
             self.Text = string.format("%.2f", Value)
         end)),
 
-        Stat("Half", "half  -  derive of seed", 208, merge("Half", function(self, Value)
+        Stat("Half", "half  -  derive of seed", 208, merge("Half", function(self, _, Value)
             self.Text = string.format("%.2f", Value)
         end)),
 
-        Stat("Total", "total  -  derive of both", 388, merge("Total", function(self, Value)
+        Stat("Total", "total  -  derive of both", 388, merge("Total", function(self, _, Value)
             self.Text = string.format("%.2f", Value)
         end)),
     }
@@ -806,7 +812,7 @@ return function()
 
             mount("Card"),
 
-            event("Beat", "every one of these is a damped spring, nothing else", function(self, Value)
+            event("Beat", "every one of these is a damped spring, nothing else", function(self, _, Value)
                 self.Text = Value
             end),
         },
@@ -1000,7 +1006,7 @@ return function()
 
             mount("Card"),
 
-            event("Told", "TweenService cannot tween a sequence at all, this can", function(self, Value)
+            event("Told", "TweenService cannot tween a sequence at all, this can", function(self, _, Value)
                 self.Text = Value
             end),
         },
@@ -1092,7 +1098,7 @@ return function()
             TextXAlignment = Enum.TextXAlignment.Left,
             TextColor3 = style("Skin")["Ink"],
 
-            event("Line", "notice", function(self, Value)
+            event("Line", "notice", function(self, _, Value)
                 self.Text = Value
             end),
         },
@@ -1323,7 +1329,7 @@ return function()
 
             mount("Card"),
 
-            event("Word", "under 1 rings, 1 is critical, over 1 crawls in without a bounce", function(self, Value)
+            event("Word", "under 1 rings, 1 is critical, over 1 crawls in without a bounce", function(self, _, Value)
                 self.Text = Value
             end),
         },
@@ -1428,7 +1434,7 @@ return function()
 
         { ClassName = "UICorner", CornerRadius = UDim.new(0, 3) },
 
-        event("Tint", Color3.fromRGB(122, 162, 255), function(self, Value)
+        event("Tint", Color3.fromRGB(122, 162, 255), function(self, _, Value)
             self.BackgroundColor3 = Value
         end),
     })
@@ -1575,7 +1581,7 @@ return function()
 
             mount("Card"),
 
-            event("Count", 0, function(self, Value)
+            event("Count", 0, function(self, _, Value)
                 self.Text = `{Value} in flight   {#Pool} asleep`
             end),
         },
@@ -1649,7 +1655,7 @@ return function()
 
             mount("Card"),
 
-            event("Word", "each chip asks this page where it belongs", function(self, Value)
+            event("Word", "each chip asks this page where it belongs", function(self, _, Value)
                 self.Text = Value
             end),
         },
@@ -1694,7 +1700,7 @@ return function()
             },
             { ClassName = "UIListLayout", Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder },
 
-            receive(function(self, Target, Source)
+            receive(function(self, _, Target, Source)
                 return Source.Kind() == Tray.Key and self
             end),
         })
@@ -1751,7 +1757,7 @@ return function()
             TextXAlignment = Enum.TextXAlignment.Left,
             TextColor3 = style("Skin")["Ink"],
 
-            event("Label", "chip", function(self, Value)
+            event("Label", "chip", function(self, _, Value)
                 self.Text = Value
             end),
         },
@@ -1878,7 +1884,7 @@ return function()
 
             mount("Card"),
 
-            event("Word", "press play, the keyframes carry their own events", function(self, Value)
+            event("Word", "press play, the keyframes carry their own events", function(self, _, Value)
                 self.Text = Value
             end),
         },
@@ -2009,7 +2015,7 @@ return function()
 
             mount("Card"),
 
-            event("Count", 0, function(self, Value)
+            event("Count", 0, function(self, _, Value)
                 self.Text = `{Value} rows`
             end),
         },
@@ -2097,7 +2103,7 @@ return function()
         ClipsDescendants = true,
         BackgroundColor3 = style("Skin")["Rail"],
 
-        event("Order", 0, function(self, Value)
+        event("Order", 0, function(self, _, Value)
             self.LayoutOrder = Value
         end),
 
@@ -2114,7 +2120,7 @@ return function()
             TextXAlignment = Enum.TextXAlignment.Left,
             TextColor3 = style("Skin")["Ink"],
 
-            event("Label", "row", function(self, Value)
+            event("Label", "row", function(self, _, Value)
                 self.Text = Value
             end),
         },

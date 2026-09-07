@@ -29,7 +29,7 @@ is what hands ownership to the scope.
 local Interface = Scope:Capture({
     ClassName = "Frame",
     mount(PlayerGui),
-    event("Count", 0, function(self, Value)
+    event("Count", 0, function(self, _, Value)
         self.Name = `Count{Value}`
     end),
 })

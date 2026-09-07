@@ -1,3 +1,5 @@
+--!strict
+
 const Symbols = require(script.Symbols)
 const Scope = require(script.Scope)
 const Types = require(script.Types)

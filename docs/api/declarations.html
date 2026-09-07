@@ -82,7 +82,7 @@ child of that name on the node <strong>around</strong> it.</p>
 
         TextSize = <span class="hljs-number">21</span>,
 
-        event(<span class="hljs-string">&quot;Word&quot;</span>, <span class="hljs-string">&quot;ready&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+        event(<span class="hljs-string">&quot;Word&quot;</span>, <span class="hljs-string">&quot;ready&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, Value)</span></span>
             <span class="hljs-built_in">self</span>.Text = Value
         <span class="hljs-keyword">end</span>),
     },
@@ -116,10 +116,18 @@ ceremony. It also means a typo&#39;d property name errors on mount rather than
 silently doing nothing.</p>
 <div class="callout tip">
 
-<p><strong>Signal callbacks receive the instance first</strong></p>
-<p>A connected callback is called as <code>Callback(Instance, ...)</code> - the instance,
-then whatever the signal passes. This holds for every callback in Vision, so
-you never have to close over the instance to edit it.</p>
+<p><strong>Every callback gets the instance, then the vision</strong></p>
+<p>A connected callback is called as <code>Callback(Instance, Vision, ...)</code> - the
+instance it is attached to, the vision that built it, then whatever the signal
+passes. This holds for every callback in Vision, so you never have to close
+over either one.</p>
+<pre class="code"><code class="hljs">Activated = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Panel)</span></span>
+    Panel.Count(Panel.Count() + <span class="hljs-number">1</span>)
+<span class="hljs-keyword">end</span>,</code></pre>
+<p>The vision is not in scope while you are writing its own declaration, which is
+exactly when you want to reach its values. This is how you reach them.</p>
+<p><code>Vision.create</code> uses the same order and passes <code>nil</code> in the vision slot, so one
+declaration works with either.</p>
 </div>
 
 <h2 id="attributes"><a class="anchor" href="#attributes">#</a>attributes</h2>
@@ -133,15 +141,28 @@ and <code>Tags</code> are accepted.</p>
 tags = { Managed = <span class="hljs-literal">true</span> },</code></pre>
 <h2 id="attributechanged"><a class="anchor" href="#attributechanged">#</a>AttributeChanged</h2>
 <p>A map of attribute names to callbacks, connected with
-<code>GetAttributeChangedSignal</code>. The callback receives the instance first.</p>
+<code>GetAttributeChangedSignal</code>. The callback receives the instance, the vision,
+then the attribute&#39;s new value - no <code>GetAttribute</code> call needed.</p>
 <pre class="code"><code class="hljs">AttributeChanged = {
-    Role = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self)</span></span>
-        <span class="hljs-built_in">print</span>(<span class="hljs-built_in">self</span>.Name, <span class="hljs-string">&quot;is now&quot;</span>, <span class="hljs-built_in">self</span>:GetAttribute(<span class="hljs-string">&quot;Role&quot;</span>))
+    Role = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Panel, Role)</span></span>
+        <span class="hljs-built_in">print</span>(<span class="hljs-built_in">self</span>.Name, <span class="hljs-string">&quot;is now&quot;</span>, Role)
     <span class="hljs-keyword">end</span>,
 },</code></pre>
 <p>Connections are made <strong>after</strong> the declared <code>attributes</code> are applied, so
 setting up initial state does not fire these. They are disconnected by
 <code>Cleanup</code> along with every other connection.</p>
+<h2 id="propertychanged"><a class="anchor" href="#propertychanged">#</a>PropertyChanged</h2>
+<p>A map of property names to callbacks, connected with
+<code>GetPropertyChangedSignal</code>. The callback receives the instance, the vision,
+then the property&#39;s new value.</p>
+<pre class="code"><code class="hljs">PropertyChanged = {
+    AbsoluteSize = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Panel, Size)</span></span>
+        Panel.Wide(Size.X &gt; <span class="hljs-number">600</span>)
+    <span class="hljs-keyword">end</span>,
+},</code></pre>
+<p>Like <code>AttributeChanged</code>, connections are made <strong>after</strong> the declared
+properties are written, so staging a value does not fire these, and <code>Cleanup</code>
+disconnects them. A remount wires them again against the new instance.</p>
 <h2 id="children"><a class="anchor" href="#children">#</a>Children</h2>
 <p>Any table in the array part that is not a <a href="./keywords.html">keyword</a> is a child
 declaration. By default a child is parented to the declaration that contains
@@ -171,7 +192,7 @@ the node it targets.</p>
 <h2 id="reserved-keys"><a class="anchor" href="#reserved-keys">#</a>Reserved keys</h2>
 <p>These keys are read by Vision and never assigned to the instance:</p>
 <p><code>ClassName</code>, <code>FromParent</code>, <code>attributes</code>, <code>Attributes</code>, <code>tags</code>, <code>Tags</code>,
-<code>AttributeChanged</code></p>
+<code>AttributeChanged</code>, <code>PropertyChanged</code></p>
 
 </main>
 </div>

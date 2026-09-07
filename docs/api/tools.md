@@ -71,9 +71,13 @@ local Panel = Vision.create({
 })
 ```
 
-It honours properties, `attributes`, `tags`, `AttributeChanged`, signal
-properties (the instance is still the first argument), children, and a
-`mount` marker holding an `Instance`.
+It honours properties, `attributes`, `tags`, `AttributeChanged`,
+`PropertyChanged`, signal properties, children, and a `mount` marker holding
+an `Instance`.
+
+Callbacks keep the same shape as `Capture` - `(Instance, Vision, ...)` - with
+`nil` in the vision slot, since there is no vision here. One declaration works
+with either.
 
 Everything else is ignored - `event`, `merge`, `derive`, `ready`, `cleanup`,
 `drawcall` and `receive` need a Vision to mean anything. A `style` token

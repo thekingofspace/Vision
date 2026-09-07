@@ -14,7 +14,7 @@ local Interface = Scope:Capture({
     ClassName = "TextLabel",
     Vision.mount(PlayerGui),
 
-    Vision.event("Count", 0, function(self, Value)
+    Vision.event("Count", 0, function(self, _, Value)
         self.Text = `Clicks: {Value}`
     end),
 })
@@ -24,6 +24,29 @@ Interface:Mount()
 ```
 
 Documentation lives in [docs/](docs).
+
+## Installing
+
+With [Wally](https://wally.run):
+
+```toml
+[dependencies]
+Vision = "thekingofspace/vision@1.1.2"
+```
+
+```bash
+wally install
+```
+
+It is a `shared` package, so it lands in `Packages`:
+
+```lua
+local Vision = require(ReplicatedStorage.Packages.Vision)
+```
+
+Without Wally, take `Vision.rbxm` from a
+[release](https://github.com/thekingofspace/Vision/releases) and drop it
+wherever you keep shared modules.
 
 ## Toolchain
 

@@ -1,3 +1,5 @@
+--!strict
+
 const Symbols = {}
 
 const Marker = {}
@@ -11,7 +13,7 @@ function Symbols.Is(Value: any): boolean
     return type(Value) == "table" and getmetatable(Value) == Marker
 end
 
-function Symbols.event(Event: string, InitialValue: any, Callback: (Instance, any) -> ())
+function Symbols.event(Event: string, InitialValue: any, Callback: (Instance, any, any) -> ())
     return setmetatable({
         Kind = "Event",
         Name = Event,
@@ -20,7 +22,7 @@ function Symbols.event(Event: string, InitialValue: any, Callback: (Instance, an
     }, Marker)
 end
 
-function Symbols.merge(Event: string, Callback: (Instance, any) -> ())
+function Symbols.merge(Event: string, Callback: (Instance, any, any) -> ())
     return setmetatable({
         Kind = "Merge",
         Name = Event,
@@ -39,28 +41,28 @@ function Symbols.derive(
     }, Marker)
 end
 
-function Symbols.ready(Callback: (Instance) -> ())
+function Symbols.ready(Callback: (Instance, any, any) -> ())
     return setmetatable({
         Kind = "Ready",
         Callback = Callback,
     }, Marker)
 end
 
-function Symbols.cleanup(Callback: (Instance) -> ())
+function Symbols.cleanup(Callback: (Instance, any) -> ())
     return setmetatable({
         Kind = "Cleanup",
         Callback = Callback,
     }, Marker)
 end
 
-function Symbols.drawcall(Callback: (Instance, Vector2) -> ())
+function Symbols.drawcall(Callback: (Instance, any, Vector2) -> ())
     return setmetatable({
         Kind = "Draw",
         Callback = Callback,
     }, Marker)
 end
 
-function Symbols.receive(Callback: (Instance, Instance, any) -> Instance?)
+function Symbols.receive(Callback: (Instance, any, Instance, any) -> Instance?)
     return setmetatable({
         Kind = "Receive",
         Callback = Callback,

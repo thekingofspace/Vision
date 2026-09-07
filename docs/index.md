@@ -41,7 +41,7 @@ local Interface = Scope:Capture({
         Name = "Readout",
         Size = UDim2.fromOffset(200, 40),
 
-        event("Count", 0, function(self, Value)
+        event("Count", 0, function(self, _, Value)
             self.Text = `Clicks: {Value}`
         end),
 

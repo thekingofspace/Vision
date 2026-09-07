@@ -1,13 +1,19 @@
+--!strict
+
 const Sheet = require(script.Parent.Sheet)
+const Types = require(script.Parent.Types)
 
-const Methods = {}
+type Store = Types.Dynamic
+type Handle = Types.Linker
 
-const Tuning = { Looped = "boolean", Speed = "number", Rate = "number" }
+const Methods = {} :: Store
+
+const Tuning: { [string]: string } = { Looped = "boolean", Speed = "number", Rate = "number" }
 
 const Flipbook = {
-    __index = function(self, Key: string)
+    __index = function(self: any, Key: string): any
         if Key == "Finished" then
-            const Link = rawget(self, "Link")
+            const Link = rawget(self, "Link") :: any
 
             return Link == nil or Link.Finished
         end
@@ -17,13 +23,13 @@ const Flipbook = {
         end
 
         if Tuning[Key] then
-            return rawget(self, "Saved")[Key]
+            return (rawget(self, "Saved") :: Store)[Key]
         end
 
         return Methods[Key]
     end,
 
-    __newindex = function(self, Key: string, Value: any)
+    __newindex = function(self: any, Key: string, Value: any)
         const Want = Tuning[Key]
 
         if not Want then
@@ -44,9 +50,11 @@ const Flipbook = {
             error("a flipbook's Rate must be above zero", 0)
         end
 
-        rawget(self, "Saved")[Key] = Value
+        const Saved = rawget(self, "Saved") :: Store
 
-        const Link = rawget(self, "Link")
+        Saved[Key] = Value
+
+        const Link = rawget(self, "Link") :: any
 
         if Link and not Link.Finished then
             Link[Key] = Value
@@ -54,7 +62,7 @@ const Flipbook = {
     end,
 }
 
-function Flipbook.new(Scope, Page: any, Object: Instance, Frames: { string }, Rate: number?)
+function Flipbook.new(Scope: any, Page: any, Object: Instance, Frames: { string }, Rate: number?)
     if not Sheet.Is(Page) then
         error("a flipbook needs a sheet to read its sprites from", 0)
     end
@@ -85,7 +93,7 @@ function Flipbook.new(Scope, Page: any, Object: Instance, Frames: { string }, Ra
         error("a flipbook's rate must be above zero", 0)
     end
 
-    const Self = setmetatable({}, Flipbook)
+    const Self = setmetatable({}, Flipbook) :: any
 
     rawset(Self, "Saved", { Looped = false, Speed = 1, Rate = Beat })
     rawset(Self, "Scope", Scope)
@@ -101,10 +109,10 @@ end
 function Methods:Play()
     self:Stop()
 
-    const Saved = rawget(self, "Saved")
-    const Page = rawget(self, "Page")
-    const Object = rawget(self, "Object")
-    const Order = rawget(self, "Order")
+    const Saved = rawget(self, "Saved") :: Store
+    const Page = rawget(self, "Page") :: any
+    const Object = rawget(self, "Object") :: Instance
+    const Order = rawget(self, "Order") :: { string }
 
     if not Page then
         return self
@@ -115,7 +123,7 @@ function Methods:Play()
         Page:Apply(Object, Order[Index])
     end
 
-    const Link = rawget(self, "Scope").Runtime:Flip(Object, #Order, Saved.Rate, Show)
+    const Link = (rawget(self, "Scope") :: any).Runtime:Flip(Object, #Order, Saved.Rate, Show)
 
     Link.Speed = Saved.Speed
     Link.Looped = Saved.Looped
@@ -126,7 +134,7 @@ function Methods:Play()
 end
 
 function Methods:Stop()
-    const Link = rawget(self, "Link")
+    const Link = rawget(self, "Link") :: Handle?
 
     if Link then
         Link:Cancel()
@@ -138,7 +146,7 @@ function Methods:Stop()
 end
 
 function Methods:Await()
-    const Link = rawget(self, "Link")
+    const Link = rawget(self, "Link") :: Handle?
 
     if Link and not Link.Finished then
         Link:Await()

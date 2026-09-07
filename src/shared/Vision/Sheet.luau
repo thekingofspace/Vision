@@ -1,3 +1,17 @@
+--!strict
+
+type Painted = ImageLabel
+
+type Cell = { Offset: Vector2, Size: Vector2 }
+
+type Entry = {
+    [number]: string | Vector2,
+    Name: string?,
+    Offset: Vector2?,
+    Position: Vector2?,
+    Size: Vector2?,
+}
+
 const Sheet = {}
 
 const Reserved = {
@@ -5,9 +19,9 @@ const Reserved = {
     Size = true,
 }
 
-const function Cell(Name: string, Value: any, Default: Vector2?)
-    local Offset
-    local Span
+const function Cell(Name: string, Value: any, Default: Vector2?): Cell
+    local Offset: Vector2?
+    local Span: Vector2?
 
     if typeof(Value) == "Vector2" then
         Offset = Value
@@ -57,10 +71,10 @@ function Sheet.new(Declaration: any)
         error("a sheet's Image must be a string", 0)
     end
 
-    const Cells = {}
-    const Names = {}
+    const Cells: { [string]: Cell } = {}
+    const Names: { string } = {}
 
-    for Index, Entry in ipairs(Declaration) do
+    for Index, Entry in ipairs(Declaration :: { Entry }) do
         if type(Entry) ~= "table" then
             error(`sprite {Index} must be a table of a name and a position`, 0)
         end
@@ -106,18 +120,20 @@ function Sheet:Frames(): { string }
 end
 
 function Sheet:Apply(Object: Instance, Name: string)
-    const Spot = self.Cells[Name]
+    const Spot = self.Cells[Name] :: Cell?
 
     if not Spot then
         error(`this sheet has no sprite named "{tostring(Name)}"`, 0)
     end
 
-    if self.Image and Object.Image ~= self.Image then
-        Object.Image = self.Image
+    const Target = Object :: Painted
+
+    if self.Image and Target.Image ~= self.Image then
+        Target.Image = self.Image
     end
 
-    Object.ImageRectOffset = Spot.Offset
-    Object.ImageRectSize = Spot.Size
+    Target.ImageRectOffset = Spot.Offset
+    Target.ImageRectSize = Spot.Size
 
     return Object
 end

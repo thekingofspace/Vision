@@ -1,11 +1,86 @@
+--!strict
+
 const Symbols = require(script.Parent.Symbols)
+
+const Types = require(script.Parent.Types)
 
 const Token = Symbols.Token
 const Viewport = require(script.Parent.Viewport)
 
 const Capture = {}
 
-const Internal = setmetatable({}, { __mode = "k" })
+export type Handler = (Instance, Types.Vision, any) -> ()
+
+export type CleanupCall = (Instance, Types.Vision) -> ()
+
+export type ReadyCall = (Instance, Types.Vision, (CleanupCall) -> ()) -> ()
+
+export type ReceiveCall = (Instance, Types.Vision, Instance, Types.Vision) -> Instance?
+
+export type DrawCall = (Instance, Types.Vision, Vector2) -> ()
+
+export type Node = {
+    Kind: string,
+    Origin: string | Instance,
+    Owned: boolean,
+    Attributes: { [string]: any }?,
+    AttributeChanged: Types.AttributeChanged?,
+    PropertyChanged: Types.PropertyChanged?,
+    Tags: { [any]: any }?,
+    Fields: { any },
+    Painted: { any }?,
+    Children: { Node },
+    Ready: { ReadyCall },
+    Receive: { ReceiveCall },
+    Draw: { DrawCall },
+    Cleanup: { CleanupCall },
+    Transient: { CleanupCall },
+    Connections: { any },
+    Pending: { any },
+    Watched: { any }?,
+    Parent: Node?,
+    Target: any,
+    Instance: any,
+}
+
+export type Binding = {
+    Node: Node,
+    Callback: Handler,
+}
+
+export type Event = {
+    Name: string,
+    Value: any,
+    Declared: boolean,
+    Bindings: { Binding },
+    Targets: { Instance },
+    Handlers: { Handler },
+    Dependents: { [Event]: boolean },
+    Sources: { [Event]: boolean },
+    Compute: any,
+    Firing: boolean,
+    Pending: boolean,
+    Running: boolean,
+    Set: (any?) -> any,
+    Write: (any?) -> any,
+}
+
+export type State = {
+    Scope: any,
+    Vision: any,
+    Declaration: Types.Declaration,
+    Events: { [string]: Event },
+    Derived: { Event },
+    Mounts: { [string]: Node },
+    Nodes: { Node },
+    Handle: { any },
+    Root: Node,
+    Mounted: boolean,
+    Generation: number,
+    Recompute: (Event) -> (),
+}
+
+const Internal: { [any]: State } = setmetatable({}, { __mode = "k" }) :: any
 
 const Methods = {}
 
@@ -18,6 +93,7 @@ const Reserved = {
     tags = true,
     Tags = true,
     AttributeChanged = true,
+    PropertyChanged = true,
     FromParent = true,
 }
 
@@ -31,18 +107,18 @@ const Protected = {
     Clone = true,
 }
 
-const function Register(State, Name: string)
-    local Event = State.Events[Name]
+const function Register(State: State, Name: string): Event
+    const Known = State.Events[Name]
 
-    if Event then
-        return Event
+    if Known then
+        return Known
     end
 
     if Protected[Name] then
         error(`Vision event "{Name}" collides with a reserved method name`, 0)
     end
 
-    Event = {
+    const Event: Event = ({
         Name = Name,
         Value = nil,
         Declared = false,
@@ -51,13 +127,14 @@ const function Register(State, Name: string)
         Handlers = {},
         Dependents = {},
         Sources = {},
-    }
+    } :: any) :: Event
 
     State.Events[Name] = Event
 
-    local Targets = Event.Targets
-    local Handlers = Event.Handlers
-    local Dependents = Event.Dependents
+    const Targets = Event.Targets
+    const Handlers = Event.Handlers
+    const Dependents = Event.Dependents
+    const Handle = State.Handle
 
     const Write = function(NewValue: any?): any
         if NewValue == nil then
@@ -99,7 +176,7 @@ const function Register(State, Name: string)
                         break
                     end
 
-                    Handler(Targets[Index], Current)
+                    Handler(Targets[Index], Handle[1], Current)
                 end
             until not Event.Pending
         end)
@@ -124,7 +201,7 @@ const function Register(State, Name: string)
     return Event
 end
 
-const function Parse(State, Declaration, Parent)
+const function Parse(State: State, Declaration: any, Parent: Node?): Node
     local Kind = "Class"
     local Origin = Declaration.ClassName
     local Sources = 0
@@ -172,12 +249,13 @@ const function Parse(State, Declaration, Parent)
         error("Declaration requires a ClassName", 0)
     end
 
-    const Node = {
+    const Node = ({
         Kind = Kind,
         Origin = Origin,
         Owned = Kind == "Class" or Kind == "Clone",
         Attributes = Declaration.attributes or Declaration.Attributes,
         AttributeChanged = Declaration.AttributeChanged,
+        PropertyChanged = Declaration.PropertyChanged,
         Tags = Declaration.tags or Declaration.Tags,
         Fields = nil,
         Painted = nil,
@@ -189,10 +267,11 @@ const function Parse(State, Declaration, Parent)
         Transient = {},
         Connections = {},
         Pending = {},
+        Watched = if Declaration.AttributeChanged or Declaration.PropertyChanged then {} else nil,
         Parent = Parent,
         Target = nil,
         Instance = nil,
-    }
+    } :: any) :: Node
 
     table.insert(State.Nodes, Node)
 
@@ -229,9 +308,9 @@ const function Parse(State, Declaration, Parent)
 
     for _, Entry in ipairs(Declaration) do
         if Symbols.Is(Entry) then
-            const Kind = Entry.Kind
+            const What = Entry.Kind
 
-            if Kind == "Event" then
+            if What == "Event" then
                 local Event = Register(State, Entry.Name)
 
                 if not Event.Declared then
@@ -240,11 +319,11 @@ const function Parse(State, Declaration, Parent)
                 end
 
                 table.insert(Event.Bindings, { Node = Node, Callback = Entry.Callback })
-            elseif Kind == "Merge" then
+            elseif What == "Merge" then
                 local Event = Register(State, Entry.Name)
 
                 table.insert(Event.Bindings, { Node = Node, Callback = Entry.Callback })
-            elseif Kind == "Derive" then
+            elseif What == "Derive" then
                 local Event = Register(State, Entry.Name)
 
                 if Event.Compute then
@@ -253,15 +332,15 @@ const function Parse(State, Declaration, Parent)
 
                 Event.Compute = Entry.Callback
                 table.insert(State.Derived, Event)
-            elseif Kind == "Ready" then
+            elseif What == "Ready" then
                 table.insert(Node.Ready, Entry.Callback)
-            elseif Kind == "Receive" then
+            elseif What == "Receive" then
                 table.insert(Node.Receive, Entry.Callback)
-            elseif Kind == "Cleanup" then
+            elseif What == "Cleanup" then
                 table.insert(Node.Cleanup, Entry.Callback)
-            elseif Kind == "Draw" then
+            elseif What == "Draw" then
                 table.insert(Node.Draw, Entry.Callback)
-            elseif Kind == "Mount" then
+            elseif What == "Mount" then
                 Node.Target = Entry.Target
             end
         elseif type(Entry) == "table" then
@@ -272,21 +351,21 @@ const function Parse(State, Declaration, Parent)
     return Node
 end
 
-const Wired = {}
+const Wired: { [string]: { [string]: boolean } } = {}
 
-const function Take(Node): Instance
+const function Take(Node: Node): Instance
     const Kind = Node.Kind
 
     if Kind == "Class" then
-        return Instance.new(Node.Origin)
+        return Instance.new(Node.Origin :: string)
     end
 
     if Kind == "Clone" then
-        return Node.Origin:Clone()
+        return (Node.Origin :: Instance):Clone()
     end
 
     if Kind == "Adopt" then
-        return Node.Origin
+        return Node.Origin :: Instance
     end
 
     const Host = if Node.Parent then Node.Parent.Instance else nil
@@ -299,8 +378,9 @@ const function Take(Node): Instance
     return Found
 end
 
-const function Raise(State, Node)
+const function Raise(State: State, Node: Node)
     const Object = Take(Node)
+    const Members = (Object :: any) :: Types.Dynamic
     const ClassName = Object.ClassName
 
     Node.Instance = Object
@@ -326,16 +406,16 @@ const function Raise(State, Node)
         local Signal = Known[Key]
 
         if Signal == nil then
-            Signal = typeof(Object[Key]) == "RBXScriptSignal"
+            Signal = typeof(Members[Key]) == "RBXScriptSignal"
             Known[Key] = Signal
         end
 
         if Signal then
-            Pending[Slot + 1] = Object[Key]
+            Pending[Slot + 1] = Members[Key]
             Pending[Slot + 2] = Value
             Slot += 2
         else
-            Object[Key] = Value
+            Members[Key] = Value
         end
     end
 
@@ -354,7 +434,7 @@ const function Raise(State, Node)
                 error(`style "{Token.Style}" is not loaded on this scope`, 0)
             end
 
-            Object[Key] = Sheet:Get(Token.Field)
+            Members[Key] = Sheet:Get(Token.Field)
             Connections[#Connections + 1] = Sheet:Attach(Object, Key, Token.Field)
         end
     end
@@ -375,16 +455,38 @@ const function Raise(State, Node)
         end
     end
 
+    const Watched = Node.Watched
+
+    if not Watched then
+        return
+    end
+
+    table.clear(Watched)
+
+    local Seat = 0
+
     if Node.AttributeChanged then
         for Key, Callback in Node.AttributeChanged do
-            Pending[Slot + 1] = Object:GetAttributeChangedSignal(Key)
-            Pending[Slot + 2] = Callback
-            Slot += 2
+            Watched[Seat + 1] = Object:GetAttributeChangedSignal(Key)
+            Watched[Seat + 2] = Callback
+            Watched[Seat + 3] = Key
+            Watched[Seat + 4] = true
+            Seat += 4
+        end
+    end
+
+    if Node.PropertyChanged then
+        for Key, Callback in Node.PropertyChanged do
+            Watched[Seat + 1] = Object:GetPropertyChangedSignal(Key)
+            Watched[Seat + 2] = Callback
+            Watched[Seat + 3] = Key
+            Watched[Seat + 4] = false
+            Seat += 4
         end
     end
 end
 
-const function Build(State)
+const function Build(State: State)
     const Nodes = State.Nodes
 
     for Index = 1, #Nodes do
@@ -392,7 +494,7 @@ const function Build(State)
     end
 end
 
-const function Offer(Host, Pending: Instance, Source): Instance?
+const function Offer(Host: any, Pending: Instance, Source: any): Instance?
     const Other = Internal[Host]
 
     if not Other or not Other.Mounted then
@@ -404,7 +506,7 @@ const function Offer(Host, Pending: Instance, Source): Instance?
 
         if Object then
             for _, Callback in Node.Receive do
-                const Taken = Callback(Object, Pending, Source)
+                const Taken = Callback(Object, Other.Handle[1], Pending, Source)
 
                 if typeof(Taken) == "Instance" then
                     return Taken
@@ -416,8 +518,8 @@ const function Offer(Host, Pending: Instance, Source): Instance?
     return nil
 end
 
-const function Graft(State, Node, Target, Source): Instance?
-    const Pending = Node.Instance
+const function Graft(State: State, Node: Node, Target: any, Source: any): Instance?
+    const Pending: Instance? = Node.Instance
 
     if not Pending then
         return nil
@@ -447,7 +549,7 @@ const function Graft(State, Node, Target, Source): Instance?
     return nil
 end
 
-const function Resolve(State, Node, Source): Instance?
+const function Resolve(State: State, Node: Node, Source: any): Instance?
     local Target = Node.Target
 
     if typeof(Target) == "Instance" then
@@ -467,42 +569,66 @@ const function Resolve(State, Node, Source): Instance?
     return if Node.Parent then Node.Parent.Instance else nil
 end
 
-const function Attach(Node)
+const function Attach(State: State, Node: Node)
     for _, Child in Node.Children do
-        Attach(Child)
+        Attach(State, Child)
     end
 
     const Object = Node.Instance
     const Pending = Node.Pending
     const Connections = Node.Connections
+    const Handle = State.Handle
 
     for Index = 1, #Pending, 2 do
         const Callback = Pending[Index + 1]
 
         table.insert(
             Connections,
-            Pending[Index]:Connect(function(...)
-                Callback(Object, ...)
+            (Pending[Index] :: RBXScriptSignal):Connect(function(...)
+                Callback(Object, Handle[1], ...)
             end)
         )
     end
 
     table.clear(Pending)
+
+    const Watched = Node.Watched
+
+    if not Watched then
+        return
+    end
+
+    for Index = 1, #Watched, 4 do
+        const Callback = Watched[Index + 1]
+        const Key = Watched[Index + 2]
+        const Attribute = Watched[Index + 3]
+
+        table.insert(
+            Connections,
+            (Watched[Index] :: RBXScriptSignal):Connect(function()
+                Callback(Object, Handle[1], if Attribute then Object:GetAttribute(Key) else Object[Key])
+            end)
+        )
+    end
+
+    table.clear(Watched)
 end
 
-const function Paint(Node, Size: Vector2)
+const function Paint(State: State, Node: Node, Size: Vector2)
     for _, Child in Node.Children do
-        Paint(Child, Size)
+        Paint(State, Child, Size)
     end
+
+    const Owner = State.Handle[1]
 
     for _, Callback in Node.Draw do
-        Callback(Node.Instance, Size)
+        Callback(Node.Instance, Owner, Size)
     end
 end
 
-const function Observe(Node)
+const function Observe(State: State, Node: Node)
     for _, Child in Node.Children do
-        Observe(Child)
+        Observe(State, Child)
     end
 
     if #Node.Draw == 0 then
@@ -511,36 +637,41 @@ const function Observe(Node)
 
     const Object = Node.Instance
     const Draw = Node.Draw
+    const Handle = State.Handle
 
     table.insert(
         Node.Connections,
         Viewport.Listen(function(Size: Vector2)
+            const Owner = Handle[1]
+
             for _, Callback in Draw do
-                Callback(Object, Size)
+                Callback(Object, Owner, Size)
             end
         end)
     )
 end
 
-local function Ready(Node)
+local function Ready(State: State, Node: Node)
     for _, Child in Node.Children do
-        Ready(Child)
+        Ready(State, Child)
     end
 
     if #Node.Ready == 0 then
         return
     end
 
-    const Later = function(Callback: (Instance) -> ())
+    const Later = function(Callback: (Instance, any) -> ())
         table.insert(Node.Transient, Callback)
     end
 
+    const Owner = State.Handle[1]
+
     for _, Callback in Node.Ready do
-        Callback(Node.Instance, Later)
+        Callback(Node.Instance, Owner, Later)
     end
 end
 
-const function Recompute(State, Event, Silent: boolean?)
+const function Recompute(State: State, Event: Event, Silent: boolean?)
     if Event.Running then
         error(`Vision value "{Event.Name}" depends on itself`, 0)
     end
@@ -599,7 +730,7 @@ const function Recompute(State, Event, Silent: boolean?)
     return Result
 end
 
-const function Settle(State)
+const function Settle(State: State)
     local Derived = State.Derived
 
     if #Derived == 0 then
@@ -625,7 +756,7 @@ const function Settle(State)
     end
 end
 
-const function Activate(State)
+const function Activate(State: State)
     for _, Event in State.Events do
         local Bindings = Event.Bindings
         local Targets = Event.Targets
@@ -643,36 +774,40 @@ const function Activate(State)
     end
 end
 
-const function Deactivate(State)
+const function Deactivate(State: State)
     for _, Event in State.Events do
         table.clear(Event.Targets)
         table.clear(Event.Handlers)
     end
 end
 
-const function Teardown(Node)
+const function Teardown(State: State, Node: Node)
     for _, Child in Node.Children do
-        Teardown(Child)
+        Teardown(State, Child)
     end
 
     if not Node.Instance then
         return
     end
 
+    const Owner = State.Handle[1]
+
     for Index = #Node.Transient, 1, -1 do
-        Node.Transient[Index](Node.Instance)
+        Node.Transient[Index](Node.Instance, Owner)
     end
 
     table.clear(Node.Transient)
 
     for Index = #Node.Cleanup, 1, -1 do
-        Node.Cleanup[Index](Node.Instance)
+        Node.Cleanup[Index](Node.Instance, Owner)
     end
 end
 
-const function Finish(State, Source)
+const function Finish(State: State, Source: any)
     Activate(State)
     Settle(State)
+
+    const Owner = State.Handle[1]
 
     for _, Event in State.Events do
         local Targets = Event.Targets
@@ -680,19 +815,19 @@ const function Finish(State, Source)
         local Value = Event.Value
 
         for Index = 1, #Handlers do
-            Handlers[Index](Targets[Index], Value)
+            Handlers[Index](Targets[Index], Owner, Value)
         end
     end
 
-    Paint(State.Root, Viewport.Current())
+    Paint(State, State.Root, Viewport.Current())
 
     if State.Root.Owned or State.Root.Target ~= nil then
         State.Root.Instance.Parent = Resolve(State, State.Root, Source)
     end
 
-    Ready(State.Root)
-    Attach(State.Root)
-    Observe(State.Root)
+    Ready(State, State.Root)
+    Attach(State, State.Root)
+    Observe(State, State.Root)
 end
 
 function Methods:Mount()
@@ -737,7 +872,7 @@ function Methods:MountAsync(Budget: number?)
     const Mark = State.Generation
     const Slice = Budget or 0.002
     const Nodes = State.Nodes
-    const Built = {}
+    const Built: { Instance } = {}
 
     local Clock = os.clock()
 
@@ -806,7 +941,7 @@ function Methods:Cleanup()
     State.Mounted = false
     State.Generation += 1
 
-    Teardown(State.Root)
+    Teardown(State, State.Root)
 
     const Runtime = State.Scope.Runtime
     const Linked = next(Runtime.Claims) ~= nil
@@ -822,6 +957,10 @@ function Methods:Cleanup()
 
         table.clear(Node.Connections)
         table.clear(Node.Pending)
+
+        if Node.Watched then
+            table.clear(Node.Watched)
+        end
 
         if Linked and Node.Instance then
             Runtime:CancelOwner(Node.Instance)
@@ -871,10 +1010,10 @@ function Capture.Is(Value: any): boolean
     return type(Value) == "table" and Internal[Value] ~= nil
 end
 
-function Capture.new(Scope, Declaration)
-    local Vision = setmetatable({}, Meta)
+function Capture.new(Scope: any, Declaration: any)
+    local Vision: Types.Vision = setmetatable({}, Meta) :: any
 
-    const State = {
+    const State: State = ({
         Scope = Scope,
         Vision = Vision,
         Declaration = Declaration,
@@ -886,7 +1025,7 @@ function Capture.new(Scope, Declaration)
         Root = nil,
         Mounted = false,
         Generation = 0,
-    }
+    } :: any) :: State
 
     State.Recompute = function(Event)
         Recompute(State, Event)

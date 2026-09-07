@@ -1,3 +1,5 @@
+--!strict
+
 const TweenService = game:GetService("TweenService")
 
 const Interpolate = {}
@@ -88,7 +90,7 @@ local Lerps: { [string]: (any, any, number) -> any } = {
             return if Alpha >= 0.5 then Goal else Start
         end
 
-        const Keypoints = table.create(#From)
+        const Keypoints = table.create(#From) :: { NumberSequenceKeypoint }
 
         for Index, Point in From do
             const Other = To[Index]
@@ -111,7 +113,7 @@ local Lerps: { [string]: (any, any, number) -> any } = {
             return if Alpha >= 0.5 then Goal else Start
         end
 
-        const Keypoints = table.create(#From)
+        const Keypoints = table.create(#From) :: { ColorSequenceKeypoint }
 
         for Index, Point in From do
             const Other = To[Index]

@@ -72,7 +72,7 @@ place.
 local Card = Scope:Capture({
     ClassName = "Frame",
     mount(ListContainer),
-    event("Title", "Untitled", function(self, Value)
+    event("Title", "Untitled", function(self, _, Value)
         self.Name = Value
     end),
 })

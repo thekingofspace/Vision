@@ -90,7 +90,7 @@ place.</p>
 <pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Card = Scope:Capture({
     ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
     mount(ListContainer),
-    event(<span class="hljs-string">&quot;Title&quot;</span>, <span class="hljs-string">&quot;Untitled&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, Value)</span></span>
+    event(<span class="hljs-string">&quot;Title&quot;</span>, <span class="hljs-string">&quot;Untitled&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, Value)</span></span>
         <span class="hljs-built_in">self</span>.Name = Value
     <span class="hljs-keyword">end</span>),
 })

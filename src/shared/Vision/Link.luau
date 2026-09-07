@@ -1,6 +1,76 @@
+--!strict
+
 const RunService = game:GetService("RunService")
 
 const Interpolate = require(script.Parent.Interpolate)
+
+export type Link = {
+    Runtime: any,
+    Update: (Link, number) -> boolean,
+    Elapsed: number,
+    Cycle: number,
+    Finished: boolean,
+    Claims: any,
+    Threads: any,
+    Watchers: any,
+
+    Apply: any,
+    Channels: any,
+    Fire: any,
+    Info: any,
+    Marks: any,
+    Object: any,
+    Owner: any,
+    Peek: any,
+    Put: any,
+    Show: any,
+    Staged: number,
+    Tracks: any,
+
+    Count: number,
+    Cursor: number,
+    Damping: number,
+    Index: number,
+    Length: number,
+    Omega: number,
+    Rate: number,
+    RestageTime: number,
+    Speed: number,
+
+    Looped: boolean,
+    Primed: boolean,
+    Restaging: boolean,
+    SmoothLoop: boolean,
+
+    Seek: (Link, number) -> (),
+    Step: (Link, number) -> (),
+    Cancel: (Link) -> (),
+    Await: (Link) -> (),
+}
+
+export type Slots = { [string]: Link }
+
+export type Runtime = {
+    Links: { Link },
+    Buffer: { Link },
+    Claims: { [any]: Slots },
+    Connection: RBXScriptConnection?,
+
+    Claim: (Runtime, any, string, Link) -> (),
+    Unclaim: (Runtime, any, string, Link) -> (),
+    CancelOwner: (Runtime, any) -> (),
+    Add: (Runtime, Link) -> (),
+    Remove: (Runtime, Link) -> (),
+    Start: (Runtime) -> (),
+    Stop: (Runtime) -> (),
+    Step: (Runtime, number) -> (),
+    Release: (Runtime) -> (),
+    Create: (Runtime, TweenInfo, (number, number) -> (), { { any } }) -> Link,
+    Velocity: (Runtime, any, string) -> { number }?,
+    Flip: (Runtime, Instance, number, number, (number) -> ()) -> Link,
+    Play: (Runtime, any, (string) -> any, (string, any) -> (), { any }, { any }, number, (string, { any }) -> (), number?) -> Link,
+    Solve: (Runtime, number, number, { any }) -> Link,
+}
 
 const Link = {}
 Link.__index = Link
@@ -134,14 +204,14 @@ const function Blank(Tracks: { any })
     end
 end
 
-const function Rewind(Self)
+const function Rewind(Self: Link)
     Self.Elapsed = if Self.Length > 0 then Self.Elapsed % Self.Length else 0
     Self.Cursor = 1
 
     Blank(Self.Tracks)
 end
 
-const function Restage(Self)
+const function Restage(Self: Link)
     const Peek = Self.Peek
     const Span = math.max(Self.RestageTime, 1e-4)
 
@@ -164,7 +234,7 @@ const function Restage(Self)
     end
 end
 
-const function Timeline(Self, DeltaTime: number): boolean
+const function Timeline(Self: Link, DeltaTime: number): boolean
     const Tick = DeltaTime * Self.Speed
 
     if Self.Restaging then
@@ -297,7 +367,7 @@ const function Timeline(Self, DeltaTime: number): boolean
     return Resting and not Fresh
 end
 
-const function Flip(Self, DeltaTime: number): boolean
+const function Flip(Self: Link, DeltaTime: number): boolean
     Self.Elapsed += DeltaTime * Self.Speed
 
     const Count = Self.Count
@@ -323,7 +393,7 @@ const function Flip(Self, DeltaTime: number): boolean
     return Done
 end
 
-const function Tween(Self, DeltaTime: number): boolean
+const function Tween(Self: Link, DeltaTime: number): boolean
     Self.Elapsed += DeltaTime
 
     const Info = Self.Info
@@ -347,7 +417,7 @@ const function Tween(Self, DeltaTime: number): boolean
     return false
 end
 
-const function Physics(Self, DeltaTime: number): boolean
+const function Physics(Self: Link, DeltaTime: number): boolean
     const Carry, Push, Pull, Keep = Coefficients(Self.Omega, Self.Damping, DeltaTime)
     local Settled = true
 
@@ -394,8 +464,8 @@ const function Physics(Self, DeltaTime: number): boolean
     return Settled
 end
 
-function Link.new(Owner, Update)
-    return setmetatable({
+function Link.new(Owner: any, Update: any): Link
+    return (setmetatable({
         Runtime = Owner,
         Update = Update,
         Elapsed = 0,
@@ -404,10 +474,10 @@ function Link.new(Owner, Update)
         Claims = {},
         Threads = {},
         Watchers = {},
-    }, Link)
+    }, Link) :: any) :: Link
 end
 
-function Link:Seek(Time: number)
+function Link.Seek(self: Link, Time: number)
     if self.Finished or not self.Tracks then
         return
     end
@@ -433,7 +503,7 @@ function Link:Seek(Time: number)
     Timeline(self, 0)
 end
 
-function Link:Step(DeltaTime: number)
+function Link.Step(self: Link, DeltaTime: number)
     if self.Finished then
         return
     end
@@ -443,7 +513,7 @@ function Link:Step(DeltaTime: number)
     end
 end
 
-function Link:Cancel()
+function Link.Cancel(self: Link)
     if self.Finished then
         return
     end
@@ -487,7 +557,7 @@ function Link:Cancel()
     end
 end
 
-function Link:Await()
+function Link.Await(self: Link)
     if self.Finished then
         return
     end
@@ -496,16 +566,16 @@ function Link:Await()
     coroutine.yield()
 end
 
-function Runtime.new()
-    return setmetatable({
+function Runtime.new(): Runtime
+    return (setmetatable({
         Links = {},
         Buffer = {},
         Claims = setmetatable({}, { __mode = "k" }),
         Connection = nil,
-    }, Runtime)
+    }, Runtime) :: any) :: Runtime
 end
 
-function Runtime:Claim(Owner: any, Name: string, Target)
+function Runtime.Claim(self: Runtime, Owner: any, Name: string, Target: Link)
     local Slots = self.Claims[Owner]
 
     if not Slots then
@@ -529,7 +599,7 @@ function Runtime:Claim(Owner: any, Name: string, Target)
     table.insert(Target.Claims, { Owner, Name })
 end
 
-function Runtime:Unclaim(Owner: any, Name: string, Target)
+function Runtime.Unclaim(self: Runtime, Owner: any, Name: string, Target: Link)
     local Slots = self.Claims[Owner]
 
     if not Slots then
@@ -545,7 +615,7 @@ function Runtime:Unclaim(Owner: any, Name: string, Target)
     end
 end
 
-function Runtime:CancelOwner(Owner: any)
+function Runtime.CancelOwner(self: Runtime, Owner: any)
     local Slots = self.Claims[Owner]
 
     if not Slots then
@@ -563,12 +633,12 @@ function Runtime:CancelOwner(Owner: any)
     end
 end
 
-function Runtime:Add(Target)
+function Runtime.Add(self: Runtime, Target)
     table.insert(self.Links, Target)
     self:Start()
 end
 
-function Runtime:Remove(Target)
+function Runtime.Remove(self: Runtime, Target)
     const Index = table.find(self.Links, Target)
 
     if Index then
@@ -580,7 +650,7 @@ function Runtime:Remove(Target)
     end
 end
 
-function Runtime:Start()
+function Runtime.Start(self: Runtime)
     if self.Connection then
         return
     end
@@ -592,7 +662,7 @@ function Runtime:Start()
     end)
 end
 
-function Runtime:Stop()
+function Runtime.Stop(self: Runtime)
     if not self.Connection then
         return
     end
@@ -601,7 +671,7 @@ function Runtime:Stop()
     self.Connection = nil
 end
 
-function Runtime:Step(DeltaTime: number)
+function Runtime.Step(self: Runtime, DeltaTime: number)
     const Links = self.Links
     const Count = #Links
 
@@ -624,7 +694,7 @@ function Runtime:Step(DeltaTime: number)
     end
 end
 
-function Runtime:Release()
+function Runtime.Release(self: Runtime)
     for _, Target in table.clone(self.Links) do
         Target:Cancel()
     end
@@ -633,8 +703,8 @@ function Runtime:Release()
     self:Stop()
 end
 
-const function Guard(Target, Owners)
-    const Seen = {}
+const function Guard(Target: Link, Owners: { unknown })
+    const Seen: { [Instance]: boolean } = {}
 
     for _, Owner in Owners do
         if typeof(Owner) == "Instance" and not Seen[Owner] then
@@ -650,7 +720,7 @@ const function Guard(Target, Owners)
     end
 end
 
-function Runtime:Create(Info: TweenInfo, Apply: (number, number) -> (), Slots: { { any } })
+function Runtime.Create(self: Runtime, Info: TweenInfo, Apply: (number, number) -> (), Slots: { { any } })
     const Target = Link.new(self, Tween)
 
     Target.Info = Info
@@ -674,7 +744,7 @@ function Runtime:Create(Info: TweenInfo, Apply: (number, number) -> (), Slots: {
     return Target
 end
 
-function Runtime:Velocity(Owner: any, Name: string): { number }?
+function Runtime.Velocity(self: Runtime, Owner: any, Name: string): { number }?
     local Slots = self.Claims[Owner]
 
     if not Slots then
@@ -696,7 +766,7 @@ function Runtime:Velocity(Owner: any, Name: string): { number }?
     return nil
 end
 
-function Runtime:Flip(Object: Instance, Count: number, Rate: number, Show: (number) -> ())
+function Runtime.Flip(self: Runtime, Object: Instance, Count: number, Rate: number, Show: (number) -> ())
     const Target = Link.new(self, Flip)
 
     Target.Object = Object
@@ -719,7 +789,7 @@ function Runtime:Flip(Object: Instance, Count: number, Rate: number, Show: (numb
     return Target
 end
 
-function Runtime:Play(Owner: any, Peek: (string) -> any, Put: (string, any) -> (), Tracks: { any }, Marks: { any }, Length: number, Fire: (string, { any }) -> (), Start: number?)
+function Runtime.Play(self: Runtime, Owner: any, Peek: (string) -> any, Put: (string, any) -> (), Tracks: { any }, Marks: { any }, Length: number, Fire: (string, { any }) -> (), Start: number?)
     const Target = Link.new(self, Timeline)
 
     Target.Owner = Owner
@@ -759,7 +829,7 @@ function Runtime:Play(Owner: any, Peek: (string) -> any, Put: (string, any) -> (
     return Target
 end
 
-function Runtime:Solve(Period: number, Damping: number, Channels: { any })
+function Runtime.Solve(self: Runtime, Period: number, Damping: number, Channels: { any })
     const Target = Link.new(self, Physics)
 
     Target.Omega = 2 * math.pi / math.max(Period, 1e-4)

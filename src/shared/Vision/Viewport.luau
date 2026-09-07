@@ -1,12 +1,16 @@
+--!strict
+
 const Workspace = game:GetService("Workspace")
 
 const Viewport = {}
 
-const Listeners = setmetatable({}, { __mode = "k" })
+type Watcher = (Vector2) -> ()
+
+const Listeners: { [Watcher]: boolean } = setmetatable({}, { __mode = "k" }) :: any
 
 local Size = Vector2.zero
-local Bound
-local Watching
+local Bound: RBXScriptConnection? = nil
+local Watching: RBXScriptConnection? = nil
 
 const function Measure(): Vector2
     const Camera = Workspace.CurrentCamera

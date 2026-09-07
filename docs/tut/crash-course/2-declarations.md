@@ -53,8 +53,18 @@ than assigned:
 which is which - Vision checks what the member actually is.
 
 Notice the callback receives `self`. **Every** callback in Vision gets the
-instance as its first argument, so you can edit it without closing over a
-variable.
+instance first and the vision that built it second, so you can edit the
+instance and reach the vision's values without closing over either.
+
+```lua
+Activated = function(self, Panel)
+    Panel.Count(Panel.Count() + 1)
+end,
+```
+
+That second argument matters more than it looks: while you are writing a
+declaration, the vision it produces does not exist yet, so there is nothing to
+close over. This is how you get at it.
 
 ## Attributes and tags
 
@@ -66,15 +76,16 @@ variable.
     tags = { "Managed" },
 
     AttributeChanged = {
-        Role = function(self)
-            print("role is now", self:GetAttribute("Role"))
+        Role = function(self, _, Role)
+            print("role is now", Role)
         end,
     },
 }
 ```
 
 `AttributeChanged` connects after the declared attributes are applied, so
-setting up initial state does not fire your handler.
+setting up initial state does not fire your handler. The new value arrives as
+the third argument, so you rarely need `GetAttribute` inside the handler.
 
 ## Mounting somewhere else
 

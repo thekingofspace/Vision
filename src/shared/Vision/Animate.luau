@@ -1,32 +1,76 @@
+--!strict
+
 const Symbols = require(script.Parent.Symbols)
 const Capture = require(script.Parent.Capture)
+const Types = require(script.Parent.Types)
 
-const Methods = {}
+type Store = Types.Dynamic
 
-const Tuning = { Looped = "boolean", SmoothLoop = "boolean", Speed = "number", RestageTime = "number" }
+type Listener = (any, ...any) -> ()
+
+type Binds = { [string]: { Listener } }
+
+type Peek = (Key: string) -> any
+
+type Put = (Key: string, Value: any) -> ()
+
+type Fire = (Name: string, Args: { any }) -> ()
+
+type Link = {
+    Elapsed: number,
+    Finished: boolean,
+    Looped: boolean,
+    RestageTime: number,
+    SmoothLoop: boolean,
+    Speed: number,
+    Await: (self: Link) -> (),
+    Cancel: (self: Link) -> (),
+    Seek: (self: Link, Time: number) -> (),
+}
+
+type Runtime = {
+    Play: (
+        self: Runtime,
+        Target: any,
+        Peek: Peek,
+        Put: Put,
+        Tracks: { any },
+        Marks: { any },
+        Length: number,
+        Fire: Fire,
+        Start: number?
+    ) -> Link,
+}
+
+type Scope = { Runtime: Runtime }
+
+const Methods = {} :: Store
+
+const Tuning: { [string]: string } =
+    { Looped = "boolean", SmoothLoop = "boolean", Speed = "number", RestageTime = "number" }
 
 const Animation = {
-    __index = function(self, Key: string)
+    __index = function(self: any, Key: string): any
         if Key == "Finished" then
-            const Link = rawget(self, "Link")
+            const Link = rawget(self, "Link") :: Link?
 
             return Link == nil or Link.Finished
         end
 
         if Key == "Time" then
-            const Link = rawget(self, "Link")
+            const Link = rawget(self, "Link") :: Link?
 
-            return if Link then Link.Elapsed else rawget(self, "Saved").Time
+            return if Link then Link.Elapsed else (rawget(self, "Saved") :: Store).Time
         end
 
         if Tuning[Key] then
-            return rawget(self, "Saved")[Key]
+            return (rawget(self, "Saved") :: Store)[Key]
         end
 
         return Methods[Key]
     end,
 
-    __newindex = function(self, Key: string, Value: any)
+    __newindex = function(self: any, Key: string, Value: any)
         const Want = Tuning[Key]
 
         if not Want then
@@ -47,9 +91,11 @@ const Animation = {
             error("an animation's RestageTime cannot be negative", 0)
         end
 
-        rawget(self, "Saved")[Key] = Value
+        const Saved = rawget(self, "Saved") :: Store
 
-        const Link = rawget(self, "Link")
+        Saved[Key] = Value
+
+        const Link = rawget(self, "Link") :: any
 
         if Link and not Link.Finished then
             Link[Key] = Value
@@ -57,7 +103,7 @@ const Animation = {
     end,
 }
 
-const function Order(Left, Right): boolean
+const function Order(Left: any, Right: any): boolean
     return Left.Time < Right.Time
 end
 
@@ -134,18 +180,20 @@ const function Reach(Target: any, Tracks: { any })
         error("an animation needs an instance or a vision to play on", 0)
     end
 
+    const Fields = (Target :: any) :: Types.Dynamic
+
     return function(Key: string): any
-        return Target[Key]
+        return Fields[Key]
     end, function(Key: string, Value: any)
-        Target[Key] = Value
+        Fields[Key] = Value
     end
 end
 
-function Animation.new(Scope, Keyframes: { any }, Target: any)
+function Animation.new(Scope: any, Keyframes: { any }, Target: any)
     const Tracks, Marks, Length = Read(Keyframes)
     const Peek, Put = Reach(Target, Tracks)
 
-    const Self = setmetatable({}, Animation)
+    const Self = setmetatable({}, Animation) :: any
 
     rawset(Self, "Saved", { Looped = false, SmoothLoop = false, Speed = 1, RestageTime = 0.25, Time = 0 })
     rawset(Self, "Binds", {})
@@ -158,7 +206,7 @@ function Animation.new(Scope, Keyframes: { any }, Target: any)
     rawset(Self, "Put", Put)
     rawset(Self, "Link", nil)
 
-    const Binds = rawget(Self, "Binds")
+    const Binds = rawget(Self, "Binds") :: Binds
 
     rawset(Self, "Fire", function(Name: string, Args: { any })
         const Listeners = Binds[Name]
@@ -176,19 +224,19 @@ function Animation.new(Scope, Keyframes: { any }, Target: any)
 end
 
 function Methods:Play()
-    const Live = rawget(self, "Link")
+    const Live = rawget(self, "Link") :: Link?
 
     if Live and not Live.Finished then
         return self
     end
 
-    const Scope = rawget(self, "Scope")
+    const Scope = rawget(self, "Scope") :: Scope?
 
     if not Scope then
         return self
     end
 
-    const Saved = rawget(self, "Saved")
+    const Saved = rawget(self, "Saved") :: Store
 
     if Live then
         Saved.Time = Live.Elapsed
@@ -196,12 +244,12 @@ function Methods:Play()
 
     const Link = Scope.Runtime:Play(
         rawget(self, "Target"),
-        rawget(self, "Peek"),
-        rawget(self, "Put"),
-        rawget(self, "Tracks"),
-        rawget(self, "Marks"),
-        rawget(self, "Length"),
-        rawget(self, "Fire"),
+        rawget(self, "Peek") :: Peek,
+        rawget(self, "Put") :: Put,
+        rawget(self, "Tracks") :: { any },
+        rawget(self, "Marks") :: { any },
+        rawget(self, "Length") :: number,
+        rawget(self, "Fire") :: Fire,
         Saved.Time
     )
 
@@ -220,7 +268,7 @@ function Methods:Bind(Name: string, Callback: (any, ...any) -> ())
         error("an animation event needs a name", 0)
     end
 
-    const Binds = rawget(self, "Binds")
+    const Binds = rawget(self, "Binds") :: Binds?
 
     if not Binds then
         return { Disconnect = function() end }
@@ -251,11 +299,12 @@ function Methods:Jump(Time: number)
         error("Jump needs a time in seconds", 0)
     end
 
-    const Spot = math.clamp(Time, 0, rawget(self, "Length") or 0)
+    const Spot = math.clamp(Time, 0, (rawget(self, "Length") :: number?) or 0)
+    const Saved = rawget(self, "Saved") :: Store
 
-    rawget(self, "Saved").Time = Spot
+    Saved.Time = Spot
 
-    const Link = rawget(self, "Link")
+    const Link = rawget(self, "Link") :: Link?
 
     if Link then
         if Link.Finished then
@@ -269,7 +318,7 @@ function Methods:Jump(Time: number)
 end
 
 function Methods:Await()
-    const Link = rawget(self, "Link")
+    const Link = rawget(self, "Link") :: Link?
 
     if Link and not Link.Finished then
         Link:Await()
@@ -277,11 +326,13 @@ function Methods:Await()
 end
 
 function Methods:Stop()
-    const Link = rawget(self, "Link")
+    const Link = rawget(self, "Link") :: Link?
 
     if Link then
         if not Link.Finished then
-            rawget(self, "Saved").Time = Link.Elapsed
+            const Saved = rawget(self, "Saved") :: Store
+
+            Saved.Time = Link.Elapsed
         end
 
         Link:Cancel()
@@ -295,7 +346,7 @@ end
 function Methods:Destroy()
     self:Stop()
 
-    const Binds = rawget(self, "Binds")
+    const Binds = rawget(self, "Binds") :: Binds?
 
     if Binds then
         table.clear(Binds)
