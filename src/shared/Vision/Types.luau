@@ -7,8 +7,9 @@ export type Vision = {
     Mount:(self:Vision) -> (),
     Open:(self:Vision) -> Instance,
     MountAsync:(self:Vision, Budget:number?) -> (),
-    Clone:(self:Vision) -> Vision
-} & {[string]:CapFunc<any>}
+    Clone:(self:Vision) -> Vision,
+    [string]:CapFunc<any>
+}
 
 export type Marker = {
     Kind:string,
