@@ -3,6 +3,7 @@
 const Symbols = require(script.Parent.Symbols)
 
 const Types = require(script.Parent.Types)
+const Classes = require(script.Parent.Classes)
 
 const Token = Symbols.Token
 const Viewport = require(script.Parent.Viewport)
@@ -271,6 +272,14 @@ const function Parse(State: State, Declaration: any, Parent: Node?): Node
         error("Declaration requires a ClassName", 0)
     end
 
+    const Custom = if Sources == 0 then Classes.Find(Origin) else nil
+    local Made = nil
+
+    if Custom then
+        Made = Classes.Made(Custom, Declaration)
+        Origin = Custom.Base
+    end
+
     const Node = ({
         Kind = Kind,
         Origin = Origin,
@@ -307,6 +316,10 @@ const function Parse(State: State, Declaration: any, Parent: Node?): Node
             continue
         end
 
+        if Custom and Custom.Names[Key] then
+            continue
+        end
+
         if type(Value) == "table" and getmetatable(Value) == Token then
             if not Painted then
                 Painted = {}
@@ -335,6 +348,48 @@ const function Parse(State: State, Declaration: any, Parent: Node?): Node
 
     if type(Name) == "string" then
         State.Mounts[Name] = Node
+    end
+
+    if Custom then
+        const Props = Made :: any
+
+        for _, Entry in ipairs(Declaration) do
+            if Symbols.Is(Entry) and Entry.Kind == "Event" then
+                const Early = Register(State, Entry.Name)
+
+                if not Early.Declared then
+                    Early.Declared = true
+                    Early.Value = Entry.Initial
+                end
+            end
+        end
+
+        for _, Pair in Classes.Bound(Custom, Declaration) do
+            const Key = Pair[1]
+            const Token = Pair[2]
+            const Watch = Classes.Watch(Custom, Key)
+
+            if not Watch then
+                error(`class "{Custom.Name}" cannot follow a value on "{Key}", it does not watch that property`, 0)
+            end
+
+            const Event = Register(State, Token.Name)
+
+            if not Event.Declared and Token.Initial ~= nil then
+                Event.Declared = true
+                Event.Value = Token.Initial
+            end
+
+            if Event.Value ~= nil then
+                Props[Key] = Event.Value
+            end
+
+            table.insert(Event.Bindings, { Node = Node, Callback = Watch })
+        end
+
+        for _, Inner in Classes.Build(Custom, Props) do
+            table.insert(Node.Children, Parse(State, Inner, Node))
+        end
     end
 
     for _, Entry in ipairs(Declaration) do

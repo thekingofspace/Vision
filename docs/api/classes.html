@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#4a54d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)">
+<title>Classes | Vision</title>
+<meta name="description" content="Existence Begins With Perception.">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="nav">
+<a class="brand" href="../index.html">
+<img src="../assets/logo.svg" alt="" width="26" height="26">
+<span>Vision</span>
+</a>
+<nav class="links">
+<a href="../index.html">Home</a>
+<a href="../tut/crash-course/1-introduction.html">Tutorials</a>
+<a href="./declarations.html">API</a>
+<a href="../design.html">Design</a>
+<a href="../mig/index.html">Migrating</a>
+<a href="../comparison.html">Comparison</a>
+<a href="https://github.com/thekingofspace/Vision">GitHub</a>
+</nav>
+</header>
+<div class="shell">
+<aside class="sidebar">
+<p class="group-title">API</p>
+<div class="items">
+<a href="./declarations.html">Declarations</a>
+<a href="./keywords.html">Keywords</a>
+<a href="./scope.html">Scope</a>
+<a href="./style.html">Style</a>
+<a href="./vision.html">Vision</a>
+<a href="./animation.html">Animation</a>
+<a href="./timeline.html">Timeline</a>
+<a href="./sprites.html">Sprites</a>
+<a class="active" href="./classes.html">Classes</a>
+<a href="./tools.html">Tools</a>
+</div>
+</aside>
+<main class="content">
+<h1 id="classes"><a class="anchor" href="#classes">#</a>Classes</h1>
+<p>A custom class is a name you can put in <code>ClassName</code> that Vision resolves to a
+real instance plus a tree of its own.</p>
+<pre class="code"><code class="hljs">Vision.class(<span class="hljs-string">&quot;Chip&quot;</span>, {
+    Base = <span class="hljs-string">&quot;Frame&quot;</span>,
+
+    Properties = { Image = <span class="hljs-string">&quot;&quot;</span>, Text = <span class="hljs-string">&quot;&quot;</span> },
+
+    Construct = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Made)</span></span>
+        <span class="hljs-keyword">return</span> {
+            { ClassName = <span class="hljs-string">&quot;ImageLabel&quot;</span>, Name = <span class="hljs-string">&quot;Icon&quot;</span>, Image = Made.Image },
+            { ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>, Name = <span class="hljs-string">&quot;Label&quot;</span>, Text = Made.Text },
+        }
+    <span class="hljs-keyword">end</span>,
+
+    Changed = {
+        Text = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(self, _, Value)</span></span>
+            <span class="hljs-built_in">self</span>:FindFirstChild(<span class="hljs-string">&quot;Label&quot;</span>).Text = Value
+        <span class="hljs-keyword">end</span>,
+    },
+})</code></pre>
+<pre class="code"><code class="hljs">Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;Chip&quot;</span>,
+    Size = UDim2.fromOffset(<span class="hljs-number">200</span>, <span class="hljs-number">32</span>),
+
+    Image = <span class="hljs-string">&quot;rbxassetid://100&quot;</span>,
+    Text = <span class="hljs-string">&quot;hello&quot;</span>,
+})</code></pre>
+<p>Every creation checks the registry first. A <code>ClassName</code> that is registered
+builds through the class; anything else goes straight to <code>Instance.new</code> as
+before, so nothing changes for declarations that do not use one.</p>
+<h2 id="the-definition"><a class="anchor" href="#the-definition">#</a>The definition</h2>
+<pre class="code"><code class="hljs">Vision.class(Name: <span class="hljs-built_in">string</span>, Definition) -&gt; <span class="hljs-built_in">string</span></code></pre>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>what it is</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Base</code></td>
+<td>required, the real <code>ClassName</code> the class is built on</td>
+</tr>
+<tr>
+<td><code>Construct</code></td>
+<td>required, a function taking the resolved properties and returning a declaration</td>
+</tr>
+<tr>
+<td><code>Properties</code></td>
+<td>a map of custom property names to <strong>default values</strong></td>
+</tr>
+<tr>
+<td><code>Changed</code></td>
+<td>a map of property names to callbacks, run when a bound value moves</td>
+</tr>
+</tbody></table>
+<p><code>Construct</code> may return one declaration, or a table whose array part is a list
+of them. Both of these are fine:</p>
+<pre class="code"><code class="hljs">Construct = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Made)</span></span>
+    <span class="hljs-keyword">return</span> { ClassName = <span class="hljs-string">&quot;UICorner&quot;</span>, CornerRadius = UDim.new(<span class="hljs-number">0</span>, <span class="hljs-number">4</span>) }
+<span class="hljs-keyword">end</span></code></pre>
+<pre class="code"><code class="hljs">Construct = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(Made)</span></span>
+    <span class="hljs-keyword">return</span> {
+        { ClassName = <span class="hljs-string">&quot;UIListLayout&quot;</span> },
+        { ClassName = <span class="hljs-string">&quot;TextLabel&quot;</span>, Text = Made.Text },
+    }
+<span class="hljs-keyword">end</span></code></pre>
+<p>What it returns becomes children of the instance, built before any children
+you declared yourself.</p>
+<h2 id="custom-properties"><a class="anchor" href="#custom-properties">#</a>Custom properties</h2>
+<p>A key that matches one of the class&#39;s <code>Properties</code> is <strong>not</strong> written to the
+instance. It is collected, defaulted, and handed to <code>Construct</code> as <code>Made</code>.</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;Chip&quot;</span>,
+
+    Size = UDim2.fromOffset(<span class="hljs-number">200</span>, <span class="hljs-number">32</span>),   <span class="hljs-comment">-- a real Frame property, assigned</span>
+    Text = <span class="hljs-string">&quot;hello&quot;</span>,                     <span class="hljs-comment">-- a custom property, given to Construct</span>
+}</code></pre>
+<p>They are not properties and they are not attributes. Nothing about the class
+is written onto the instance, so <code>Body.Text</code> and <code>Body:GetAttribute(&quot;Text&quot;)</code>
+are both nil. The class&#39;s own tree is where the value ended up.</p>
+<p>Every property needs a default. Leave one out of a declaration and the
+default is what <code>Construct</code> sees.</p>
+<h2 id="changing-one-afterwards"><a class="anchor" href="#changing-one-afterwards">#</a>Changing one afterwards</h2>
+<p>Bind it to a value with <a href="./keywords.html#fromevent">fromEvent</a>. The class&#39;s
+<code>Changed</code> callback for that property runs on every write, with the usual
+<code>(instance, vision, value)</code>:</p>
+<pre class="code"><code class="hljs">Scope:Capture({
+    ClassName = <span class="hljs-string">&quot;Frame&quot;</span>,
+
+    event(<span class="hljs-string">&quot;Word&quot;</span>, <span class="hljs-string">&quot;one&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span> <span class="hljs-keyword">end</span>),
+
+    { ClassName = <span class="hljs-string">&quot;Chip&quot;</span>, Text = fromEvent(<span class="hljs-string">&quot;Word&quot;</span>) },
+})</code></pre>
+<p><code>Interface.Word(&quot;two&quot;)</code> runs <code>Chip</code>&#39;s <code>Changed.Text</code> against that node. Any
+number of nodes can follow the same value, and one write moves all of them.</p>
+<p>The constructor sees the value too. <code>Construct</code> is handed the value&#39;s current
+setting rather than the property default, so the first build is already
+correct rather than being corrected a moment later.</p>
+<p>Binding a property the class does not watch is an error, because nothing
+would happen:</p>
+<pre class="code"><code class="hljs">class "Chip" cannot follow a value on "TextSize", it does not watch that property</code></pre>
+<h2 id="rules"><a class="anchor" href="#rules">#</a>Rules</h2>
+<ul>
+<li>A name can only be registered once.</li>
+<li>A class cannot extend another class. <code>Base</code> has to be a real Roblox
+<code>ClassName</code>.</li>
+<li>Every entry in <code>Changed</code> has to name one of the class&#39;s <code>Properties</code>.</li>
+<li><code>Construct</code> has to build something. Returning an empty table is an error.</li>
+<li>The rest of Vision is unchanged: <code>Cleanup</code> destroys the whole tree the class
+built, a remount rebuilds it, and <code>Clone</code> gives the copy its own.</li>
+</ul>
+<h2 id="adding-one-to-your-own-game"><a class="anchor" href="#adding-one-to-your-own-game">#</a>Adding one to your own game</h2>
+<p>Register before you capture anything that uses it. Anywhere that runs once is
+fine - the top of a module, or a small file that only registers:</p>
+<pre class="code"><code class="hljs"><span class="hljs-keyword">local</span> Vision = <span class="hljs-built_in">require</span>(ReplicatedStorage.Packages.Vision)
+
+Vision.class(<span class="hljs-string">&quot;Chip&quot;</span>, { ... })
+
+<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span></code></pre>
+<pre class="code"><code class="hljs"><span class="hljs-built_in">require</span>(script.Parent.Classes.Chip)
+
+<span class="hljs-keyword">local</span> Card = Scope:Capture({ ClassName = <span class="hljs-string">&quot;Chip&quot;</span>, Text = <span class="hljs-string">&quot;hello&quot;</span> })</code></pre>
+<p>The registry is global to the Vision module, so a class registered on the
+client is not registered on the server. Register on both if both build it.</p>
+<h2 id="adding-one-to-vision-itself"><a class="anchor" href="#adding-one-to-vision-itself">#</a>Adding one to Vision itself</h2>
+<p>The same call, from inside the library. Put the class in its own module under
+<code>src/shared/Vision/</code>, require it from <code>init.luau</code> so registration happens when
+Vision is first required, and add it to the module list in
+<code>scripts/build.luau</code>&#39;s harness so it ships.</p>
+<p>Vision does not ship any classes of its own. Every class is one you or your
+game registered, which keeps the library&#39;s surface to the primitives and
+leaves naming to you.</p>
+
+</main>
+</div>
+<footer class="foot">
+<p>Released under the MIT License. Documentation structure and source concept adapted from <a href="https://github.com/centau/vide">Vide</a> by centau.</p>
+<p class="motto">Existence Begins With Perception.</p>
+</footer>
+</body>
+</html>

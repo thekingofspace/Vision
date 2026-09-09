@@ -50,6 +50,15 @@ export type create = (Declaration:Declaration) -> Instance
 export type style = (Name:string) -> {[string]:any}
 export type fromEvent = (Event:string, InitialValue:any?) -> any
 
+export type Class = {
+    Base:string,
+    Properties:{[string]:any},
+    Construct:(Made:{[string]:any}) -> Declaration,
+    Changed:{[string]:(self:Instance, vision:Vision, Value:any) -> ()}?
+}
+
+export type class = (Name:string, Definition:Class) -> string
+
 export type Keyframe = {
     Easing:TweenInfo | {Period:number?, Damping:number?, Dampening:number?},
     Time:number,

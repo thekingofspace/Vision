@@ -31,7 +31,7 @@ With [Wally](https://wally.run):
 
 ```toml
 [dependencies]
-Vision = "thekingofspace/vision@1.1.2"
+Vision = "thekingofspace/vision@1.1.6"
 ```
 
 ```bash

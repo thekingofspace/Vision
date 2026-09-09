@@ -2,6 +2,7 @@
 
 const Symbols = require(script.Parent.Symbols)
 const Types = require(script.Parent.Types)
+const Classes = require(script.Parent.Classes)
 
 type Dynamic = Types.Dynamic
 
@@ -22,11 +23,17 @@ const function Create(Declaration: any): Instance
         error("Declaration requires a ClassName", 0)
     end
 
-    const Object = Instance.new(ClassName)
+    const Custom = Classes.Find(ClassName)
+    const Made = if Custom then Classes.Made(Custom, Declaration) else nil
+    const Object = Instance.new(if Custom then Custom.Base else ClassName)
     const Fields = (Object :: any) :: Dynamic
 
     for Key, Value in Declaration do
         if type(Key) ~= "string" or Reserved[Key] then
+            continue
+        end
+
+        if Custom and Custom.Names[Key] then
             continue
         end
 
@@ -82,6 +89,16 @@ const function Create(Declaration: any): Instance
             Object:GetPropertyChangedSignal(Key):Connect(function()
                 Callback(Object, nil, Fields[Key])
             end)
+        end
+    end
+
+    if Custom then
+        for _, Inner in Classes.Build(Custom, Made) do
+            const Child = Create(Inner)
+
+            if Child.Parent == nil then
+                Child.Parent = Object
+            end
         end
     end
 

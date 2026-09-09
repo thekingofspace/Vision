@@ -55,6 +55,7 @@ const Sidebars = [
             { text: "Animation", link: "/api/animation" },
             { text: "Timeline", link: "/api/timeline" },
             { text: "Sprites", link: "/api/sprites" },
+            { text: "Classes", link: "/api/classes" },
             { text: "Tools", link: "/api/tools" },
         ],
     },

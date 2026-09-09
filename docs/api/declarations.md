@@ -120,6 +120,21 @@ exactly when you want to reach its values. This is how you reach them.
 declaration works with either.
 :::
 
+## Custom classes
+
+A `ClassName` that names a [registered class](/api/classes) resolves through
+that class instead of `Instance.new`. The class supplies the real base class
+and a tree of its own, and any key matching one of its properties is handed to
+the class rather than assigned.
+
+```lua
+{
+    ClassName = "Chip",
+    Size = UDim2.fromOffset(200, 32),
+    Text = "hello",
+}
+```
+
 ## attributes
 
 A map of attribute names to values, applied with `SetAttribute` when the

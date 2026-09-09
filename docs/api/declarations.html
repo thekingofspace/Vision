@@ -39,6 +39,7 @@
 <a href="./animation.html">Animation</a>
 <a href="./timeline.html">Timeline</a>
 <a href="./sprites.html">Sprites</a>
+<a href="./classes.html">Classes</a>
 <a href="./tools.html">Tools</a>
 </div>
 </aside>
@@ -135,6 +136,16 @@ exactly when you want to reach its values. This is how you reach them.</p>
 declaration works with either.</p>
 </div>
 
+<h2 id="custom-classes"><a class="anchor" href="#custom-classes">#</a>Custom classes</h2>
+<p>A <code>ClassName</code> that names a <a href="./classes.html">registered class</a> resolves through
+that class instead of <code>Instance.new</code>. The class supplies the real base class
+and a tree of its own, and any key matching one of its properties is handed to
+the class rather than assigned.</p>
+<pre class="code"><code class="hljs">{
+    ClassName = <span class="hljs-string">&quot;Chip&quot;</span>,
+    Size = UDim2.fromOffset(<span class="hljs-number">200</span>, <span class="hljs-number">32</span>),
+    Text = <span class="hljs-string">&quot;hello&quot;</span>,
+}</code></pre>
 <h2 id="attributes"><a class="anchor" href="#attributes">#</a>attributes</h2>
 <p>A map of attribute names to values, applied with <code>SetAttribute</code> when the
 instance is created. Both <code>attributes</code> and <code>Attributes</code> are accepted.</p>
